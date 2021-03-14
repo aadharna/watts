@@ -31,9 +31,25 @@ class AlignedReward(gym.Wrapper):
 
         return action, reward, done, info
 
+    def reset(self, **kwargs):
+        self.win = None
+        self.steps = 0
+        return self.env.reset(**kwargs)
+
     def __str__(self):
         return f"<aligned{str(self.env)}>"
 
+def add_wrappers(str_list: list) -> list:
+    wraps = []
+    for w in str_list:
+        if "Aligned" in w:
+            wraps.append(AlignedReward)
+        # add additional wrappers here
+        # elif ...
+        else:
+            raise ValueError("Requested wrapper does not exist. Please make it.")
+
+    return wraps
 
 if __name__ == "__main__":
     import gym
