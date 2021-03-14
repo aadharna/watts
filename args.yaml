@@ -20,7 +20,8 @@ shape0: 9
 generatorType: evolutionary
 
 ##network args
-network_name: "AIIDE_PINSKY_MODEL"
+network_name: "AIIDE_PINSKY_MODEL"  # Other agents: Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+framework: "torch"
 #action: 6
 #depth: 6
 
@@ -39,6 +40,6 @@ num_poet_loops: 5000
 result_prefix: .. # DO NOT CHANGE!!
 start_fresh: True
 
-# run test without score; only win
-no_score: True
-refresh: 100
+
+# gym Env Wrappers
+wrappers: ["Aligned"]
