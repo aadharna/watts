@@ -9,7 +9,7 @@ from levels.zelda_action_interpreter import interpretAction
 import torch
 
 
-@ray.remote
+@ray.remote(num_returns=2)
 def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_string, actor_critic_weights):
     """
 
@@ -33,20 +33,24 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
     actor.to(device)
 
     rewards = []
+    win = False
 
     while not done:
         state = torch.FloatTensor([state]).to(device)
         x, _ = actor({'obs': state}, None, None)
         _, torch_action = torch.max(x.squeeze(), 0)
         action = interpretAction(torch_action.cpu().numpy())
-        next_state, reward, done, _ = env.step(action)
+        next_state, reward, done, info = env.step(action)
         # env.render(observer='global')
 
         rewards.append(reward)
         state = next_state
     env.close()
 
-    return rewards
+    if "PlayerResults" in info:
+        win = info['PlayerResults']['1']
+
+    return rewards, win == "Win"
 
 
 if __name__ == "__main__":
