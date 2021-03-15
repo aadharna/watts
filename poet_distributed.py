@@ -10,7 +10,7 @@ from network_factory import NetworkFactory
 from generators.static_generator import StaticGenerator
 
 from utils.gym_wrappers import add_wrappers
-from utils.register import register_env_with_rllib
+from utils.register import Registrar
 from utils.loader import load_from_yaml
 
 parser = argparse.ArgumentParser()
@@ -31,18 +31,13 @@ if __name__ == "__main__":
 
     args = load_from_yaml(fpath=_args.args_file)
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
+    registry = Registrar(file_args=args)
 
     wrappers = add_wrappers(args.wrappers)
 
-    gym_factory = GridGameFactory(file_args=args, name=name, n_actions=nActions, act_space=actSpace, obs_space=obsSpace,
-                                  observer=observer, env_wrappers=wrappers)
+    gym_factory = GridGameFactory(file_args=args, env_wrappers=wrappers, registrar=registry)
 
-    network_factory = NetworkFactory(obs_space=obsSpace,
-                                     action_space=actSpace,
-                                     num_outputs=nActions,
-                                     model_config={},
-                                     name=args.network_name)
+    network_factory = NetworkFactory(registry)
 
     manager = PoetManager(_args.exp_name, file_args=args, gym_factory=gym_factory, network_factory=network_factory)
     """
