@@ -89,6 +89,6 @@ if __name__ == "__main__":
     for e in eval_returns:
         for k, v in e.items():
             if k == 'score':
-                print(sum(v))
+                print(f"score for env : {sum(v)}")
 
     ray.shutdown()
