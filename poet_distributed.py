@@ -35,13 +35,8 @@ if __name__ == "__main__":
 
     wrappers = add_wrappers(args.wrappers)
 
-    gym_factory = GridGameFactory(file_args=args,
-                                  name=name,
-                                  nActions=nActions,
-                                  actSpace=actSpace,
-                                  obsSpace=obsSpace,
-                                  observer=observer,
-                                  env_wrappers=wrappers)
+    gym_factory = GridGameFactory(file_args=args, name=name, n_actions=nActions, act_space=actSpace, obs_space=obsSpace,
+                                  observer=observer, env_wrappers=wrappers)
 
     network_factory = NetworkFactory(obs_space=obsSpace,
                                      action_space=actSpace,

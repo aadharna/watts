@@ -3,14 +3,8 @@ from griddly import gd
 from utils.loader import load_from_yaml
 
 class GridGameFactory:
-    def __init__(self,
-                 file_args,
-                 name: str,
-                 nActions: int,
-                 actSpace: gym.spaces.Space,
-                 obsSpace: gym.spaces.Space,
-                 observer,
-                 env_wrappers: list):
+    def __init__(self, file_args, name: str, n_actions: int, act_space: gym.spaces.Space, obs_space: gym.spaces.Space,
+                 observer, env_wrappers: list):
         """Factory to create new gym envs.
 
         gameFactory = GridGameFactory(*register_env_with_griddly(args_file='args.yaml'))
@@ -18,20 +12,20 @@ class GridGameFactory:
         Alternatively with rllib:
         gameFactory = GridGameFactory(*register_with_rllib(args_file='args.yaml'))
 
-        :param args_file: arguments loaded from file via utils.loader.load_yaml_file
+        :param file_args: arguments loaded from file via utils.loader.load_yaml_file
         :param name: name to be used with the gym.make command. e.g. GDY-Zelda-v0
-        :param nActions: number of discrete actions in the env
-        :param actSpace: gym action_space
-        :param obsSpace: gym observation_space
+        :param n_actions: number of discrete actions in the env
+        :param act_space: gym action_space
+        :param obs_space: gym observation_space
         :param env_wrappers: list of env.Wrappers to apply to the env
         """
         # super(GridGame, self).__init__()
 
         self.args = file_args
         self.name = name
-        self.nActions = nActions
-        self.action_space = actSpace
-        self.observation_space = obsSpace
+        self.nActions = n_actions
+        self.action_space = act_space
+        self.observation_space = obs_space
         self.observer = observer
         self.env_wrappers = env_wrappers
 
