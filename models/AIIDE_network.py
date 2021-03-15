@@ -7,6 +7,7 @@ from torch.distributions import Categorical
 import numpy as np
 
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2, ModelConfigDict
+from griddly.util.rllib.torch.agents.common import layer_init
 
 
 class AIIDEActor(TorchModelV2, nn.Module):
@@ -21,21 +22,21 @@ class AIIDEActor(TorchModelV2, nn.Module):
         self._num_actions = num_outputs
 
         self.embedding = nn.Sequential(
-            nn.Conv2d(in_channels=self._num_objects, out_channels=8, kernel_size=1),
+            layer_init(nn.Conv2d(in_channels=self._num_objects, out_channels=8, kernel_size=1)),
             nn.ReLU(),
-            nn.Conv2d(in_channels=8, out_channels=32, kernel_size=2),
+            layer_init(nn.Conv2d(in_channels=8, out_channels=32, kernel_size=2)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(640, 128),  # was 512 previously
+            layer_init(nn.Linear(640, 128)),  # was 512 previously
             nn.ReLU()
         )
 
         self.policy_head = nn.Sequential(
-            nn.Linear(128, num_outputs)
+            layer_init(nn.Linear(128, num_outputs))
         )
 
         self.value_head = nn.Sequential(
-            nn.Linear(128, 1)
+            layer_init(nn.Linear(128, 1))
         )
 
     def forward(self, input_dict, state, seq_lens):
@@ -60,21 +61,24 @@ if __name__ == "__main__":
     import griddly
     from griddly import gd
 
+    from utils.loader import load_from_yaml
     from utils.register import register_env_with_griddly
     from gym_factory import GridGameFactory
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_griddly(args_file=os.path.join('..', 'args.yaml'),
-                                                                             prefix='..')
+    os.chdir('..')
+    args = load_from_yaml(os.path.join('args.yaml'))
 
-    gameFactory = GridGameFactory(name, nActions, actSpace, obsSpace, observer)
+    name, nActions, actSpace, obsSpace, observer = register_env_with_griddly(file_args=args)
+
+    gameFactory = GridGameFactory(args, name, nActions, actSpace, obsSpace, observer, env_wrappers=[])
     env = gameFactory.make()()
-    _ = env.reset()
+    state = env.reset()
     print(env.observation_space.shape)
 
     #shape should = 640 in this test, but 512 in rllib. I don't know why.
 
     network = AIIDEActor(obs_space=env.observation_space, action_space=env.action_space,
                          num_outputs=nActions, model_config={}, name='AIIDE_PINSKY_MODEL')
-    state = env.reset()
+
     foo, _ = network({'obs': torch.FloatTensor([state])}, [0], 1)
     print(foo)
