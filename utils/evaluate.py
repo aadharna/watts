@@ -9,7 +9,7 @@ from levels.zelda_action_interpreter import interpretAction
 import torch
 
 
-@ray.remote(num_returns=2)
+@ray.remote
 def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_string, actor_critic_weights):
     """
 
@@ -50,7 +50,7 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
 
-    return rewards, win == "Win"
+    return {'score': rewards, 'win': win == "Win"}
 
 
 if __name__ == "__main__":
