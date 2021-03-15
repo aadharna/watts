@@ -25,7 +25,7 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
 
     actor.load_state_dict(actor_critic_weights)
     state = env.reset(level_string=level_string)
-    print(state.shape)
+    # print(state.shape)
     done = False
 
     use_cuda = torch.cuda.is_available()
@@ -50,7 +50,7 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
 
-    return {'score': rewards, 'win': win == "Win"}
+    return {'score': rewards, 'win': win == "Win", 'info': info}
 
 
 if __name__ == "__main__":
@@ -86,5 +86,6 @@ if __name__ == "__main__":
     # rewards, returns, log_probs, values, states, actions, advantage, entropy = bar
 
     foo = ray.get(rewards_future)
-    print(sum(foo))
+    print(foo)
+    print(sum(foo['score']))
     ray.shutdown()

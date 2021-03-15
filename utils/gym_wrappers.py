@@ -11,7 +11,7 @@ class AlignedReward(gym.Wrapper):
         self.action_space = env.action_space
 
         self.win = None
-        self.steps = 0
+        self.steps = -1
         self.play_length = None
 
     def step(self, action):
@@ -20,6 +20,7 @@ class AlignedReward(gym.Wrapper):
         self.steps += 1
         if "PlayerResults" in info:
             self.win = info['PlayerResults']['1']
+            print(self.win)
             # print(f"set win to: {self.win}")
 
         if self.win == 'Win':
@@ -28,12 +29,15 @@ class AlignedReward(gym.Wrapper):
             reward = (self.steps / self.play_length) - 1
         else:
             reward = 0
+        info['step'] = self.steps
+        info['win']  = self.win
+        info['r'] = reward
 
         return action, reward, done, info
 
     def reset(self, **kwargs):
         self.win = None
-        self.steps = 0
+        self.steps = -1
         return self.env.reset(**kwargs)
 
     def __str__(self):
