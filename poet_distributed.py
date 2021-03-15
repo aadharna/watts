@@ -9,6 +9,7 @@ from network_factory import NetworkFactory
 
 from generators.static_generator import StaticGenerator
 
+from utils.gym_wrappers import add_wrappers
 from utils.register import register_env_with_rllib
 from utils.loader import load_from_yaml
 
@@ -32,13 +33,15 @@ if __name__ == "__main__":
 
     name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
 
+    wrappers = add_wrappers(args.wrappers)
+
     gym_factory = GridGameFactory(file_args=args,
                                   name=name,
                                   nActions=nActions,
                                   actSpace=actSpace,
                                   obsSpace=obsSpace,
                                   observer=observer,
-                                  env_wrappers=[])
+                                  env_wrappers=wrappers)
 
     network_factory = NetworkFactory(obs_space=obsSpace,
                                      action_space=actSpace,
@@ -82,8 +85,10 @@ if __name__ == "__main__":
     manager.add_pair(network=network_factory.make()(), generator=generator)
 
     eval_futures = manager.evaluate()
-    summed = [sum(ray.get(e)) for e in eval_futures]
-    print(summed)
-
+    eval_returns = ray.get(eval_futures)
+    for e in eval_returns:
+        for k, v in e.items():
+            if k == 'score':
+                print(sum(v))
 
     ray.shutdown()
