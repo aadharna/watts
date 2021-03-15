@@ -6,6 +6,7 @@ game: limited_zelda        # alternate solarfox. Use commented out params.
 lvl_dir: levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
+record_freq: 100000
 
 # generator args, will change for each game
 mechanics: ['+', 'A', 'g', '3', 'w'] #['b', 'A', 'w']
@@ -27,8 +28,8 @@ framework: "torch"
 
 # algo args
 game_len: 500
-n_games: 1000
 opt_algo: "DE"
+n_games: 1000
 popsize: 50
 mutation_timer: 20
 mutation_rate: 0.8

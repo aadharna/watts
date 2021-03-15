@@ -3,59 +3,44 @@ from griddly import gd
 from utils.loader import load_from_yaml
 
 class GridGameFactory:
-    def __init__(self, file_args, name: str, n_actions: int, act_space: gym.spaces.Space, obs_space: gym.spaces.Space,
-                 observer, env_wrappers: list):
+    def __init__(self, file_args, env_wrappers: list, registrar):
         """Factory to create new gym envs.
 
-        gameFactory = GridGameFactory(*register_env_with_griddly(args_file='args.yaml'))
-
-        Alternatively with rllib:
-        gameFactory = GridGameFactory(*register_with_rllib(args_file='args.yaml'))
-
+        :param registrar: utils.registry.Registrar class. This holds info needed to make new envs
         :param file_args: arguments loaded from file via utils.loader.load_yaml_file
-        :param name: name to be used with the gym.make command. e.g. GDY-Zelda-v0
-        :param n_actions: number of discrete actions in the env
-        :param act_space: gym action_space
-        :param obs_space: gym observation_space
         :param env_wrappers: list of env.Wrappers to apply to the env
         """
-        # super(GridGame, self).__init__()
 
+        self.registrar = registrar
         self.args = file_args
-        self.name = name
-        self.nActions = n_actions
-        self.action_space = act_space
-        self.observation_space = obs_space
-        self.observer = observer
         self.env_wrappers = env_wrappers
 
     def make(self):
         def _make():
-            from utils.register import register_env_with_rllib
-            _ = register_env_with_rllib(file_args=self.args)
-            env = gym.make(self.name,
-                           global_observer_type=self.observer,
-                           player_observer_type=self.observer)
+            from ray.tune.registry import register_env
+            from griddly.util.rllib.wrappers.core import RLlibEnv
+            register_env(self.registrar.env_name, RLlibEnv)
+            env = RLlibEnv(self.registrar.get_rllib_config)
             env.enable_history(True)
             for wrapper in self.env_wrappers:
                 env = wrapper(env)
-                if 'aligned' in str(env):
+                if 'aligned' in str(env) and env.play_length is None:
                     env.play_length = self.args.game_len
             return env
         return _make
 
 
 if __name__ == "__main__":
-    from utils.register import register_env_with_rllib
+    from utils.register import Registrar
     from utils.gym_wrappers import AlignedReward
     from utils.loader import load_from_yaml
     import os
 
     args = load_from_yaml(os.path.join('args.yaml'))
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
+    registry = Registrar(file_args=args)
 
-    gameFactory = GridGameFactory(args, name, nActions, actSpace, obsSpace, observer, [AlignedReward])
+    gameFactory = GridGameFactory(file_args=args, env_wrappers=[AlignedReward], registrar=registry)
 
     env = gameFactory.make()()
     import matplotlib.pyplot as plt

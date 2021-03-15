@@ -45,7 +45,9 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
 
         rewards.append(reward)
         state = next_state
+
     env.close()
+    env.game.release()
 
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
@@ -54,7 +56,7 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
 
 
 if __name__ == "__main__":
-    from utils.register import register_env_with_rllib
+    from utils.register import Registrar
     from utils.loader import load_from_yaml
     from utils.gym_wrappers import AlignedReward
 
@@ -69,11 +71,10 @@ if __name__ == "__main__":
 
     args = load_from_yaml(os.path.join('args.yaml'))
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
+    registrar = Registrar(file_args=args)
 
-    gameFactory = GridGameFactory(args, name, nActions, actSpace, obsSpace, observer, [AlignedReward])
-    networkFactory = NetworkFactory(obs_space=obsSpace, action_space=actSpace,
-                         num_outputs=nActions, model_config={}, name='AIIDE_PINSKY_MODEL')
+    gameFactory = GridGameFactory(args, [AlignedReward], registrar=registrar)
+    networkFactory = NetworkFactory(registrar=registrar)
 
     network = networkFactory.make()()
     actor_critic_weights = network.state_dict()

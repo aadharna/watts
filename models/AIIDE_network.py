@@ -27,7 +27,7 @@ class AIIDEActor(TorchModelV2, nn.Module):
             layer_init(nn.Conv2d(in_channels=8, out_channels=32, kernel_size=2)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(640, 128)),  # was 512 previously
+            layer_init(nn.Linear(512, 128)),  # was 512 previously
             nn.ReLU()
         )
 
@@ -62,23 +62,21 @@ if __name__ == "__main__":
     from griddly import gd
 
     from utils.loader import load_from_yaml
-    from utils.register import register_env_with_griddly
+    from utils.register import Registrar
     from gym_factory import GridGameFactory
 
     os.chdir('..')
-    args = load_from_yaml(os.path.join('args.yaml'))
+    arg_path = os.path.join('args.yaml')
+    file_args = load_from_yaml(arg_path)
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_griddly(file_args=args)
+    registry = Registrar(file_args)
 
-    gameFactory = GridGameFactory(args, name, nActions, actSpace, obsSpace, observer, env_wrappers=[])
+    gameFactory = GridGameFactory(file_args=file_args, env_wrappers=[], registrar=registry)
     env = gameFactory.make()()
     state = env.reset()
     print(env.observation_space.shape)
 
-    #shape should = 640 in this test, but 512 in rllib. I don't know why.
-
-    network = AIIDEActor(obs_space=env.observation_space, action_space=env.action_space,
-                         num_outputs=nActions, model_config={}, name='AIIDE_PINSKY_MODEL')
+    network = AIIDEActor(**registry.get_nn_build_info)
 
     foo, _ = network({'obs': torch.FloatTensor([state])}, [0], 1)
     print(foo)

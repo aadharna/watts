@@ -7,54 +7,42 @@ from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgen
 
 
 class NetworkFactory:
-    def __init__(self, obs_space: gym.spaces.Space, action_space: gym.spaces.Space,
-                         num_outputs: int, model_config: dict = {}, name: str = 'AIIDE_PINSKY_MODEL'):
+    def __init__(self, registrar):
         """Factory to create NNs
 
-        :param name: Name of NN you want this factory to create. MUST be a valid NN. See models.AIIDE_network for eg
-        :param obs_space: gym.space for observations
-        :param action_space: gym.space for actions
-        :param num_outputs: number of output actions
-        :param model_config: model_config for rllib
-        """
-        self.obs = obs_space
-        self.acs = action_space
-        self.num_outputs = num_outputs
-        self.model_config = model_config
-        self.name = name
+        :param registrar: utils.registery.Registrar object. This holds various dicts needed for initialization.
 
+        """
+        self.registrar = registrar
+        self.network_name = self.registrar.network_name
         self.constructor = self.get_network_constructor()
 
     def get_network_constructor(self):
-        if self.name == "AIIDE_PINSKY_MODEL":
+        if self.network_name == "AIIDE_PINSKY_MODEL":
             return AIIDEActor
-        elif self.name == "Adversarial_PCGRL":
+        elif self.network_name == "Adversarial_PCGRL":
             return PCGRLAdversarial
-        elif self.name == "SimpleConvAgent":
+        elif self.network_name == "SimpleConvAgent":
             return SimpleConvAgent
-        elif self.name == "GAPAgent":
+        elif self.network_name == "GAPAgent":
             return GAPAgent
         else:
             raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
 
     def make(self):
         def _make():
-            return self.constructor(self.obs, self.acs, self.num_outputs, self.model_config, self.name)
+            return self.constructor(**self.registrar.get_nn_build_info)
         return _make
 
+
 if __name__ == "__main__":
-    import os
     from utils.loader import load_from_yaml
-    from utils.register import register_env_with_rllib
+    from utils.register import Registrar
     args = load_from_yaml('args.yaml')
 
-    name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
+    registry = Registrar(file_args=args)
 
-    network_factory = NetworkFactory(obs_space=obsSpace,
-                                     action_space=actSpace,
-                                     num_outputs=nActions,
-                                     model_config={},
-                                     name=args.network_name)
+    network_factory = NetworkFactory(registrar=registry)
 
     network = network_factory.make()()
     print(network)
