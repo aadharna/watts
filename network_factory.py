@@ -41,3 +41,20 @@ class NetworkFactory:
         def _make():
             return self.constructor(self.obs, self.acs, self.num_outputs, self.model_config, self.name)
         return _make
+
+if __name__ == "__main__":
+    import os
+    from utils.loader import load_from_yaml
+    from utils.register import register_env_with_rllib
+    args = load_from_yaml('args.yaml')
+
+    name, nActions, actSpace, obsSpace, observer = register_env_with_rllib(file_args=args)
+
+    network_factory = NetworkFactory(obs_space=obsSpace,
+                                     action_space=actSpace,
+                                     num_outputs=nActions,
+                                     model_config={},
+                                     name=args.network_name)
+
+    network = network_factory.make()()
+    print(network)
