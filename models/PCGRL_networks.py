@@ -76,12 +76,12 @@ class Items(Enum):
 
 
 if __name__ == "__main__":
-
-    adversary = PCGRLAdversarial(...)
-    level = adversary.genearate(length=15, width=15)
-
-    level = level.squeeze()
-    level[4, 5, 0] = 235
-
-    foo = np.argmax(level, axis=0)
-    print(foo)
+    pass
+    # adversary = PCGRLAdversarial(...)
+    # level = adversary.genearate(length=15, width=15)
+    #
+    # level = level.squeeze()
+    # level[4, 5, 0] = 235
+    #
+    # foo = np.argmax(level, axis=0)
+    # print(foo)

@@ -19,6 +19,9 @@ class Pair:
     def __str__(self):
         return str(self.generator)
 
+    # def update_agent(self, new_weights):
+    #     self.agent.get_policy().set_weights(new_weights)
+
     # def _evaluate(self) -> float:
     #     """
     #     The generator at this time has a level embedded in it already.

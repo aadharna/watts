@@ -11,5 +11,10 @@ class BaseGenerator(abc.ABC):
     def update_from_lvl_string(self, level_string):
         raise NotImplementedError
 
+    def generate(self):
+        def _generate() -> str:
+            raise NotImplementedError
+        return _generate
+
     def __str__(self):
         raise NotImplementedError

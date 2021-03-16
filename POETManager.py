@@ -1,5 +1,4 @@
-from utils.loader import load_from_yaml
-from utils.evaluate import evaluate_agent_on_level
+from evaluators.evaluate import evaluate_agent_on_level
 
 from pair.agent_environment_pair import Pair
 from generators.base import BaseGenerator

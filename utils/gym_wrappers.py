@@ -20,7 +20,6 @@ class AlignedReward(gym.Wrapper):
         self.steps += 1
         if "PlayerResults" in info:
             self.win = info['PlayerResults']['1']
-            print(self.win)
             # print(f"set win to: {self.win}")
 
         if self.win == 'Win':

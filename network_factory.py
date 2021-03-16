@@ -1,5 +1,3 @@
-import gym
-
 from models.AIIDE_network import AIIDEActor
 from models.PCGRL_networks import PCGRLAdversarial
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent

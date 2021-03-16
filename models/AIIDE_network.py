@@ -78,5 +78,9 @@ if __name__ == "__main__":
 
     network = AIIDEActor(**registry.get_nn_build_info)
 
+    print(network)
+
     foo, _ = network({'obs': torch.FloatTensor([state])}, [0], 1)
-    print(foo)
+    # print(foo)
+    _, torch_action = torch.max(foo.squeeze(), 0)
+    print(torch_action.cpu().numpy())

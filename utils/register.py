@@ -35,7 +35,7 @@ class Registrar:
         else:
             self.observer = gd.ObserverType.VECTOR
 
-        self.gdy_file = os.path.join(file_args.lvl_dir, f'{self.file_args.game}.yaml')
+        self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
 
         self.trainer_config = {'environment_name': self.name,
                                'yaml_file': self.gdy_file,
@@ -52,10 +52,18 @@ class Registrar:
         _ = env.reset()
         self.act_space = env.action_space
         self.obs_space = env.observation_space
+        self.n_actions = 0
+
+        # In Griddly, the zero-th action of each Discrete action in a no-op.
+        # This means that there are two no-ops in Zelda. Therefore, we just manually count the
+        # operations for each action
         if type(self.act_space) == MultiDiscrete:
-            self.n_actions = prod(self.act_space.nvec)
+            self.n_actions += 1
+            for k in self.act_space.nvec:
+                self.n_actions += (k - 1)
+            # self.n_actions = prod(self.act_space.nvec)
         elif type(self.act_space) == Discrete:
-            self.n_actions = self.act_space.n
+            self.n_actions += self.act_space.n
         else:
             raise ValueError(f"Unsupported action type in game: {file_args.game}. "
                              f"Only Discrete and MultiDiscrete are supported")
@@ -63,16 +71,20 @@ class Registrar:
         env.game.release()
         del env
 
+        self.generator_config = {
+
+        }
+
         self.information_dict = {
             'env_name': self.name,
             'trainer_config': self.trainer_config,
+            'generator_config': self.generator_config,
             'nn_build_config': {
                 'action_space': self.act_space,
                 'obs_space': self.obs_space,
                 'model_config': {},
                 'num_outputs': self.n_actions,
-                'name': self.file_args.network_name
-            }
+                'name': self.file_args.network_name},
         }
 
 
@@ -91,6 +103,10 @@ class Registrar:
     @property
     def network_name(self):
         return self.information_dict['nn_build_config']['name']
+
+    @property
+    def get_generator_config(self):
+        return self.information_dict['generator_config']
 
 
 if __name__ == "__main__":
