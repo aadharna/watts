@@ -20,7 +20,7 @@ class GridGameFactory:
             from ray.tune.registry import register_env
             from griddly.util.rllib.wrappers.core import RLlibEnv
             register_env(self.registrar.env_name, RLlibEnv)
-            env = RLlibEnv(self.registrar.get_rllib_config)
+            env = RLlibEnv(self.registrar.get_config_to_build_rllib_env)
             env.enable_history(True)
             for wrapper in self.env_wrappers:
                 env = wrapper(env)
