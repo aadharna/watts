@@ -28,7 +28,7 @@ framework: "torch"
 
 # algo args
 game_len: 500
-opt_algo: "DE"
+opt_algo: "PPO"
 n_games: 1000
 popsize: 50
 mutation_timer: 20
