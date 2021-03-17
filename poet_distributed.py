@@ -32,11 +32,8 @@ if __name__ == "__main__":
     args = load_from_yaml(fpath=_args.args_file)
 
     registry = Registrar(file_args=args)
-
     wrappers = add_wrappers(args.wrappers)
-
     gym_factory = GridGameFactory(file_args=args, env_wrappers=wrappers, registrar=registry)
-
     network_factory = NetworkFactory(registry)
 
     manager = PoetManager(_args.exp_name, file_args=args, gym_factory=gym_factory, network_factory=network_factory)
