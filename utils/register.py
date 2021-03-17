@@ -9,6 +9,7 @@ import griddly
 from griddly import gd
 from griddly.util.rllib.wrappers.core import RLlibEnv
 
+from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 from ray.tune.registry import register_env
 
 class Registrar:
@@ -37,18 +38,19 @@ class Registrar:
 
         self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
 
-        self.trainer_config = {'environment_name': self.name,
-                               'yaml_file': self.gdy_file,
-                               'level': self.file_args.init_lvl,
-                               'max_steps': self.file_args.game_len,
-                               'global_observer_type': self.observer,
-                               'player_observer_type': self.observer,
-                               'record_video_config': {
+        self.rllib_env_config = {'environment_name': self.name,
+                                 'yaml_file': self.gdy_file,
+                                 'level': self.file_args.init_lvl,
+                                 'max_steps': self.file_args.game_len,
+                                 'global_observer_type': self.observer,
+                                 'player_observer_type': self.observer,
+                                 'random_level_on_reset': False,
+                                 'record_video_config': {
                                        'frequency': self.file_args.record_freq
-                                   }
-                               }
+                                    }
+                                 }
 
-        env = RLlibEnv(self.trainer_config)
+        env = RLlibEnv(self.rllib_env_config)
         _ = env.reset()
         self.act_space = env.action_space
         self.obs_space = env.observation_space
@@ -75,38 +77,67 @@ class Registrar:
 
         }
 
-        self.information_dict = {
-            'env_name': self.name,
-            'trainer_config': self.trainer_config,
-            'generator_config': self.generator_config,
-            'nn_build_config': {
+        self.nn_build_config = {
                 'action_space': self.act_space,
                 'obs_space': self.obs_space,
                 'model_config': {},
                 'num_outputs': self.n_actions,
-                'name': self.file_args.network_name},
+                'name': self.file_args.network_name
         }
 
+        # Trainer Config for selected algorithm
+        self.trainer_config = self.get_default_trainer_config(self.file_args.opt_algo)
+        self.trainer_config['env_config'] = self.rllib_env_config
+        self.trainer_config['env'] = self.name
+        self.trainer_config["model"] = {
+                'custom_model': self.file_args.network_name,
+                'custom_model_config': {}
+            }
+        self.trainer_config["framework"] = self.file_args.framework
+        self.trainer_config["num_workers"] = 2
+        self.trainer_config["num_envs_per_worker"] = 2
+
+    def get_default_trainer_config(self, opt_algo):
+        if opt_algo == "OpenAIES":
+            return es.DEFAULT_CONFIG.copy()
+        elif opt_algo == "PPO":
+            return ppo.DEFAULT_CONFIG.copy()
+        elif opt_algo == 'MAML':
+            return maml.DEFAULT_CONFIG.copy()
+        elif opt_algo == 'DDPG':
+            return ddpg.DEFAULT_CONFIG.copy()
+        elif opt_algo == 'DQN':
+            return dqn.DEFAULT_CONFIG.copy()
+        elif opt_algo == 'SAC':
+            return sac.DEFAULT_CONFIG.copy()
+        elif opt_algo == 'IMPALA':
+            return impala.DEFAULT_CONFIG.copy()
+        else:
+            raise ValueError('Pick another opt_algo')
 
     @property
     def get_nn_build_info(self):
-        return self.information_dict['nn_build_config']
+        return self.nn_build_config
 
     @property
-    def get_rllib_config(self):
-        return self.information_dict['trainer_config']
+    def get_trainer_config(self):
+        return self.trainer_config
+
+    @property
+    def get_config_to_build_rllib_env(self):
+        return self.rllib_env_config
 
     @property
     def env_name(self):
-        return self.information_dict['env_name']
+        return self.name
 
     @property
     def network_name(self):
-        return self.information_dict['nn_build_config']['name']
+        return self.file_args.network_name
 
     @property
     def get_generator_config(self):
-        return self.information_dict['generator_config']
+        return self.generator_config
 
 
 if __name__ == "__main__":
@@ -119,9 +150,9 @@ if __name__ == "__main__":
     Registry = Registrar(file_args)
     print(Registry.env_name)
     print(Registry.get_nn_build_info)
-    print(Registry.get_rllib_config)
+    print(Registry.get_config_to_build_rllib_env)
 
-    env = RLlibEnv(Registry.get_rllib_config)
+    env = RLlibEnv(Registry.get_config_to_build_rllib_env)
     state = env.reset()
     ns, r, d, info = env.step(env.action_space.sample())
     print(info)
