@@ -1,3 +1,5 @@
+from managers.base import Manager
+
 from evaluators.evaluate import evaluate_agent_on_level
 
 from pair.agent_environment_pair import Pair
@@ -6,20 +8,16 @@ from generators.base import BaseGenerator
 from gym_factory import GridGameFactory
 from network_factory import NetworkFactory
 
-class PoetManager:
+class PoetManager(Manager):
     def __init__(self, exp_name: str, file_args, gym_factory: GridGameFactory, network_factory: NetworkFactory):
-        """
+        """Extends the manager class to instantiate the POET algorithm
 
         :param exp_name: exp_name from launch script
         :param file_args: args loaded via utils.loader.load_from_yaml e.g. load_from_yaml(args.yaml)
         :param gym_factory: factory to make new gym.Envs
         :param network_factory: factory to make new NNs
         """
-        self.args = file_args
-        self.exp_name = exp_name
-
-        self.gym_factory = gym_factory
-        self.network_factory = network_factory
+        super().__init__(exp_name, file_args, gym_factory, network_factory)
 
         self.pairs = []
 
@@ -51,4 +49,35 @@ class PoetManager:
         pass
 
     def pass_mc(self):
+        pass
+
+    def run(self):
+        """
+        # Paired Open Ended Trailblazer main loop
+        #
+        # For forever:
+        #
+        # 1) Build new environments (or change robot morphology)
+        #    This could take the form of:
+        #       * evolutionary algorithm
+        #       * neural network
+        #       * random domains
+        #       * etc
+        #
+        #    1b) Make sure new environments are not too easy or too hard
+        #    1c) When too many envs, remove envs that are too old (or some other metric)
+
+        # 2) Optimize agents in their current environment
+        #    This could be done with any sort of optimization algorithm
+        #       * Evolutionary methods
+        #       * RL
+        #       * etc
+
+        # 3) Transfer agents across environments
+        #    This could be determined with
+        #       * self-play evaluations
+        #       * tournament selection
+        #       * etc
+
+        """
         pass
