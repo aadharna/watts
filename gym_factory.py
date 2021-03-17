@@ -29,6 +29,14 @@ class GridGameFactory:
             return env
         return _make
 
+    def register(self):
+        def _register():
+            from ray.tune.registry import register_env
+            from griddly.util.rllib.wrappers.core import RLlibEnv
+            register_env(self.registrar.env_name, RLlibEnv)
+            return
+        return _register
+
 
 if __name__ == "__main__":
     from utils.register import Registrar
