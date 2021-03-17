@@ -60,9 +60,8 @@ class Registrar:
         # This means that there are two no-ops in Zelda. Therefore, we just manually count the
         # operations for each action
         if type(self.act_space) == MultiDiscrete:
-            self.n_actions += 1
             for k in self.act_space.nvec:
-                self.n_actions += (k - 1)
+                self.n_actions += k
             # self.n_actions = prod(self.act_space.nvec)
         elif type(self.act_space) == Discrete:
             self.n_actions += self.act_space.n
