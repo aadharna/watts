@@ -3,7 +3,7 @@ import ray
 import time
 import argparse
 
-from POETManager import PoetManager
+from managers.POETManager import PoetManager
 from gym_factory import GridGameFactory
 from network_factory import NetworkFactory
 
@@ -40,34 +40,7 @@ if __name__ == "__main__":
     network_factory = NetworkFactory(registry)
 
     manager = PoetManager(_args.exp_name, file_args=args, gym_factory=gym_factory, network_factory=network_factory)
-    """
-    # Paired Open Ended Trailblazer main loop
-    #
-    # For forever:
-    #
-    # 1) Build new environments (or change robot morphology)
-    #    This could take the form of:
-    #       * evolutionary algorithm
-    #       * neural network
-    #       * random domains
-    #       * etc
-    #
-    #    1b) Make sure new environments are not too easy or too hard
-    #    1c) When too many envs, remove envs that are too old (or some other metric)
 
-    # 2) Optimize agents in their current environment
-    #    This could be done with any sort of optimization algorithm
-    #       * Evolutionary methods
-    #       * RL
-    #       * etc
-
-    # 3) Transfer agents across environments
-    #    This could be determined with
-    #       * self-play evaluations
-    #       * tournament selection
-    #       * etc
-
-    """
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = StaticGenerator(level_string)
 
