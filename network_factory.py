@@ -1,3 +1,5 @@
+from ray.rllib.models import ModelCatalog
+
 from models.AIIDE_network import AIIDEActor
 from models.PCGRL_networks import PCGRLAdversarial
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
@@ -15,6 +17,8 @@ class NetworkFactory:
         self.network_name = self.registrar.network_name
         self.constructor = self.get_network_constructor()
 
+        ModelCatalog.register_custom_model(self.network_name, self.constructor)
+
     def get_network_constructor(self):
         if self.network_name == "AIIDE_PINSKY_MODEL":
             return AIIDEActor
@@ -28,9 +32,19 @@ class NetworkFactory:
             raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
 
     def make(self):
+        """Make a pytorch NN.
+
+        :return: function to build a pytorch network
+        """
         def _make():
             return self.constructor(**self.registrar.get_nn_build_info)
         return _make
+
+    def register(self):
+        def _register():
+            ModelCatalog.register_custom_model(self.network_name, self.constructor)
+            return
+        return _register
 
 
 if __name__ == "__main__":
