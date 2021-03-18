@@ -8,7 +8,7 @@ from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgen
 
 class NetworkFactory:
     def __init__(self, registrar):
-        """Factory to create NNs
+        """Factory to create NNs and register it with ray's global NN register
 
         :param registrar: utils.registery.Registrar object. This holds various dicts needed for initialization.
 
