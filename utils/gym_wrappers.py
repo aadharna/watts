@@ -1,9 +1,13 @@
 import gym
+from griddly.util.rllib.wrappers.core import RLlibEnv
 
 
-class AlignedReward(gym.Wrapper):
-    def __init__(self, env):
+class AlignedReward(gym.Wrapper, RLlibEnv):
+
+    def __init__(self, env, env_config):
         gym.Wrapper.__init__(self, env=env)
+        RLlibEnv.__init__(self, env_config=env_config)
+
         self.env = env
         _ = self.env.reset()
         self.env.enable_history(True)
@@ -12,7 +16,7 @@ class AlignedReward(gym.Wrapper):
 
         self.win = None
         self.steps = -1
-        self.play_length = None
+        self.play_length = env_config.get('max_steps', 500)
 
     def step(self, action):
         assert(self.play_length is not None)
@@ -57,12 +61,18 @@ def add_wrappers(str_list: list) -> list:
 if __name__ == "__main__":
     import gym
     import griddly
+    import os
+    from utils.register import Registrar
+    from utils.loader import load_from_yaml
+    os.chdir('..')
 
-    env = gym.make('GDY-Zelda-v0')
+    registery = Registrar(file_args=load_from_yaml('args.yaml'))
+
+    env = RLlibEnv(registery.get_config_to_build_rllib_env)
     print(str(env))
-    env = AlignedReward(env)
+    env = AlignedReward(env, registery.get_config_to_build_rllib_env)
     print(str(env))
-    env.play_length = 500
+
 
     done = False
     rs = []
@@ -73,4 +83,4 @@ if __name__ == "__main__":
         infos.append(i)
 
     print(rs)
-    print(infos)
+    # print(infos)
