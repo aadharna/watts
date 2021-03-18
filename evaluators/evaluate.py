@@ -20,7 +20,7 @@ def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_stri
     :return:
     """
 
-    env = gym_factory_monad()
+    env = gym_factory_monad()  # use built-in env_config dict
     actor = network_factory_monad()
 
     actor.load_state_dict(actor_critic_weights)
