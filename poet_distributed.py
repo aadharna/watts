@@ -1,3 +1,5 @@
+import os
+import sys
 import ray
 
 import time
@@ -27,6 +29,9 @@ def f(i):
 
 if __name__ == "__main__":
 
+    sep = os.pathsep
+    os.environ['PYTHONPATH'] = sep.join(sys.path)
+
     ray.init()
 
     args = load_from_yaml(fpath=_args.args_file)
@@ -50,5 +55,11 @@ if __name__ == "__main__":
         for k, v in e.items():
             if k == 'score':
                 print(f"score for env : {sum(v)}")
+
+    opt_futures = manager.optimize()
+    opt_returns = ray.get(opt_futures)
+    for e in opt_returns:
+        for k, v in e.items():
+            print(k, v)
 
     ray.shutdown()
