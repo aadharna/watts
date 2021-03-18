@@ -29,7 +29,6 @@ class Registrar:
 
         self.file_args = file_args
         self.name = f'{self.file_args.game}_custom'
-        register_env(self.name, RLlibEnv)
 
         if self.file_args.pictures:
             self.observer = gd.ObserverType.SPRITE_2D
@@ -85,7 +84,8 @@ class Registrar:
         }
 
         # Trainer Config for selected algorithm
-        self.trainer_config = self.get_default_trainer_config(self.file_args.opt_algo)
+        self.trainer_config, self.trainer_constr = self.get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+
         self.trainer_config['env_config'] = self.rllib_env_config
         self.trainer_config['env'] = self.name
         self.trainer_config["model"] = {
@@ -96,21 +96,21 @@ class Registrar:
         self.trainer_config["num_workers"] = 2
         self.trainer_config["num_envs_per_worker"] = 2
 
-    def get_default_trainer_config(self, opt_algo):
+    def get_default_trainer_config_and_constructor(self, opt_algo):
         if opt_algo == "OpenAIES":
-            return es.DEFAULT_CONFIG.copy()
+            return es.DEFAULT_CONFIG.copy(), es.ESTrainer
         elif opt_algo == "PPO":
-            return ppo.DEFAULT_CONFIG.copy()
+            return ppo.DEFAULT_CONFIG.copy(), ppo.PPOTrainer
         elif opt_algo == 'MAML':
-            return maml.DEFAULT_CONFIG.copy()
+            return maml.DEFAULT_CONFIG.copy(), maml.MAMLTrainer
         elif opt_algo == 'DDPG':
-            return ddpg.DEFAULT_CONFIG.copy()
+            return ddpg.DEFAULT_CONFIG.copy(), ddpg.DDPGTrainer
         elif opt_algo == 'DQN':
-            return dqn.DEFAULT_CONFIG.copy()
+            return dqn.DEFAULT_CONFIG.copy(), dqn.DQNTrainer
         elif opt_algo == 'SAC':
-            return sac.DEFAULT_CONFIG.copy()
+            return sac.DEFAULT_CONFIG.copy(), sac.SACTrainer
         elif opt_algo == 'IMPALA':
-            return impala.DEFAULT_CONFIG.copy()
+            return impala.DEFAULT_CONFIG.copy(), impala.ImpalaTrainer
         else:
             raise ValueError('Pick another opt_algo')
 
