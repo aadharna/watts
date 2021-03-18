@@ -8,20 +8,24 @@ from ray.rllib.agents import ppo
 
 
 @ray.remote
-def optimize_agent_on_env(gym_factory_monad, level_string, actor_critic_weights, trainer_config):
+def optimize_agent_on_env(trainer_constructor,
+                          trainer_config,
+                          registered_gym_name,
+                          level_string,
+                          actor_critic_weights):
     """Run one step of optimization remotely!!
 
-    :param gym_factory_monad: registry function wrapper
+    :param trainer_constructor: constructor for algo to optimize wtih e.g. ppo.PPOTrainer for rllib to run optimization.
+    :param trainer_config: config dict for e.g. PPO.
+    :param registered_gym_name: name of env registered with ray via `env_register`
     :param level_string: level as a string (this is temporary and will
                             also become a callback to allow for dynamically created strings)
     :param actor_critic_weights: torch state_dict
-    :param trainer_config: config dict for e.g. PPO.
     :return: dict of {optimized weights, result_dict}
     """
 
-    gym_factory_monad()
     trainer_config['env_config']['level_string'] = level_string
-    trainer = ppo.PPOTrainer(config=trainer_config, env=trainer_config['env'])
+    trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
     trainer.get_policy().model.load_state_dict(actor_critic_weights)
     result = trainer.train()
 
@@ -30,34 +34,51 @@ def optimize_agent_on_env(gym_factory_monad, level_string, actor_critic_weights,
 
 if __name__ == "__main__":
     import os
+    import sys
     import ray
-    import gym
-    import griddly
     from ray.tune.registry import register_env
-    from griddly.util.rllib.wrappers.core import RLlibEnv
+
     from utils.loader import load_from_yaml
     from utils.register import Registrar
+    from utils.gym_wrappers import AlignedReward
+    from models.AIIDE_network import AIIDEActor
     from network_factory import NetworkFactory
     from gym_factory import GridGameFactory
 
-    os.chdir('..')
-    ray.init()
+    from pprint import pprint
 
-    register_env('foo', RLlibEnv)
+    os.chdir('..')
+    sep = os.pathsep
+    os.environ['PYTHONPATH'] = sep.join(sys.path)
+
+    ray.init()
 
     args_file = os.path.join('args.yaml')
     args = load_from_yaml(args_file)
 
     registry = Registrar(file_args=args)
     network_factory = NetworkFactory(registrar=registry)
-    gym_factory = GridGameFactory(args, [], registry)
+    gym_factory = GridGameFactory(args, [AlignedReward], registry)
 
     init_net = network_factory.make()()
     init_weights = init_net.state_dict()
 
-    opt_ref = optimize_agent_on_env.remote(gym_factory.register(), None, init_weights, registry.trainer_config)
+    # register_env(registry.name, gym_factory.make())
+    print(registry.name)
+    pprint(registry.trainer_config['env_config'])
+    pprint(registry.trainer_config['model'])
 
-    return_dict = ray.get(opt_ref)
-    print(return_dict)
+    try:
+        opt_ref = optimize_agent_on_env.remote(registry.trainer_constr,
+                                               registry.trainer_config,
+                                               registry.name,
+                                               None,
+                                               init_weights)
+        return_dict = ray.get(opt_ref)
+        print(return_dict)
+    except ray.tune.error.TuneError as e:
+        ray.shutdown()
+
+
 
     ray.shutdown()
