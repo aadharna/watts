@@ -40,12 +40,6 @@ class NetworkFactory:
             return self.constructor(**self.registrar.get_nn_build_info)
         return _make
 
-    def register(self):
-        def _register():
-            ModelCatalog.register_custom_model(self.network_name, self.constructor)
-            return
-        return _register
-
 
 if __name__ == "__main__":
     from utils.loader import load_from_yaml
