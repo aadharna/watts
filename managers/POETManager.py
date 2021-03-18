@@ -1,6 +1,7 @@
 from managers.base import Manager
 
 from evaluators.evaluate import evaluate_agent_on_level
+from optimization.optimize import optimize_agent_on_env
 
 from pair.agent_environment_pair import Pair
 from generators.base import BaseGenerator
@@ -32,7 +33,7 @@ class PoetManager(Manager):
         refs = [evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                network_factory_monad=self.network_factory.make(),
                                                level_string=str(p.generator),
-                                               actor_critic_weights=p.agent.state_dict())
+                                               actor_critic_weights=p.solver.state_dict())
                 for p in self.pairs]
         return refs
 
@@ -45,8 +46,18 @@ class PoetManager(Manager):
     def transfer(self):
         pass
 
-    def optimize(self):
-        pass
+    def optimize(self) -> list:
+        """
+        Optimize each NN-pair on its PAIRED environment
+        :return: list of future-refs to the new optimized weights
+        """
+        refs = [optimize_agent_on_env.remote(trainer_constructor=self.gym_factory.registrar.trainer_constr,
+                                             trainer_config=self.gym_factory.registrar.trainer_config,
+                                             registered_gym_name=self.gym_factory.registrar.name,
+                                             level_string=str(p.generator),
+                                             actor_critic_weights=p.solver.state_dict())
+                for p in self.pairs]
+        return refs
 
     def pass_mc(self):
         pass
