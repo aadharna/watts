@@ -1,16 +1,16 @@
 from utils.loader import load_from_yaml
 
 from generators.base import BaseGenerator
-from ray.rllib.agents.trainer import Trainer
+from torch.nn import Module
 
 class Pair:
     id = 0
 
-    def __init__(self, file_args, agent: Trainer, generator: BaseGenerator):
+    def __init__(self, file_args, agent: Module, generator: BaseGenerator):
 
         self.args = file_args
 
-        self.agent = agent
+        self.solver = agent
         self.generator = generator
 
         self.id = Pair.id
@@ -18,26 +18,6 @@ class Pair:
 
     def __str__(self):
         return str(self.generator)
-
-    # def update_agent(self, new_weights):
-    #     self.agent.get_policy().set_weights(new_weights)
-
-    # def _evaluate(self) -> float:
-    #     """
-    #     The generator at this time has a level embedded in it already.
-    #     Evaluate the attached NN in this defined map.
-    #     :return: float
-    #     """
-    #     resultDict = self.agent._evaluate()
-    #     return resultDict['episode_reward_mean']
-    #
-    # def _train(self):
-    #     """
-    #
-    #     :return:
-    #     """
-    #     ptr = self.agent.train()
-    #     return ptr
 
 
 if __name__ == "__main__":
