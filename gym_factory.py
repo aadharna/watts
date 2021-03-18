@@ -16,21 +16,18 @@ class GridGameFactory:
         register_env(self.registrar.name, self.make())
 
     def make(self):
-        def _make(env_config):
+        def _make(env_config: dict = dict()):
+            """function used to register env creation with rllib.
+
+            :param env_config: unused param. Here for compatibility purposes with rllib
+            :return: (wrapped) RLlibEnv from griddly
+            """
             env = RLlibEnv(self.registrar.get_config_to_build_rllib_env)
             env.enable_history(True)
             for i, wrapper in enumerate(self.env_wrappers):
                 env = wrapper(env, self.registrar.get_config_to_build_rllib_env)
             return env
         return _make
-
-    def register(self):
-        def _register():
-            from ray.tune.registry import register_env
-            from griddly.util.rllib.wrappers.core import RLlibEnv
-            register_env(self.registrar.env_name, RLlibEnv)
-            return
-        return _register
 
 
 if __name__ == "__main__":
@@ -45,7 +42,7 @@ if __name__ == "__main__":
 
     gameFactory = GridGameFactory(file_args=args, env_wrappers=[AlignedReward], registrar=registry)
 
-    env = gameFactory.make()(registry.get_config_to_build_rllib_env)
+    env = gameFactory.make()()#registry.get_config_to_build_rllib_env)
     import matplotlib.pyplot as plt
 
     state = env.reset()
