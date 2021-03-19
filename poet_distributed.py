@@ -38,10 +38,13 @@ if __name__ == "__main__":
 
     registry = Registrar(file_args=args)
     wrappers = add_wrappers(args.wrappers)
-    gym_factory = GridGameFactory(file_args=args, env_wrappers=wrappers, registrar=registry)
+    gym_factory = GridGameFactory(registrar=registry, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry)
 
-    manager = PoetManager(_args.exp_name, file_args=args, gym_factory=gym_factory, network_factory=network_factory)
+    manager = PoetManager(exp_name=_args.exp_name,
+                          gym_factory=gym_factory,
+                          network_factory=network_factory,
+                          registrar=registry)
 
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = StaticGenerator(level_string)
