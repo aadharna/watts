@@ -10,17 +10,21 @@ import torch
 
 
 @ray.remote
-def evaluate_agent_on_level(gym_factory_monad, network_factory_monad, level_string, actor_critic_weights):
+def evaluate_agent_on_level(gym_factory_monad,
+                            rllib_env_config,
+                            level_string,
+                            network_factory_monad, actor_critic_weights):
     """
 
-    :param gym_factory_monad: Factory_make function for gym.Env
-    :param network_factory_monad: Factory_make function for NN
+    :param gym_factory_monad: Factory_make function for env
+    :param rllib_env_config: dictionary of necessary information to make the env
     :param level_string: what level do you want to load into the game defined by the above gdy file
+    :param network_factory_monad: Factory_make function for NN
     :param actor_critic_weights: weights for your actor-critic network
     :return:
     """
 
-    env = gym_factory_monad()  # use built-in env_config dict
+    env = gym_factory_monad(rllib_env_config)
     actor = network_factory_monad()
 
     actor.load_state_dict(actor_critic_weights)
@@ -73,7 +77,7 @@ if __name__ == "__main__":
 
     registrar = Registrar(file_args=args)
 
-    gameFactory = GridGameFactory(args, [AlignedReward], registrar=registrar)
+    gameFactory = GridGameFactory(registrar=registrar, env_wrappers=[AlignedReward])
     networkFactory = NetworkFactory(registrar=registrar)
 
     network = networkFactory.make()()
