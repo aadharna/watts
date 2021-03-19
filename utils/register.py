@@ -3,14 +3,32 @@ import os
 import gym
 from gym.spaces import MultiDiscrete, Discrete
 
-from numpy import prod
 
 import griddly
 from griddly import gd
 from griddly.util.rllib.wrappers.core import RLlibEnv
 
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
-from ray.tune.registry import register_env
+
+
+def get_default_trainer_config_and_constructor(opt_algo):
+    if opt_algo == "OpenAIES":
+        return es.DEFAULT_CONFIG.copy(), es.ESTrainer
+    elif opt_algo == "PPO":
+        return ppo.DEFAULT_CONFIG.copy(), ppo.PPOTrainer
+    elif opt_algo == 'MAML':
+        return maml.DEFAULT_CONFIG.copy(), maml.MAMLTrainer
+    elif opt_algo == 'DDPG':
+        return ddpg.DEFAULT_CONFIG.copy(), ddpg.DDPGTrainer
+    elif opt_algo == 'DQN':
+        return dqn.DEFAULT_CONFIG.copy(), dqn.DQNTrainer
+    elif opt_algo == 'SAC':
+        return sac.DEFAULT_CONFIG.copy(), sac.SACTrainer
+    elif opt_algo == 'IMPALA':
+        return impala.DEFAULT_CONFIG.copy(), impala.ImpalaTrainer
+    else:
+        raise ValueError('Pick another opt_algo')
+
 
 class Registrar:
     id = 0
@@ -84,7 +102,7 @@ class Registrar:
         }
 
         # Trainer Config for selected algorithm
-        self.trainer_config, self.trainer_constr = self.get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+        self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
 
         self.trainer_config['env_config'] = self.rllib_env_config
         self.trainer_config['env'] = self.name
@@ -95,24 +113,6 @@ class Registrar:
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 2
         self.trainer_config["num_envs_per_worker"] = 2
-
-    def get_default_trainer_config_and_constructor(self, opt_algo):
-        if opt_algo == "OpenAIES":
-            return es.DEFAULT_CONFIG.copy(), es.ESTrainer
-        elif opt_algo == "PPO":
-            return ppo.DEFAULT_CONFIG.copy(), ppo.PPOTrainer
-        elif opt_algo == 'MAML':
-            return maml.DEFAULT_CONFIG.copy(), maml.MAMLTrainer
-        elif opt_algo == 'DDPG':
-            return ddpg.DEFAULT_CONFIG.copy(), ddpg.DDPGTrainer
-        elif opt_algo == 'DQN':
-            return dqn.DEFAULT_CONFIG.copy(), dqn.DQNTrainer
-        elif opt_algo == 'SAC':
-            return sac.DEFAULT_CONFIG.copy(), sac.SACTrainer
-        elif opt_algo == 'IMPALA':
-            return impala.DEFAULT_CONFIG.copy(), impala.ImpalaTrainer
-        else:
-            raise ValueError('Pick another opt_algo')
 
     @property
     def get_nn_build_info(self):
