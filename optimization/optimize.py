@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     registry = Registrar(file_args=args)
     network_factory = NetworkFactory(registrar=registry)
-    gym_factory = GridGameFactory(args, [AlignedReward], registry)
+    gym_factory = GridGameFactory(registry, [AlignedReward])
 
     init_net = network_factory.make()()
     init_weights = init_net.state_dict()
