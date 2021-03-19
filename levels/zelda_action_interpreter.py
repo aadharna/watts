@@ -12,6 +12,6 @@ def interpretAction(a: int) -> list:
         # THIS will happen with Chris's update to allow for
         # e.g. nparray(2)
         action = [0, int(a)]
-    elif a in [5]:
-        action = [1, int(a)]
+    elif a in [5, 6]:
+        action = [1, int(a) - 5]
     return action
