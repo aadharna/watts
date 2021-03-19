@@ -6,6 +6,19 @@ from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
 from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgent
 
 
+def get_network_constructor(network_name):
+    if network_name == "AIIDE_PINSKY_MODEL":
+        return AIIDEActor
+    elif network_name == "Adversarial_PCGRL":
+        return PCGRLAdversarial
+    elif network_name == "SimpleConvAgent":
+        return SimpleConvAgent
+    elif network_name == "GAPAgent":
+        return GAPAgent
+    else:
+        raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
+
+
 class NetworkFactory:
     def __init__(self, registrar):
         """Factory to create NNs and register it with ray's global NN register
@@ -15,21 +28,9 @@ class NetworkFactory:
         """
         self.registrar = registrar
         self.network_name = self.registrar.network_name
-        self.constructor = self.get_network_constructor()
+        self.constructor = get_network_constructor(self.network_name)
 
         ModelCatalog.register_custom_model(self.network_name, self.constructor)
-
-    def get_network_constructor(self):
-        if self.network_name == "AIIDE_PINSKY_MODEL":
-            return AIIDEActor
-        elif self.network_name == "Adversarial_PCGRL":
-            return PCGRLAdversarial
-        elif self.network_name == "SimpleConvAgent":
-            return SimpleConvAgent
-        elif self.network_name == "GAPAgent":
-            return GAPAgent
-        else:
-            raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
 
     def make(self):
         """Make a pytorch NN.
