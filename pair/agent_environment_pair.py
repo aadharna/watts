@@ -19,6 +19,9 @@ class Pair:
     def __str__(self):
         return str(self.generator)
 
+    def update_solver_weights(self, new_weights):
+        self.solver.load_state_dict(new_weights)
+
 
 if __name__ == "__main__":
     pass
