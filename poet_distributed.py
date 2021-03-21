@@ -21,18 +21,12 @@ parser.add_argument("--args_file", type=str, default='args.yaml', help='path to 
 _args = parser.parse_args()
 
 
-@ray.remote
-def f(i):
-    time.sleep(1)
-    return i
-
-
 if __name__ == "__main__":
 
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init()
+    ray.init(num_gpus=0)
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -51,6 +45,7 @@ if __name__ == "__main__":
 
     manager.add_pair(network=network_factory.make()(), generator=generator)
     manager.add_pair(network=network_factory.make()(), generator=generator)
+    manager.add_pair(network=network_factory.make()(), generator=generator)
 
     eval_futures = manager.evaluate()
     eval_returns = ray.get(eval_futures)
@@ -64,5 +59,15 @@ if __name__ == "__main__":
     for e in opt_returns:
         for k, v in e.items():
             print(k, v)
+
+    print("testing transfer")
+
+    nets = [p.solver for p in manager.pairs]
+    lvls = [p.generator for p in manager.pairs]
+    new_weights = manager.transfer(nets, lvls)
+    print(new_weights)
+
+    for i, new_weight in new_weights.items():
+        manager.set_solver_weights(i, new_weight)
 
     ray.shutdown()
