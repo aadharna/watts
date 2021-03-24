@@ -1,54 +1,50 @@
 import os
 import numpy as np
 from copy import deepcopy
-from utils.loader import load_from_yaml, load_obj
-
+from itertools import product
 from generators.base import BaseGenerator
 
 
 class EvolutionaryGenerator(BaseGenerator):
     id = 0
 
-    def __init__(self, tile_world,
-                 shape,
-                 file_args,
-                 generation=0,
-                 locations={},
-                 **kwargs):
-        """
+    def __init__(self, level_string, file_args):
+        """generator for maps that operates on tiles in a direct encoding
 
-        :param tile_world: 2d numpy array of map
-        :param path: gym_gvgai.dir
-        :param mechanics: list of sprites you would like to be able to mutate into
-        :param generation: int
+        :param level_string: string of level wwwwwwwwww\nw...
+        :param file_args: arguments loaded from file via load_from_yaml and in the registry
         """
         super().__init__()
 
         self.args = file_args
         self.floor = self.args.floor[0]
-
         self.game = self.args.game
+        self.mechanics = self.args.mechanics
+
+        if level_string[-1] != "\n":
+            level_string += "\n"
+        f = level_string.split('\n')[:-1]  # remove blank line.
+        height = len(f)
+        tile = [list(row) for row in f]
+
+        npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
+        shape = npa.shape
+
         self._length = shape[0]
         self._height = shape[1]
 
-        # self.BOUNDARY = load_obj(path, f'{self.game}_boundary.pkl')
+        # set boundary values to 'w' in Zelda
+        range_height = list(product([0, self._length - 1], range(self._height)))
+        range_length = list(product(range(self._length), [0, self._height - 1]))
 
-        self._tile_world = tile_world
+        self.BOUNDARY = {'w': range_height + range_length}
 
-        self.mechanics = self.args.mechanics
-
-        self.generation = generation
-        self.locations = locations if bool(locations) else self._parse_tile_world(tile_world)
+        # sets the self.locations argument here because this function needs to a setter for outside methods
+        self.update_from_lvl_string(new_lvl=level_string)
+        self.string = str(self)
 
         self.id = EvolutionaryGenerator.id
         EvolutionaryGenerator.id += 1
-
-        self.string = str(self)
-
-        self.diff = 1
-
-        # self.chars = np.unique(np.unique(self.tile_world).tolist() + self.mechanics)
-        # self.chars = list(set(self.chars) - {'A'}) # do not place more agents
 
     def update_from_lvl_string(self, new_lvl):
         """
@@ -57,7 +53,6 @@ class EvolutionaryGenerator(BaseGenerator):
         :return:
         """
         split_lvl = new_lvl.split('\n')[:-1]  # remove empty '' at the end
-        # print(split_lvl)
 
         o = np.array([['0'] * self._height] * self._length, dtype=str)
         for i in range(self._length):
@@ -87,23 +82,21 @@ class EvolutionaryGenerator(BaseGenerator):
 
         return locations
 
-    @property
-    def tile_world(self):
+    def tile_world(self, locations):
         # numpy array
         npa = np.array([['0'] * self._height] * self._length, dtype=str)
-        for k in self.locations.keys():
-            for pos in self.locations[k]:
+        for k in locations.keys():
+            for pos in locations[k]:
                 npa[pos[0]][pos[1]] = k
         for k in self.BOUNDARY.keys():
             for pos in self.BOUNDARY[k]:
                 npa[pos[0]][pos[1]] = k
 
-        # npa[npa == '0'] = '.'
         return npa
 
-    def mutate(self, mutationRate, **kwargs):
+    def mutate(self, mutation_rate: float, **kwargs):  # -> EvolutionaryGenerator
         """randomly edit parts of the level!
-        :param mutationRate: e.g. 0.2
+        :param mutation_rate: e.g. 0.2
         :return: dict of location data for the entire level
         """
         locations = deepcopy(self.locations)
@@ -131,7 +124,7 @@ class EvolutionaryGenerator(BaseGenerator):
             return new_location
 
         # if we manage to mutate:
-        if np.random.rand() < mutationRate:
+        if np.random.rand() < mutation_rate:
             choices = np.arange(1, 4)
 
             ###
@@ -249,12 +242,16 @@ class EvolutionaryGenerator(BaseGenerator):
                 if p in [pos for k in self.BOUNDARY.keys() for pos in self.BOUNDARY[k]]:
                     locations[k].pop(i)
 
-        return locations, self.tile_world.shape
+        return EvolutionaryGenerator(self._to_str(locations), self.args)
 
+    def generate(self):
+        def _generate() -> str:
+            return str(self)
+        return _generate
 
-    def __str__(self):
+    def _to_str(self, location):
         stringrep = ""
-        tile_world = self.tile_world
+        tile_world = self.tile_world(location)
         for i in range(len(tile_world)):
             for j in range(len(tile_world[i])):
                 stringrep += tile_world[i][j]
@@ -262,11 +259,19 @@ class EvolutionaryGenerator(BaseGenerator):
                     stringrep += '\n'
         return stringrep
 
+    def __str__(self):
+        return self._to_str(self.locations)
+
+
 if __name__ == "__main__":
     import os
     from utils.loader import load_from_yaml
     os.chdir('..')
 
     args = load_from_yaml('args.yaml')
+    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
+    generator = EvolutionaryGenerator(level_string=level_string, file_args=args)
+    g2 = generator.mutate(0.88)
 
-    generator = EvolutionaryGenerator()
+    print(str(generator))
+    print(g2.generate()())
