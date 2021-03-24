@@ -26,18 +26,22 @@ framework: "torch"
 #action: 6
 #depth: 6
 
-# algo args
+# algo optimization args
 game_len: 500
 opt_algo: "PPO"
-n_games: 1000
-popsize: 50
-mutation_timer: 20
+#opt_popsize: 50
+#n_opt_games: 1000
+
+# algo generation args
+mutation_timer: 10
 mutation_rate: 0.8
-transfer_timer: 10
-max_children: 8
-max_envs: 30
+max_children: 5
+max_envs: 15
 comp_agent: mcts
-num_poet_loops: 5000
+
+# algo general args
+num_poet_loops: 25
+transfer_timer: 10
 result_prefix: .. # DO NOT CHANGE!!
 start_fresh: True
 
