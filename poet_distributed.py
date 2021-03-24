@@ -10,6 +10,7 @@ from gym_factory import GridGameFactory
 from network_factory import NetworkFactory
 
 from generators.static_generator import StaticGenerator
+from generators.AIIDE_generator import EvolutionaryGenerator
 
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
@@ -41,33 +42,9 @@ if __name__ == "__main__":
                           registrar=registry)
 
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = StaticGenerator(level_string)
-
-    manager.add_pair(network=network_factory.make()(), generator=generator)
-    manager.add_pair(network=network_factory.make()(), generator=generator)
+    generator = EvolutionaryGenerator(level_string, file_args=args)
     manager.add_pair(network=network_factory.make()(), generator=generator)
 
-    eval_futures = manager.evaluate()
-    eval_returns = ray.get(eval_futures)
-    for e in eval_returns:
-        for k, v in e.items():
-            if k == 'score':
-                print(f"score for env : {sum(v)}")
-
-    opt_futures = manager.optimize()
-    opt_returns = ray.get(opt_futures)
-    for e in opt_returns:
-        for k, v in e.items():
-            print(k, v)
-
-    print("testing transfer")
-
-    nets = [p.solver for p in manager.pairs]
-    lvls = [p.generator for p in manager.pairs]
-    new_weights = manager.transfer(nets, lvls)
-    print(new_weights)
-
-    for i, new_weight in new_weights.items():
-        manager.set_solver_weights(i, new_weight)
+    manager.run()
 
     ray.shutdown()
