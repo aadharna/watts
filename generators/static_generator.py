@@ -13,18 +13,19 @@ class StaticGenerator(BaseGenerator):
         self.level = level_string
 
     def mutate(self, **kwargs):
-        pass
+        return StaticGenerator(self.level)
 
     def update_from_lvl_string(self, level_string):
         self.level = level_string
 
     def generate(self):
-        def _generate():
+        def _generate() -> str:
             return self.level
         return _generate
 
     def __str__(self):
         return self.level
+
 
 if __name__ == "__main__":
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
