@@ -11,25 +11,25 @@ from ray.rllib.agents import ppo
 def optimize_agent_on_env(trainer_constructor,
                           trainer_config,
                           registered_gym_name,
-                          level_string,
-                          actor_critic_weights):
+                          level_string_monad,
+                          actor_critic_weights,
+                          **kwargs):
     """Run one step of optimization remotely!!
 
     :param trainer_constructor: constructor for algo to optimize wtih e.g. ppo.PPOTrainer for rllib to run optimization.
     :param trainer_config: config dict for e.g. PPO.
     :param registered_gym_name: name of env registered with ray via `env_register`
-    :param level_string: level as a string (this is temporary and will
-                            also become a callback to allow for dynamically created strings)
+    :param level_string_monad:  callback to allow for dynamically created strings
     :param actor_critic_weights: torch state_dict
     :return: dict of {optimized weights, result_dict}
     """
 
-    trainer_config['env_config']['level_string'] = level_string
+    trainer_config['env_config']['level_string'] = level_string_monad()
     trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
     trainer.get_policy().model.load_state_dict(actor_critic_weights)
     result = trainer.train()
 
-    return {'weights': trainer.get_policy().model.state_dict(), "result_dict": result}
+    return {'weights': trainer.get_policy().model.state_dict(), "result_dict": result, 'pair_id': kwargs['pair_id']}
 
 
 if __name__ == "__main__":
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         opt_ref = optimize_agent_on_env.remote(registry.trainer_constr,
                                                registry.trainer_config,
                                                registry.name,
-                                               None,
+                                               lambda: None,
                                                init_weights)
         return_dict = ray.get(opt_ref)
         print(return_dict)

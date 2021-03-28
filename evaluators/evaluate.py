@@ -12,13 +12,15 @@ import torch
 @ray.remote
 def evaluate_agent_on_level(gym_factory_monad,
                             rllib_env_config,
-                            level_string,
-                            network_factory_monad, actor_critic_weights):
+                            level_string_monad,
+                            network_factory_monad,
+                            actor_critic_weights,
+                            **kwargs):
     """
 
     :param gym_factory_monad: Factory_make function for env
     :param rllib_env_config: dictionary of necessary information to make the env
-    :param level_string: what level do you want to load into the game defined by the above gdy file
+    :param level_string_monad: what level do you want to load into the game defined by the above gdy file
     :param network_factory_monad: Factory_make function for NN
     :param actor_critic_weights: weights for your actor-critic network
     :return:
@@ -28,11 +30,13 @@ def evaluate_agent_on_level(gym_factory_monad,
     actor = network_factory_monad()
 
     actor.load_state_dict(actor_critic_weights)
-    state = env.reset(level_string=level_string)
+    # todo will probably have to change this
+    state = env.reset(level_string=level_string_monad())
     # print(state.shape)
     done = False
 
-    use_cuda = torch.cuda.is_available()
+    # use_cuda = torch.cuda.is_available()
+    use_cuda = False
     device = torch.device("cuda" if use_cuda else "cpu")
     actor.to(device)
 
@@ -56,7 +60,8 @@ def evaluate_agent_on_level(gym_factory_monad,
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
 
-    return {'score': rewards, 'win': win == "Win", 'info': info}
+    return {'score': rewards, 'win': win == "Win", 'info': info,
+            'solver_id': kwargs.get('solver_id', 0), 'gen_id': kwargs.get('gen_id', 0)}
 
 
 if __name__ == "__main__":
@@ -84,8 +89,9 @@ if __name__ == "__main__":
     actor_critic_weights = network.state_dict()
 
     rewards_future = evaluate_agent_on_level.remote(gym_factory_monad=gameFactory.make(),
+                                                    rllib_env_config=registrar.get_config_to_build_rllib_env,
                                                     network_factory_monad=networkFactory.make(),
-                                                    level_string=level_string,
+                                                    level_string_monad=lambda: level_string,
                                                     actor_critic_weights=actor_critic_weights)
 
     # rewards, returns, log_probs, values, states, actions, advantage, entropy = bar
