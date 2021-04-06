@@ -42,7 +42,9 @@ class PoetManager(Manager):
                                                rllib_env_config=self.registrar.get_config_to_build_rllib_env,
                                                level_string=p.generator.generate(),
                                                network_factory_monad=self.network_factory.make(),
-                                               actor_critic_weights=p.solver.state_dict())
+                                               actor_critic_weights=p.solver.state_dict(),
+                                               solver_id=p.id,
+                                               gen_id=p.id)
                 for p in self.pairs]
         return refs
 
@@ -133,15 +135,14 @@ class PoetManager(Manager):
 
                 # todo: I don't like this. We need a better way of getting the solver/generator ids.
                 # this is the same to do as below.
-                solver_id = id_map[i][0]
-                generator_id = id_map[i][1]
+                solver_id, generator_id = id_map[i]
                 refs.append(evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                            rllib_env_config=self.registrar.get_config_to_build_rllib_env,
                                                            level_string=g,
                                                            network_factory_monad=self.network_factory.make(),
                                                            actor_critic_weights=s,
                                                            solver_id=solver_id,
-                                                           generator_id=generator_id))
+                                                           gen_id=generator_id))
             return refs
 
         combo_refs = evaluate_combos(solvers=[s.state_dict() for s in solver_list],

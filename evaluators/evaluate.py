@@ -30,7 +30,9 @@ def evaluate_agent_on_level(gym_factory_monad,
     actor = network_factory_monad()
 
     actor.load_state_dict(actor_critic_weights)
-    # todo will probably have to change this
+    # todo will probably have to change this to first instantiate a generator model
+    # and then query it for the levels.
+    #  That will allow something like PAIRED to function.
     state = env.reset(level_string=level_string_monad())
     # print(state.shape)
     done = False
@@ -92,7 +94,9 @@ if __name__ == "__main__":
                                                     rllib_env_config=registrar.get_config_to_build_rllib_env,
                                                     network_factory_monad=networkFactory.make(),
                                                     level_string_monad=lambda: level_string,
-                                                    actor_critic_weights=actor_critic_weights)
+                                                    actor_critic_weights=actor_critic_weights,
+                                                    solver_id=90,
+                                                    gen_id=0)
 
     # rewards, returns, log_probs, values, states, actions, advantage, entropy = bar
 

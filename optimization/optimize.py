@@ -24,12 +24,19 @@ def optimize_agent_on_env(trainer_constructor,
     :return: dict of {optimized weights, result_dict}
     """
 
+    # todo same as evaluate.py
+    # todo will probably have to change this to first instantiate a generator model
+    # and then query it for the levels.
+    #  That will allow something like PAIRED to function?
     trainer_config['env_config']['level_string'] = level_string_monad()
     trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
     trainer.get_policy().model.load_state_dict(actor_critic_weights)
     result = trainer.train()
 
-    return {'weights': trainer.get_policy().model.state_dict(), "result_dict": result, 'pair_id': kwargs['pair_id']}
+    return {'weights': trainer.get_policy().model.state_dict(),
+            "result_dict": result,
+            'pair_id': kwargs.get('pair_id', 0)
+            }
 
 
 if __name__ == "__main__":
@@ -73,7 +80,8 @@ if __name__ == "__main__":
                                                registry.trainer_config,
                                                registry.name,
                                                lambda: None,
-                                               init_weights)
+                                               init_weights,
+                                               pair_id=0)
         return_dict = ray.get(opt_ref)
         print(return_dict)
     except ray.tune.error.TuneError as e:
