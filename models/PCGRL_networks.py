@@ -45,11 +45,16 @@ class PCGRLAdversarial(TorchModelV2, nn.Module):
 
     def genearate(self, length, width):
         blankMap = np.zeros((1, 6, length, width))
+        # todo fix selection and placement.
         tokenList = [Items.AVATAR, Items.DOOR, Items.KEY] + [Items.WALL for _ in range((length - 2) * (width - 2) - 3)]
-        for i, ITEM in zip(range((length - 1) * (width - 1)), tokenList):
+        for i, ITEM in zip(range((length - 2) * (width - 2)), tokenList):
             spot, _ = self.forward(torch.FloatTensor(blankMap), [None], None)
-            y = spot % length
-            x = spot // width
+            y = spot % (length - 2)
+            x = spot // (width - 2)
+            # We need to make sure that this assignment doesn't 
+            # actually assign anything to the boundary of the length x width level object.
+            #   A 15 x 15 level has 13 x 13 mutable tiles. 
+            # Also, number of tiles to be placed should be a param.
             blankMap[0, ITEM.value, y, x] = 1
 
         # todo: add in:
@@ -59,6 +64,7 @@ class PCGRLAdversarial(TorchModelV2, nn.Module):
         return self.map
 
     def to_string(self):
+        # todo: make the One-Hot level into a string to pass it to Griddly.
         return
 
 
