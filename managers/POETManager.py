@@ -40,7 +40,7 @@ class PoetManager(Manager):
         """
         refs = [evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                               level_string=p.generator.generate(),
+                                               level_string_monad=p.generator.generate(),
                                                network_factory_monad=self.network_factory.make(),
                                                actor_critic_weights=p.solver.state_dict(),
                                                solver_id=p.id,
@@ -172,8 +172,9 @@ class PoetManager(Manager):
                         best_s = score
                         best_w = solvers[id_map.index(solver)].state_dict()
                         best_id = solver
-            # print(f"updated {gen_id} to {best_id}")
             new_weights[gen_id] = (best_w, best_id)
+            # todo track this info for analysis purposes
+            # print(f"updated {gen_id} to {best_id}")
 
 
 
@@ -261,7 +262,7 @@ class PoetManager(Manager):
                 updated_weights = opt_return['weights']
                 pair_id = opt_return['pair_id']
                 self.set_solver_weights(pair_id, updated_weights)
-                self.pairs[pair_id].returns.append(opt_return['result_dict'])
+                self.pairs[pair_id].results.append(opt_return['result_dict'])
 
             eval_refs = self.evaluate()
             eval_returns = ray.get(eval_refs)
@@ -276,8 +277,8 @@ class PoetManager(Manager):
                 id_map = [p.id for p in self.pairs]
                 new_weights = self.transfer(nets, lvls, id_map=id_map)
 
-                for j, new_weight in new_weights.items():
-                    self.set_solver_weights(j, new_weight)
+                for j, (best_w, best_id) in new_weights.items():
+                    self.set_solver_weights(j, best_w)
 
 
 if __name__ == "__main__":
