@@ -155,7 +155,6 @@ class PoetManager(Manager):
         # n_gens = len(generators)
         # n_solvs = len(solvers)
         results = ray.get(combo_refs)
-        results[6]['score'] = [0, 0, 200]
         # returned_scores = []
         # returned_generators = []
         # returned_solvers = []
@@ -173,7 +172,7 @@ class PoetManager(Manager):
                         best_s = score
                         best_w = solvers[id_map.index(solver)].state_dict()
                         best_id = solver
-            print(f"updated {gen_id} to {best_id}")
+            # print(f"updated {gen_id} to {best_id}")
             new_weights[gen_id] = (best_w, best_id)
 
 
@@ -272,8 +271,8 @@ class PoetManager(Manager):
                 self.set_win_status(pair_id, solved_status)
 
             if i % self.args.transfer_timer:
-                nets = [p.solver for p in self.pairs]
-                lvls = [p.generator for p in self.pairs]
+                nets = [(p.solver, i) for i, p in enumerate(self.pairs)]
+                lvls = [(p.generator, i) for i,  p in enumerate(self.pairs)]
                 id_map = [p.id for p in self.pairs]
                 new_weights = self.transfer(nets, lvls, id_map=id_map)
 
