@@ -9,7 +9,7 @@ pictures: False
 record_freq: 100000
 
 # generator args, will change for each game
-mechanics: ['+', 'A', 'g', '3', 'w'] #['b', 'A', 'w']
+mechanics: ['+', 'A', 'g', 'e', 'w'] #['b', 'A', 'w']
 singletons: ['A', 'g'] # must be only one #['A'] #
 at_least_one: ['+']    # must have at least one # ['b'] #
 immortal: ['A', '.']   # cannot be removed #['A', '+'] #
@@ -33,15 +33,15 @@ opt_algo: "PPO"
 #n_opt_games: 1000
 
 # algo generation args
-mutation_timer: 10
+mutation_timer: 2
 mutation_rate: 0.8
-max_children: 5
-max_envs: 15
+max_children: 2
+max_envs: 5
 comp_agent: mcts
 
 # algo general args
-num_poet_loops: 25
-transfer_timer: 10
+num_poet_loops: 6
+transfer_timer: 3
 result_prefix: .. # DO NOT CHANGE!!
 start_fresh: True
 
