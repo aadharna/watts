@@ -138,25 +138,64 @@ class PoetManager(Manager):
                 solver_id, generator_id = id_map[i]
                 refs.append(evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                            rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                                           level_string=g,
+                                                           level_string_monad=g,
                                                            network_factory_monad=self.network_factory.make(),
                                                            actor_critic_weights=s,
                                                            solver_id=solver_id,
                                                            gen_id=generator_id))
             return refs
 
-        combo_refs = evaluate_combos(solvers=[s.state_dict() for s in solver_list],
-                                     generators=[g.generate() for g in generator_list],
-                                     id_map=id_map)
+        solvers, solver_idxs = zip(*solver_list)
+        generators, generator_idxs = zip(*generator_list)
+        solver_generator_combo_id = list(product(id_map, id_map))
+        combo_refs = evaluate_combos(solvers=[s.state_dict() for s in solvers],
+                                     generators=[g.generate() for g in generators],
+                                     id_map=solver_generator_combo_id)
 
+        # n_gens = len(generators)
+        # n_solvs = len(solvers)
         results = ray.get(combo_refs)
-        scores = [sum(r['score']) for i, r in enumerate(results)]
-        scores = np.array(scores).reshape(len(solver_list), len(generator_list))  # this will be square for POET
-        best_ids = np.argmax(scores, axis=1)
+        results[6]['score'] = [0, 0, 200]
+        # returned_scores = []
+        # returned_generators = []
+        # returned_solvers = []
         new_weights = {}
-        for i, best_pair_id in enumerate(best_ids):
-            # todo change these indicies into the pair.id to track who is leaving where and going to where
-            new_weights[i] = solver_list[best_pair_id].state_dict()
+        for i, gen_id in enumerate(id_map):
+            best_s = -np.inf
+            best_w = solvers[i].state_dict()
+            best_id = gen_id
+            for j, r in enumerate(results):
+
+                if gen_id == r['gen_id']:
+                    score = sum(r['score'])
+                    solver = r['solver_id']
+                    if score > best_s:
+                        best_s = score
+                        best_w = solvers[id_map.index(solver)].state_dict()
+                        best_id = solver
+            print(f"updated {gen_id} to {best_id}")
+            new_weights[gen_id] = (best_w, best_id)
+
+
+
+        #         returned_scores.append(sum(r['score']))
+        #         returned_generators.append(r['gen_id'])
+        #         returned_solvers.append(r['solver_id'])
+        #
+        # scores = np.array(returned_scores).reshape(n_gens, n_solvs).T  # this will be square for POET
+        # scores[2][2] = 100
+        # gens = np.array(returned_generators).reshape(n_gens, n_solvs)
+        # solvs = np.array(returned_solvers).reshape(n_gens, n_solvs)
+        # best_result_index_per_gen = np.argmax(scores, axis=1)
+        #
+        #
+        # for i, (best_pair_id, gen_id) in enumerate(zip(best_result_index_per_gen, id_map)):
+        #     # todo change these indicies into the pair.id to track who is leaving where and going to where
+        #
+        #     # if id_map @ best_solver_index == gen_id
+        #     #   then we would just be replacing ourself, so there is no need to track a transfer
+        #     best_solver = id_map.index(solvs[i][best_pair_id])
+        #     new_weights[gen_id] = solvers[best_solver].state_dict()
 
         return new_weights
 
@@ -235,8 +274,7 @@ class PoetManager(Manager):
             if i % self.args.transfer_timer:
                 nets = [p.solver for p in self.pairs]
                 lvls = [p.generator for p in self.pairs]
-                # todo fix this
-                id_map = list(product([p.id for p in self.pairs], [p.id for p in self.pairs]))
+                id_map = [p.id for p in self.pairs]
                 new_weights = self.transfer(nets, lvls, id_map=id_map)
 
                 for j, new_weight in new_weights.items():
