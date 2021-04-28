@@ -6,7 +6,7 @@ from gym.spaces import MultiDiscrete, Discrete
 
 import griddly
 from griddly import gd
-from griddly.util.rllib.wrappers.core import RLlibEnv
+from griddly.util.rllib.environment.core import RLlibEnv
 
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 

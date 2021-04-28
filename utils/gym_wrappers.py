@@ -1,5 +1,5 @@
 import gym
-from griddly.util.rllib.wrappers.core import RLlibEnv
+from griddly.util.rllib.environment.core import RLlibEnv
 
 
 class AlignedReward(gym.Wrapper, RLlibEnv):

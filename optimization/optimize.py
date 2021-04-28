@@ -1,6 +1,6 @@
 import ray
 
-from griddly.util.rllib.wrappers.core import RLlibEnv
+from griddly.util.rllib.environment.core import RLlibEnv
 from ray.tune.registry import register_env
 
 from ray import tune
