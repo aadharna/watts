@@ -13,11 +13,12 @@ by a user, and to cleanly scale to arbitrary compute.
 
 ----  
 
-Installation:
-	* conda create -n NAME python=3.7
-	* conda activate NAME
-	* pip install ray
-	* pip install ray[rllib]
-	* conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
-	* pip install griddly
+Installation:  
+	* conda create -n NAME python=3.7  
+	* conda activate NAME  
+	* pip install ray  
+	* pip install ray[rllib]  
+	* conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  
+	* pip install griddly  
+
 
