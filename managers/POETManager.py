@@ -28,7 +28,7 @@ class PoetManager(Manager):
         """
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self.pairs = []
-        self.archive = []
+        self.forgotton_pairs = []
 
     def add_pair(self, network, generator: BaseGenerator):
         self.pairs.append(Pair(network, generator))
@@ -40,7 +40,7 @@ class PoetManager(Manager):
         """
         refs = [evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                               level_string_monad=p.generator.generate(),
+                                               level_string_monad=p.generator.generate_fn_wrapper(),
                                                network_factory_monad=self.network_factory.make(),
                                                actor_critic_weights=p.solver.state_dict(),
                                                solver_id=p.id,
@@ -149,7 +149,7 @@ class PoetManager(Manager):
         generators, generator_idxs = zip(*generator_list)
         solver_generator_combo_id = list(product(id_map, id_map))
         combo_refs = evaluate_combos(solvers=[s.state_dict() for s in solvers],
-                                     generators=[g.generate() for g in generators],
+                                     generators=[g.generate_fn_wrapper() for g in generators],
                                      id_map=solver_generator_combo_id)
 
         # n_gens = len(generators)
@@ -207,7 +207,7 @@ class PoetManager(Manager):
         refs = [optimize_agent_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
                                              trainer_config=self.registrar.trainer_config,
                                              registered_gym_name=self.registrar.name,
-                                             level_string_monad=p.generator.generate(),
+                                             level_string_monad=p.generator.generate_fn_wrapper(),
                                              actor_critic_weights=p.solver.state_dict(),
                                              pair_id=p.id)
                 for p in self.pairs]
@@ -253,7 +253,7 @@ class PoetManager(Manager):
                 if len(self.pairs) > self.args.max_envs:
                     aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
                     self.pairs = aged_pairs[:self.args.max_envs]
-                    self.archive.extend(aged_pairs[self.args.max_envs:])
+                    self.forgotton_pairs.extend(aged_pairs[self.args.max_envs:])
                     del aged_pairs
 
             opt_refs = self.optimize()
