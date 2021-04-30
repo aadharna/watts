@@ -14,16 +14,15 @@ by a user, and to cleanly scale to arbitrary compute.
 ----  
 
 Installation:  
-	* conda create -n NAME python=3.7  
+
+	* conda create -n NAME python=3.7.10  
 	* conda activate NAME  
 	* pip install ray  
 	* pip install ray[rllib]  
 	* conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  
-	* pip install griddly  
-
-Problems Charlie found:
-- No cudatoolkit=10.2 available on his mac
-- Missing libvulkan which is a C import used by griddly
+		* Note, you should grab the correct install from here: https://pytorch.org/get-started/locally/
+	* pip install griddly
+		* Make sure that vulkan is installed since Griddly depends on Vulkar for its rendering.
 
 If you see stuff like:
 ```
