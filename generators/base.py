@@ -18,7 +18,7 @@ class BaseGenerator(abc.ABC):
 
     def __str__(self):
         """This function is necessary for our generators. This function will take whatever
-        the internal representation of our "levels" are and turn it into a strong that we
+        the internal representation of our "levels" are and turn it into a string that we
         can then use to set the simulator to in Griddly.
 
         :return:
