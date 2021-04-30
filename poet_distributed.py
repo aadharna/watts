@@ -42,7 +42,7 @@ if __name__ == "__main__":
                           registrar=registry)
 
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string, file_args=args)
+    generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
     manager.add_pair(network=network_factory.make()(), generator=generator)
 
     try:
