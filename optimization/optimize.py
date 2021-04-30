@@ -64,7 +64,7 @@ if __name__ == "__main__":
     args = load_from_yaml(args_file)
 
     registry = Registrar(file_args=args)
-    network_factory = NetworkFactory(registrar=registry)
+    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
     gym_factory = GridGameFactory(registry, [AlignedReward])
 
     init_net = network_factory.make()()

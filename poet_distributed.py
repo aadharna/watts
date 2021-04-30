@@ -34,7 +34,7 @@ if __name__ == "__main__":
     registry = Registrar(file_args=args)
     wrappers = add_wrappers(args.wrappers)
     gym_factory = GridGameFactory(registrar=registry, env_wrappers=wrappers)
-    network_factory = NetworkFactory(registry)
+    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
     manager = PoetManager(exp_name=_args.exp_name,
                           gym_factory=gym_factory,

@@ -85,7 +85,7 @@ if __name__ == "__main__":
     registrar = Registrar(file_args=args)
 
     gameFactory = GridGameFactory(registrar=registrar, env_wrappers=[AlignedReward])
-    networkFactory = NetworkFactory(registrar=registrar)
+    networkFactory = NetworkFactory(registrar.network_name, registrar.get_nn_build_info)
 
     network = networkFactory.make()()
     actor_critic_weights = network.state_dict()
