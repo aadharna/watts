@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     registry = Registrar(file_args)
 
-    gameFactory = GridGameFactory(registrar=registry, env_wrappers=[])
+    gameFactory = GridGameFactory(env_name=registry.env_name, env_wrappers=[])
     env = gameFactory.make()()
     state = env.reset()
     print(env.observation_space.shape)
