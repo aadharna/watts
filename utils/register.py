@@ -1,4 +1,5 @@
 import os
+import argparse
 
 import gym
 from gym.spaces import MultiDiscrete, Discrete
@@ -89,9 +90,20 @@ class Registrar:
         env.game.release()
         del env
 
-        self.generator_config = {
-
-        }
+        # todo ??
+        # We might want to make this into something better.
+        #  Also, this should probably have it's own special prepare
+        #  function since different generators might require different initialization arguments
+        #   Also, this is being put into an argparse.Namespace because that makes the
+        #    code in the generator readable.
+        self.generator_config = argparse.Namespace(**{
+            'mechanics': self.file_args.mechanics,
+            'singletons': self.file_args.singletons,
+            'at_least_one': self.file_args.at_least_one,
+            'immortal': self.file_args.immortal,
+            'floor': self.file_args.floor,
+            'probs': self.file_args.probs,
+        })
 
         self.nn_build_config = {
                 'action_space': self.act_space,
@@ -111,7 +123,7 @@ class Registrar:
                 'custom_model_config': {}
             }
         self.trainer_config["framework"] = self.file_args.framework
-        self.trainer_config["num_workers"] = 2
+        self.trainer_config["num_workers"] = 1
         self.trainer_config["num_envs_per_worker"] = 2
 
     @property
@@ -150,6 +162,7 @@ if __name__ == "__main__":
     print(Registry.env_name)
     print(Registry.get_nn_build_info)
     print(Registry.get_config_to_build_rllib_env)
+    print(Registry.get_generator_config)
 
     env = RLlibEnv(Registry.get_config_to_build_rllib_env)
     state = env.reset()
