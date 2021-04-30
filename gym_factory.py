@@ -3,23 +3,21 @@ from ray.tune.registry import register_env
 
 
 class GridGameFactory:
-    def __init__(self, registrar, env_wrappers: list):
+    def __init__(self, env_name: str, env_wrappers: list):
         """Factory to create new gym envs and register it with ray's global env register
 
-        :param registrar: utils.registry.Registrar class. This holds info needed to make new envs
+        :param env_name: string name of the game that we want to register with RLlib
         :param env_wrappers: list of env.Wrappers to apply to the env
         """
 
-        self.registrar = registrar
-        self.args = self.registrar.file_args
         self.env_wrappers = env_wrappers
-        register_env(self.registrar.name, self.make())
+        register_env(env_name, self.make())
 
     def make(self):
         def _make(env_config: dict = dict()) -> RLlibEnv:  # this RLlibEnv is (potentially) wrapped.
             """function used to register env creation with rllib.
 
-            :param env_config: unused param. Here for compatibility purposes with rllib
+            :param env_config: information about how to build the env; compatible with Griddly and RLlibEnv
             :return: (wrapped) RLlibEnv from griddly
             """
             env = RLlibEnv(env_config)
@@ -40,11 +38,9 @@ if __name__ == "__main__":
 
     registry = Registrar(file_args=args)
 
-    gameFactory = GridGameFactory(registrar=registry, env_wrappers=[AlignedReward])
+    gameFactory = GridGameFactory(env_name=registry.env_name,
+                                  env_wrappers=[AlignedReward])
 
-    env = gameFactory.make()()#registry.get_config_to_build_rllib_env)
-    import matplotlib.pyplot as plt
-
+    env = gameFactory.make()(registry.rllib_env_config)
     state = env.reset()
-    plt.imshow(state.swapaxes(0, 2))
-    plt.show()
+    print(state.shape)

@@ -65,15 +65,16 @@ if __name__ == "__main__":
 
     registry = Registrar(file_args=args)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
-    gym_factory = GridGameFactory(registry, [AlignedReward])
+    gym_factory = GridGameFactory(registry.env_name, [AlignedReward])
 
     init_net = network_factory.make()()
+    print(init_net)
     init_weights = init_net.state_dict()
 
     # register_env(registry.name, gym_factory.make())
-    print(registry.name)
-    pprint(registry.trainer_config['env_config'])
-    pprint(registry.trainer_config['model'])
+    # print(registry.name)
+    # pprint(registry.trainer_config['env_config'])
+    # pprint(registry.trainer_config['model'])
 
     try:
         opt_ref = optimize_agent_on_env.remote(registry.trainer_constr,
@@ -83,7 +84,7 @@ if __name__ == "__main__":
                                                init_weights,
                                                pair_id=0)
         return_dict = ray.get(opt_ref)
-        print(return_dict)
+        # print(return_dict)
     except ray.tune.error.TuneError as e:
         ray.shutdown()
 
