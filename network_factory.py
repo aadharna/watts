@@ -5,15 +5,20 @@ from models.PCGRL_networks import PCGRLAdversarial
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
 from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgent
 
+aiide = "AIIDE_PINSKY_MODEL"
+conv = "SimpleConvAgent"
+gap = "GAPAgent"
+pcgrl = "Adversarial_PCGRL"
+
 
 def get_network_constructor(network_name: str):
-    if network_name == "AIIDE_PINSKY_MODEL":
+    if network_name == aiide:
         return AIIDEActor
-    elif network_name == "Adversarial_PCGRL":
+    elif network_name == pcgrl:
         return PCGRLAdversarial
-    elif network_name == "SimpleConvAgent":
+    elif network_name == conv:
         return SimpleConvAgent
-    elif network_name == "GAPAgent":
+    elif network_name == gap:
         return GAPAgent
     else:
         raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
@@ -40,16 +45,3 @@ class NetworkFactory:
         def _make():
             return self.constructor(**self.nn_build_info)
         return _make
-
-
-if __name__ == "__main__":
-    from utils.loader import load_from_yaml
-    from utils.register import Registrar
-    args = load_from_yaml('args.yaml')
-
-    registry = Registrar(file_args=args)
-
-    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
-
-    network = network_factory.make()()
-    print(network)
