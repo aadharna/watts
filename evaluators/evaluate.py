@@ -85,7 +85,6 @@ if __name__ == "__main__":
     registrar = Registrar(file_args=args)
 
     gameFactory = GridGameFactory(registrar.env_name,
-                                  registrar.rllib_env_config,
                                   env_wrappers=[AlignedReward])
 
     networkFactory = NetworkFactory(registrar.network_name, registrar.get_nn_build_info)
