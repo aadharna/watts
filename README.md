@@ -21,4 +21,19 @@ Installation:
 	* conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  
 	* pip install griddly  
 
+Problems Charlie found:
+- No cudatoolkit=10.2 available on his mac
+- Missing libvulkan which is a C import used by griddly
 
+If you see stuff like:
+```
+(pid=41878) Unknown encoder 'libx264'
+(pid=41878) ERROR: VideoRecorder encoder exited with status 1
+(pid=41872) ERROR: VideoRecorder encoder exited with status 1
+(pid=41872) Unknown encoder 'libx264'
+(pid=41878) Unknown encoder 'libx264'
+(pid=41872) Unknown encoder 'libx264'
+(pid=41872) ERROR: VideoRecorder encoder exited with status 1
+(pid=41878) ERROR: VideoRecorder encoder exited with status 1
+```
+you can ignore it. Aaron will fix it later.
