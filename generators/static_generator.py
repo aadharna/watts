@@ -18,7 +18,7 @@ class StaticGenerator(BaseGenerator):
     def update_from_lvl_string(self, level_string):
         self.level = level_string
 
-    def generate(self):
+    def generate_fn_wrapper(self):
         def _generate() -> str:
             return self.level
         return _generate
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = StaticGenerator(level_string)
     print(str(generator))
-    print(generator.generate()())
+    print(generator.generate_fn_wrapper()())

@@ -244,7 +244,7 @@ class EvolutionaryGenerator(BaseGenerator):
 
         return EvolutionaryGenerator(self._to_str(locations), self.args)
 
-    def generate(self):
+    def generate_fn_wrapper(self):
         def _generate() -> str:
             return str(self)
         return _generate
@@ -274,4 +274,4 @@ if __name__ == "__main__":
     g2 = generator.mutate(0.88)
 
     print(str(generator))
-    print(g2.generate()())
+    print(g2.generate_fn_wrapper()())
