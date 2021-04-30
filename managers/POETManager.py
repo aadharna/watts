@@ -58,7 +58,7 @@ class PoetManager(Manager):
         :param pair_list: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
         :return:
         """
-        def pass_mc(generator) -> bool:
+        def is_level_minimally_valid(generator) -> bool:
             """Minimal Criteria for the newly created levels.
             In POET, this takes the form of agent ability on the newly created level
                 Can the parent walker travel at least a minimum and not more than a maximum distance in the new map?
@@ -86,7 +86,7 @@ class PoetManager(Manager):
 
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self.args.mutation_rate)
-            if pass_mc(new_generator):
+            if is_level_minimally_valid(new_generator):
                 child_list.append((parent.solver, new_generator))
                 # todo track stats
 
