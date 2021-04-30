@@ -18,7 +18,6 @@ class EvolutionaryGenerator(BaseGenerator):
 
         self.args = file_args
         self.floor = self.args.floor[0]
-        self.game = self.args.game
         self.mechanics = self.args.mechanics
 
         if level_string[-1] != "\n":
@@ -239,7 +238,7 @@ class EvolutionaryGenerator(BaseGenerator):
         # remove anything that was in the boundary wall's spot.
         for k in locations.keys():
             for i, p in enumerate(locations[k]):
-                if p in [pos for k in self.BOUNDARY.keys() for pos in self.BOUNDARY[k]]:
+                if p in [pos for key in self.BOUNDARY.keys() for pos in self.BOUNDARY[key]]:
                     locations[k].pop(i)
 
         return EvolutionaryGenerator(self._to_str(locations), self.args)
@@ -265,12 +264,14 @@ class EvolutionaryGenerator(BaseGenerator):
 
 if __name__ == "__main__":
     import os
+    from utils.register import Registrar
     from utils.loader import load_from_yaml
     os.chdir('..')
 
     args = load_from_yaml('args.yaml')
+    registry = Registrar(file_args=args)
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string=level_string, file_args=args)
+    generator = EvolutionaryGenerator(level_string=level_string, file_args=registry.get_generator_config)
     g2 = generator.mutate(0.88)
 
     print(str(generator))
