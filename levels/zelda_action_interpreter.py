@@ -1,6 +1,6 @@
 
 
-def interpretAction(a: int) -> list:
+def interpret_action(a: int) -> list:
     """
 
     :param a: integer action. e.g. argmax( NN(state) )
@@ -8,10 +8,7 @@ def interpretAction(a: int) -> list:
     """
     action = [0, 0]
     if a in [0, 1, 2, 3, 4]:
-        # Todo: REMOVE INT CAST
-        # THIS will happen with Chris's update to allow for
-        # e.g. nparray(2)
-        action = [0, int(a)]
+        action = [0, a]
     elif a in [5, 6]:
-        action = [1, int(a) - 5]
+        action = [1, a - 5]
     return action

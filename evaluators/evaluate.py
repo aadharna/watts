@@ -4,7 +4,7 @@ import gym
 import griddly
 from griddly import gd
 
-from levels.zelda_action_interpreter import interpretAction
+from levels.zelda_action_interpreter import interpret_action
 
 import torch
 
@@ -49,7 +49,7 @@ def evaluate_agent_on_level(gym_factory_monad,
         state = torch.FloatTensor([state]).to(device)
         x, _ = actor({'obs': state}, None, None)
         _, torch_action = torch.max(x.squeeze(), 0)
-        action = interpretAction(torch_action.cpu().numpy())
+        action = interpret_action(torch_action.cpu().numpy())
         next_state, reward, done, info = env.step(action)
         # env.render(observer='global')
 
