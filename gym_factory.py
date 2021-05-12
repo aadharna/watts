@@ -22,7 +22,7 @@ class GridGameFactory:
             """
             env = RLlibEnv(env_config)
             env.enable_history(True)
-            for i, wrapper in enumerate(self.env_wrappers):
+            for wrapper in self.env_wrappers:
                 env = wrapper(env, env_config)
             return env
         return _make
