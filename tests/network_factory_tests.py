@@ -4,7 +4,7 @@ from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgen
 from models.AIIDE_network import AIIDEActor
 from models.PCGRL_networks import PCGRLAdversarial
 import network_factory
-import test_structs
+from tests import test_structs
 import unittest
 
 
