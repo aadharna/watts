@@ -43,10 +43,10 @@ if __name__ == "__main__":
 
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
-    manager.add_pair(network=network_factory.make()(), generator=generator)
+    manager.add_pair(network=network_factory.make()({}), generator=generator)
 
     try:
         manager.run()
     except Exception as e:
-        pass
+        print(e)
     ray.shutdown()

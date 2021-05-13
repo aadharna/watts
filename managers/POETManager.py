@@ -4,7 +4,7 @@ from typing import Tuple, Dict, Any
 
 from managers.base import Manager
 
-from evaluators.evaluate import evaluate_agent_on_level
+from evaluators.remote_evaluate import async_evaluate_agent_on_level
 from optimization.optimize import optimize_agent_on_env
 
 from pair.agent_environment_pair import Pair
@@ -38,13 +38,13 @@ class PoetManager(Manager):
         Evaluate each NN-pair on its PAIRED environment
         :return: list of future-refs to the evaluated objects
         """
-        refs = [evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
-                                               rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                               level_string_monad=p.generator.generate_fn_wrapper(),
-                                               network_factory_monad=self.network_factory.make(),
-                                               actor_critic_weights=p.solver.state_dict(),
-                                               solver_id=p.id,
-                                               gen_id=p.id)
+        refs = [async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
+                                                     rllib_env_config=self.registrar.get_config_to_build_rllib_env,
+                                                     level_string_monad=p.generator.generate_fn_wrapper(),
+                                                     network_factory_monad=self.network_factory.make(),
+                                                     actor_critic_weights=p.solver.state_dict(),
+                                                     solver_id=p.id,
+                                                     generator_id=p.id)
                 for p in self.pairs]
         return refs
 
@@ -136,13 +136,14 @@ class PoetManager(Manager):
                 # todo: I don't like this. We need a better way of getting the solver/generator ids.
                 # this is the same to do as below.
                 solver_id, generator_id = id_map[i]
-                refs.append(evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
+                ref = async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                            rllib_env_config=self.registrar.get_config_to_build_rllib_env,
                                                            level_string_monad=g,
                                                            network_factory_monad=self.network_factory.make(),
                                                            actor_critic_weights=s,
                                                            solver_id=solver_id,
-                                                           gen_id=generator_id))
+                                                           generator_id=generator_id)
+                refs.append(ref)
             return refs
 
         solvers, solver_idxs = zip(*solver_list)
@@ -159,27 +160,27 @@ class PoetManager(Manager):
         # returned_generators = []
         # returned_solvers = []
         new_weights = {}
-        for i, gen_id in enumerate(id_map):
+        for i, generator_id in enumerate(id_map):
             best_s = -np.inf
             best_w = solvers[i].state_dict()
-            best_id = gen_id
+            best_id = generator_id
             for j, r in enumerate(results):
 
-                if gen_id == r['gen_id']:
+                if generator_id == r['generator_id']:
                     score = sum(r['score'])
                     solver = r['solver_id']
                     if score > best_s:
                         best_s = score
                         best_w = solvers[id_map.index(solver)].state_dict()
                         best_id = solver
-            new_weights[gen_id] = (best_w, best_id)
+            new_weights[generator_id] = (best_w, best_id)
             # todo track this info for analysis purposes
-            # print(f"updated {gen_id} to {best_id}")
+            # print(f"updated {generator_id} to {best_id}")
 
 
 
         #         returned_scores.append(sum(r['score']))
-        #         returned_generators.append(r['gen_id'])
+        #         returned_generators.append(r['generator_id'])
         #         returned_solvers.append(r['solver_id'])
         #
         # scores = np.array(returned_scores).reshape(n_gens, n_solvs).T  # this will be square for POET
@@ -189,13 +190,13 @@ class PoetManager(Manager):
         # best_result_index_per_gen = np.argmax(scores, axis=1)
         #
         #
-        # for i, (best_pair_id, gen_id) in enumerate(zip(best_result_index_per_gen, id_map)):
+        # for i, (best_pair_id, generator_id) in enumerate(zip(best_result_index_per_gen, id_map)):
         #     # todo change these indicies into the pair.id to track who is leaving where and going to where
         #
-        #     # if id_map @ best_solver_index == gen_id
+        #     # if id_map @ best_solver_index == generator_id
         #     #   then we would just be replacing ourself, so there is no need to track a transfer
         #     best_solver = id_map.index(solvs[i][best_pair_id])
-        #     new_weights[gen_id] = solvers[best_solver].state_dict()
+        #     new_weights[generator_id] = solvers[best_solver].state_dict()
 
         return new_weights
 
@@ -268,7 +269,7 @@ class PoetManager(Manager):
             eval_returns = ray.get(eval_refs)
             for eval_return in eval_returns:
                 solved_status = eval_return['win']
-                pair_id = eval_return['gen_id']
+                pair_id = eval_return['generator_id']
                 self.set_win_status(pair_id, solved_status)
 
             if i % self.args.transfer_timer:

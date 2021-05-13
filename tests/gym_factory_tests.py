@@ -20,7 +20,7 @@ class TestGymFactory(unittest.TestCase):
     def test_with_wrapper(self):
         gf = gym_factory.GridGameFactory("foo", [SimpleGymWrapper])
         g = gf.make()({'yaml_file': '../levels/limited_zelda.yaml'})
-        assert g.win is None
+        assert g.foo == 5
 
 
 class SimpleGymWrapper(gym.Wrapper, RLlibEnv):
@@ -28,4 +28,4 @@ class SimpleGymWrapper(gym.Wrapper, RLlibEnv):
         gym.Wrapper.__init__(self, env=env)
         RLlibEnv.__init__(self, env_config=env_config)
 
-        self.win = None
+        self.foo = 5
