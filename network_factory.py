@@ -40,8 +40,12 @@ class NetworkFactory:
     def make(self):
         """Make a pytorch NN.
 
-        :return: function to build a pytorch network
+        :param state_dict: Dictionary containing the state to initialize this N with. If empty, uses default state.
+        :return: a pytorch network
         """
-        def _make():
-            return self.constructor(**self.nn_build_info)
+        def _make(state_dict):
+            network = self.constructor(**self.nn_build_info)
+            if state_dict:
+                network.load_state_dict(state_dict)
+            return network
         return _make

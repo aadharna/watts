@@ -26,21 +26,3 @@ class GridGameFactory:
                 env = wrapper(env, env_config)
             return env
         return _make
-
-
-if __name__ == "__main__":
-    from utils.register import Registrar
-    from utils.gym_wrappers import AlignedReward
-    from utils.loader import load_from_yaml
-    import os
-
-    args = load_from_yaml(os.path.join('args.yaml'))
-
-    registry = Registrar(file_args=args)
-
-    gameFactory = GridGameFactory(env_name=registry.env_name,
-                                  env_wrappers=[AlignedReward])
-
-    env = gameFactory.make()(registry.rllib_env_config)
-    state = env.reset()
-    print(state.shape)
