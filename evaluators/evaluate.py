@@ -1,16 +1,15 @@
-from levels.zelda_action_interpreter import interpret_action
-
+from models.categorical_action_sampler import ActionSampler
 import torch
 
 
-def evaluate(actor, env):
+def rollout(actor, env):
     """
 
-    :param actor: actor being evaluated (ex: NN)
-    :param env: env to evaluate in
+    :param actor: NN solver to be evaluated
+    :param env: An RLlibEnv to evaluate the solver in
     :return: evaluation result state
     """
-
+    sampler = ActionSampler(env.action_space)
     state = env.reset()
     # print(state.shape)
     done = False
@@ -21,20 +20,24 @@ def evaluate(actor, env):
     actor.to(device)
 
     rewards = []
+    states = []
+    actions = []
     win = False
 
     while not done:
         state = torch.FloatTensor([state]).to(device)
         x, _ = actor({'obs': state}, None, None)
-        _, torch_action = torch.max(x.squeeze(), 0)
-        action = interpret_action(torch_action.cpu().numpy())
+        action, logp, entropy = sampler.sample(x)
+        action = action.cpu().numpy()[0]
         next_state, reward, done, info = env.step(action)
         # env.render(observer='global')
 
+        states.append(state)
+        actions.append(action)
         rewards.append(reward)
         state = next_state
 
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
 
-    return info, rewards, win
+    return info, states, actions, rewards, win

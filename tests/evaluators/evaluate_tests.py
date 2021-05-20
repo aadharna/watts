@@ -1,5 +1,5 @@
 import copy
-from evaluators.evaluate import evaluate
+from evaluators.evaluate import rollout
 import network_factory
 import gym_factory
 import tests.test_structs as test_structs
@@ -21,7 +21,7 @@ class TestEvaluate(unittest.TestCase):
         nf = network_factory.NetworkFactory(network_factory.aiide, build_info)
         actor = nf.make()(test_structs.example_aiide_state_dict)
 
-        info, rewards, win = evaluate(actor, env)
+        info, states, actions, rewards, win = rollout(actor, env)
         print(info)
         print(rewards)
         print(sum(rewards))
