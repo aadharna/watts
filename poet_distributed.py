@@ -27,7 +27,7 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=0)
+    ray.init(num_gpus=0, local_mode=True)
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -48,5 +48,6 @@ if __name__ == "__main__":
     try:
         manager.run()
     except Exception as e:
+        print(f"{len(manager.pairs)} PAIR objects")
         print(e)
     ray.shutdown()
