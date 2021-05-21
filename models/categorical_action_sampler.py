@@ -45,27 +45,3 @@ class ActionSampler:
             offset += subset_size
 
         return actions, logps, torch.sum(entropies)
-
-
-if __name__ == '__main__':
-    import os
-    from utils.loader import load_from_yaml
-    from utils.register import Registrar
-    from network_factory import NetworkFactory
-
-    os.chdir('..')
-
-    args = load_from_yaml("args.yaml")
-    reg = Registrar(file_args=args)
-    nf = NetworkFactory(network_name=reg.network_name, nn_build_info=reg.get_nn_build_info)
-    nn = nf.make()({})
-    states = []
-    for _ in range(5):
-        states.append(reg.obs_space.sample())
-    states = torch.FloatTensor(states)
-    logits, _ = nn({'obs': states}, None, None)
-    sampler = ActionSampler(reg.act_space)
-    actions, logp, entropy = sampler.sample(logits)
-    print(actions)
-    print(logp)
-    print(entropy)
