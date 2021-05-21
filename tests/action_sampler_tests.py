@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from torch import rand
 from gym.spaces import Discrete, MultiDiscrete, Box
 from models.categorical_action_sampler import ActionSampler
@@ -29,3 +30,8 @@ class TestActionSampler(unittest.TestCase):
         print(actions)
         print(logp)
         print(entropy)
+
+    def test_invalid_sampling(self):
+        action_space = Box(-2.0, 2.0, (1,), np.float32)
+        with self.assertRaises(ValueError):
+            sampler = ActionSampler(action_space=action_space)

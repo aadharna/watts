@@ -22,22 +22,26 @@ def rollout(actor, env):
     rewards = []
     states = []
     actions = []
+    logps = []
+    entropies = []
     win = False
 
     while not done:
         state = torch.FloatTensor([state]).to(device)
-        x, _ = actor({'obs': state}, None, None)
-        action, logp, entropy = sampler.sample(x)
-        action = action.cpu().numpy()[0]
+        logits, _ = actor({'obs': state}, None, None)
+        torch_action, logp, entropy = sampler.sample(logits)
+        action = torch_action.cpu().numpy()[0]
         next_state, reward, done, info = env.step(action)
         # env.render(observer='global')
 
         states.append(state)
-        actions.append(action)
+        actions.append(torch_action)
         rewards.append(reward)
+        logps.append(logp)
+        entropies.append(entropy)
         state = next_state
 
     if "PlayerResults" in info:
         win = info['PlayerResults']['1']
 
-    return info, states, actions, rewards, win
+    return info, states, actions, rewards, win, logps, entropies

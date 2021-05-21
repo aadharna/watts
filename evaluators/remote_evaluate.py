@@ -1,4 +1,4 @@
-from evaluators.evaluate import rollout
+from evaluators.rollout import rollout
 import ray
 
 
@@ -29,7 +29,7 @@ def async_evaluate_agent_on_level(gym_factory_monad,
     rllib_env_config['level_string'] = level_string_monad()
     env = gym_factory_monad(rllib_env_config)
 
-    info, states, actions, rewards, win = rollout(actor, env)
+    info, states, actions, rewards, win, logps, entropies = rollout(actor, env)
     result_dictionary = {'score': rewards, 'win': win == "Win", 'info': info}
     result_dictionary.update({'solver_id': solver_id, 'generator_id': generator_id})
 
@@ -37,4 +37,3 @@ def async_evaluate_agent_on_level(gym_factory_monad,
     env.game.release()
 
     return result_dictionary
-

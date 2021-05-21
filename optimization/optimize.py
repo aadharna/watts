@@ -24,7 +24,7 @@ def optimize_agent_on_env(trainer_constructor,
     :return: dict of {optimized weights, result_dict}
     """
 
-    # todo same as evaluate.py
+    # todo same as rollout.py
     # todo will probably have to change this to first instantiate a generator model
     # and then query it for the levels.
     #  That will allow something like PAIRED to function?

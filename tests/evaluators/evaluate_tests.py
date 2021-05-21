@@ -1,5 +1,5 @@
 import copy
-from evaluators.evaluate import rollout
+from evaluators.rollout import rollout
 import network_factory
 import gym_factory
 import tests.test_structs as test_structs
