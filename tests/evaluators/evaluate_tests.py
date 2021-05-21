@@ -21,7 +21,7 @@ class TestEvaluate(unittest.TestCase):
         nf = network_factory.NetworkFactory(network_factory.aiide, build_info)
         actor = nf.make()(test_structs.example_aiide_state_dict)
 
-        info, states, actions, rewards, win = rollout(actor, env)
+        info, states, actions, rewards, win, logps, entropies = rollout(actor, env)
         print(info)
         print(rewards)
         print(sum(rewards))
