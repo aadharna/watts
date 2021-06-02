@@ -1,4 +1,6 @@
 import abc
+from typing import Tuple
+
 
 class BaseGenerator(abc.ABC):
     def __init__(self):
@@ -8,11 +10,11 @@ class BaseGenerator(abc.ABC):
     def mutate(self, **kwargs):
         raise NotImplementedError
 
-    def update_from_lvl_string(self, level_string):
+    def update(self, level):
         raise NotImplementedError
 
     def generate_fn_wrapper(self):
-        def _generate() -> str:
+        def _generate() -> Tuple[str, dict]:
             raise NotImplementedError
         return _generate
 
