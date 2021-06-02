@@ -11,6 +11,8 @@ from griddly.util.rllib.environment.core import RLlibEnv
 
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 
+import copy
+
 
 def get_default_trainer_config_and_constructor(opt_algo):
     if opt_algo == "OpenAIES":
@@ -64,7 +66,8 @@ class Registrar:
                                  'player_observer_type': self.observer,
                                  'random_level_on_reset': False,
                                  'record_video_config': {
-                                       'frequency': self.file_args.record_freq
+                                       'frequency': self.file_args.record_freq,
+                                       'directory': os.path.join('.', 'videos')
                                     }
                                  }
 
@@ -78,11 +81,9 @@ class Registrar:
         # This means that there are two no-ops in Zelda. Therefore, we just manually count the
         # operations for each action
         if type(self.act_space) == MultiDiscrete:
-            for k in self.act_space.nvec:
-                self.n_actions += k
-            # self.n_actions = prod(self.act_space.nvec)
+            self.n_actions = sum(self.act_space.nvec)
         elif type(self.act_space) == Discrete:
-            self.n_actions += self.act_space.n
+            self.n_actions = self.act_space.n
         else:
             raise ValueError(f"Unsupported action type in game: {file_args.game}. "
                              f"Only Discrete and MultiDiscrete are supported")
@@ -95,7 +96,7 @@ class Registrar:
         #  Also, this should probably have it's own special prepare
         #  function since different generators might require different initialization arguments
         #   Also, this is being put into an argparse.Namespace because that makes the
-        #    code in the generator readable.
+        #    code in the generator readable, but that should be switched to a dict for consistency.
         self.generator_config = argparse.Namespace(**{
             'mechanics': self.file_args.mechanics,
             'singletons': self.file_args.singletons,
@@ -128,15 +129,15 @@ class Registrar:
 
     @property
     def get_nn_build_info(self):
-        return self.nn_build_config
+        return copy.deepcopy(self.nn_build_config)
 
     @property
     def get_trainer_config(self):
-        return self.trainer_config
+        return copy.deepcopy(self.trainer_config)
 
     @property
     def get_config_to_build_rllib_env(self):
-        return self.rllib_env_config
+        return copy.deepcopy(self.rllib_env_config)
 
     @property
     def env_name(self):
@@ -148,7 +149,7 @@ class Registrar:
 
     @property
     def get_generator_config(self):
-        return self.generator_config
+        return copy.deepcopy(self.generator_config)
 
 
 if __name__ == "__main__":
