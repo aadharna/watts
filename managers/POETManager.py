@@ -2,6 +2,11 @@ import numpy as np
 import ray
 
 from evaluators.remote_evaluate import async_evaluate_agent_on_level
+from optimization.remote_optimize import async_optimize_solver_on_env
+
+from pair.agent_environment_pair import Pairing
+from solvers.SingleAgentSolver import SingleAgentSolver
+
 from gym_factory import GridGameFactory
 from itertools import product
 from managers.base import Manager
@@ -44,7 +49,8 @@ class PoetManager(Manager):
                                                      rllib_env_config=self.registrar.get_config_to_build_rllib_env,
                                                      level_string_monad=p.generator.generate_fn_wrapper(),
                                                      network_factory_monad=self.network_factory.make(),
-                                                     actor_critic_weights=p.solver.state_dict(),
+                                                     evaluate_monad=p.solver.evaluate,
+                                                     network_weights=p.get_solver_weights()[0],
                                                      solver_id=p.id,
                                                      generator_id=p.id)
                 for p in self.pairs]
@@ -53,7 +59,7 @@ class PoetManager(Manager):
     def set_solver_weights(self, pair_id: int, new_weights: Dict):
         for p in self.pairs:
             if p.id == pair_id:
-                p.update_solver_weights(new_weights)
+                p.update_solver_weights([new_weights])
 
     def set_win_status(self, pair_id: int, generator_solved_status: bool):
         for p in self.pairs:
@@ -81,7 +87,7 @@ class PoetManager(Manager):
         def evaluate_combos(solvers, generators, id_map) -> list:
             """run the evaluate function on the cartesian product of solvers and generators
 
-            :param solvers: list of NN-weights
+            :param solvers: list of Solver objects
             #TODO: make this a callable that will generate the string via e.g. NN-weights for a generator network
             :param generators: list of callable string levels
             :param id_map: list of tuples of (solver_id, generator_id) also created with product (id, id)
@@ -96,9 +102,10 @@ class PoetManager(Manager):
                 solver_id, generator_id = id_map[i]
                 ref = async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
                                                            rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                                           level_string_monad=g,
+                                                           level_string_monad=g.generate_fn_wrapper(),
                                                            network_factory_monad=self.network_factory.make(),
-                                                           actor_critic_weights=s,
+                                                           evaluate_monad=s.evaluate,
+                                                           network_weights=s.get_weights()[0], #this is only okay because POET uses the SingleAgentSolver class
                                                            solver_id=solver_id,
                                                            generator_id=generator_id)
                 refs.append(ref)
@@ -107,8 +114,8 @@ class PoetManager(Manager):
         solvers, solver_idxs = zip(*solver_list)
         generators, generator_idxs = zip(*generator_list)
         solver_generator_combo_id = list(product(id_map, id_map))
-        combo_refs = evaluate_combos(solvers=[s.state_dict() for s in solvers],
-                                     generators=[g.generate_fn_wrapper() for g in generators],
+        combo_refs = evaluate_combos(solvers=solvers,
+                                     generators=generators,
                                      id_map=solver_generator_combo_id)
 
         # n_gens = len(generators)
@@ -120,16 +127,16 @@ class PoetManager(Manager):
         new_weights = {}
         for i, generator_id in enumerate(id_map):
             best_s = -np.inf
-            best_w = solvers[i].state_dict()
+            best_w = solvers[i].get_weights()[0]
             best_id = generator_id
             for j, r in enumerate(results):
 
                 if generator_id == r['generator_id']:
-                    score = sum(r['score'])
+                    score = r[0]['score']
                     solver = r['solver_id']
                     if score > best_s:
                         best_s = score
-                        best_w = solvers[id_map.index(solver)].state_dict()
+                        best_w = solvers[id_map.index(solver)].get_weights()[0]
                         best_id = solver
             new_weights[generator_id] = (best_w, best_id)
             # todo track this info for analysis purposes
@@ -163,12 +170,13 @@ class PoetManager(Manager):
         Optimize each NN-pair on its PAIRED environment
         :return: list of future-refs to the new optimized weights
         """
-        refs = [optimize_agent_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
-                                             trainer_config=self.registrar.trainer_config,
-                                             registered_gym_name=self.registrar.name,
-                                             level_string_monad=p.generator.generate_fn_wrapper(),
-                                             actor_critic_weights=p.solver.state_dict(),
-                                             pair_id=p.id)
+        refs = [async_optimize_solver_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
+                                                    trainer_config=self.registrar.trainer_config,
+                                                    registered_gym_name=self.registrar.name,
+                                                    level_string_monad=p.generator.generate_fn_wrapper(),
+                                                    optimize_monad=p.solver.optimize,
+                                                    network_weights=p.get_solver_weights()[0],
+                                                    pair_id=p.id)
                 for p in self.pairs]
         return refs
 
@@ -207,7 +215,7 @@ class PoetManager(Manager):
             if i % self.args.mutation_timer:
                 children = self._mutation_strategy.mutate(self.pairs)
                 for solver, generator in children:
-                    self.pairs.append(Pair(solver, generator))
+                    self.add_pair(SingleAgentSolver([solver.agent]), generator)
 
                 if len(self.pairs) > self.args.max_envs:
                     aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
@@ -218,15 +226,15 @@ class PoetManager(Manager):
             opt_refs = self.optimize()
             opt_returns = ray.get(opt_refs)
             for opt_return in opt_returns:
-                updated_weights = opt_return['weights']
-                pair_id = opt_return['pair_id']
+                updated_weights = opt_return[0]['weights']
+                pair_id = opt_return[0]['pair_id']
                 self.set_solver_weights(pair_id, updated_weights)
-                self.pairs[pair_id].results.append(opt_return['result_dict']) # TODO does this work as expected?
+                self.pairs[pair_id].results.append(opt_return[0]['result_dict'])
 
             eval_refs = self.evaluate()
             eval_returns = ray.get(eval_refs)
             for eval_return in eval_returns:
-                solved_status = eval_return['win']
+                solved_status = eval_return[0]['win']
                 pair_id = eval_return['generator_id']
                 self.set_win_status(pair_id, solved_status)
 
