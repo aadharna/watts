@@ -4,7 +4,7 @@ from torch import rand
 
 
 example_network_factory_build_info = {
-    'action_space': MultiDiscrete([5, 2, 2]),
+    'action_space': MultiDiscrete([2, 5]),
     'obs_space': Box(0.0, 255.0, (5, 5, 6), np.float64),
     'model_config': {},
     'num_outputs': 7,
