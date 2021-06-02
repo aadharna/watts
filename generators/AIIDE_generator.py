@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 import numpy as np
 from copy import deepcopy
 from itertools import product
@@ -39,19 +40,19 @@ class EvolutionaryGenerator(BaseGenerator):
         self.BOUNDARY = {'w': range_height + range_length}
 
         # sets the self.locations argument here because this function needs to a setter for outside methods
-        self.update_from_lvl_string(new_lvl=level_string)
+        self.update(level_string)
         self.string = str(self)
 
         self.id = EvolutionaryGenerator.id
         EvolutionaryGenerator.id += 1
 
-    def update_from_lvl_string(self, new_lvl):
+    def update(self, level):
         """
         Update Generator from flat lvl string
-        :param new_lvl: flat lvl string with \n chars
+        :param level: flat lvl string with \n chars
         :return:
         """
-        split_lvl = new_lvl.split('\n')[:-1]  # remove empty '' at the end
+        split_lvl = level.split('\n')[:-1]  # remove empty '' at the end
 
         o = np.array([['0'] * self._height] * self._length, dtype=str)
         for i in range(self._length):
@@ -244,8 +245,8 @@ class EvolutionaryGenerator(BaseGenerator):
         return EvolutionaryGenerator(self._to_str(locations), self.args)
 
     def generate_fn_wrapper(self):
-        def _generate() -> str:
-            return str(self)
+        def _generate() -> Tuple[str, dict]:
+            return str(self), {}
         return _generate
 
     def _to_str(self, location):
