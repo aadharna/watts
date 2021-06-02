@@ -1,16 +1,17 @@
 from generators.base import BaseGenerator
-from torch.nn import Module
+from solvers.base import BaseSolver
 
-class Pair:
+
+class Pairing:
     id = 0
 
-    def __init__(self, agent: Module, generator: BaseGenerator):
+    def __init__(self, solver: BaseSolver, generator: BaseGenerator):
 
-        self.solver = agent
+        self.solver = solver
         self.generator = generator
 
-        self.id = Pair.id
-        Pair.id += 1
+        self.id = Pairing.id
+        Pairing.id += 1
 
         self.results = []
         self.solved = False
@@ -19,7 +20,10 @@ class Pair:
         return str(self.generator)
 
     def update_solver_weights(self, new_weights):
-        self.solver.load_state_dict(new_weights)
+        self.solver.set_weights(new_weights)
+
+    def get_solver_weights(self):
+        return self.solver.get_weights()
 
 
 if __name__ == "__main__":
