@@ -9,7 +9,12 @@ from managers.POETManager import PoetManager
 from mutation.mutation_strategy import EvolveStrategy
 from mutation.level_validator import RandomValidator
 from network_factory import NetworkFactory
-from pair.agent_environment_pair import Pair
+from generators.static_generator import StaticGenerator
+from generators.AIIDE_generator import EvolutionaryGenerator
+from pair.agent_environment_pair import Pairing
+
+from solvers.SingleAgentSolver import SingleAgentSolver
+
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
@@ -25,7 +30,7 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=0, local_mode=True)
+    ray.init(num_gpus=0)
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -39,14 +44,15 @@ if __name__ == "__main__":
 
     manager = PoetManager(exp_name=_args.exp_name,
                           gym_factory=gym_factory,
-                          initial_pair=Pair(network_factory.make()({}), generator),
+                          initial_pair=Pairing(network_factory.make()({}), generator),
                           mutation_strategy=EvolveStrategy(RandomValidator(), args.max_children, args.mutation_rate),
                           network_factory=network_factory,
                           registrar=registry)
 
     try:
         manager.run()
+        print("finished algorithm")
     except Exception as e:
-        print(f"{len(manager.pairs)} PAIR objects")
         print(e)
+    print(f"{len(manager.pairs)} PAIR objects: \n {manager.pairs}")
     ray.shutdown()
