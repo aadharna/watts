@@ -1,4 +1,4 @@
-
+from typing import Tuple
 from generators.base import BaseGenerator
 
 class StaticGenerator(BaseGenerator):
@@ -15,12 +15,12 @@ class StaticGenerator(BaseGenerator):
     def mutate(self, **kwargs):
         return StaticGenerator(self.level)
 
-    def update_from_lvl_string(self, level_string):
-        self.level = level_string
+    def update(self, level):
+        self.level = level
 
     def generate_fn_wrapper(self):
-        def _generate() -> str:
-            return self.level
+        def _generate() -> Tuple[str, dict]:
+            return self.level, {}
         return _generate
 
     def __str__(self):
