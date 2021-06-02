@@ -1,5 +1,5 @@
 import gym
-from griddly.util.rllib.environment.core import RLlibEnv
+from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
 
 
 class AlignedReward(gym.Wrapper, RLlibEnv):
@@ -44,24 +44,55 @@ class AlignedReward(gym.Wrapper, RLlibEnv):
         return self.env.reset(**kwargs)
 
     def __str__(self):
-        return f"<aligned{str(self.env)}>"
+        return f"<Aligned{str(self.env)}>"
+
+
+class SetLevelWithCallback(gym.Wrapper):
+    """GymWrapper to set the level with a callback function in Griddly.
+
+    The callback_fn should output a string representation of the level.
+    """
+
+    def __init__(self, env, env_config):
+        super(SetLevelWithCallback, self).__init__(env=env)
+        self.create_level_fn = env_config.get('callback_fn', lambda: (None, None))
+        self.generation_data = None
+        self.lvl = None
+
+    def reset(self, **kwargs):
+        level_string, info_dict = self.create_level_fn()
+        self.lvl = level_string
+        self.generation_data = info_dict
+        assert(isinstance(level_string, str) or level_string is None)
+        kwargs['level_string'] = level_string
+        return self.env.reset(**kwargs)
+
+    def step(self, action):
+        return self.env.step(action)
+
+    def __str__(self):
+        return f"<ResetCallback{str(self.env)}>"
+
 
 def add_wrappers(str_list: list) -> list:
     wraps = []
     for w in str_list:
         if "Aligned" in w:
             wraps.append(AlignedReward)
-        # add additional wrappers here
-        # elif ...
+        elif "ResetCallback" in w:
+            wraps.append(SetLevelWithCallback)
+        elif "MultiAgent" in w:
+            wraps.append(RLlibMultiAgentWrapper)
         else:
             raise ValueError("Requested wrapper does not exist. Please make it.")
 
     return wraps
 
+
 if __name__ == "__main__":
     import gym
-    import griddly
     import os
+    from griddly.util.rllib.environment.core import RLlibEnv
     from utils.register import Registrar
     from utils.loader import load_from_yaml
     os.chdir('..')
