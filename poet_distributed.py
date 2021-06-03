@@ -1,17 +1,15 @@
-import os
-import sys
-import ray
-
-import time
 import argparse
+import os
+import ray
+import sys
 
-from managers.POETManager import PoetManager
-from gym_factory import GridGameFactory
-from network_factory import NetworkFactory
-
-from generators.static_generator import StaticGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
-
+from gym_factory import GridGameFactory
+from managers.POETManager import PoetManager
+from mutation.mutation_strategy import EvolveStrategy
+from mutation.level_validator import RandomValidator
+from network_factory import NetworkFactory
+from pair.agent_environment_pair import Pair
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
@@ -36,14 +34,15 @@ if __name__ == "__main__":
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
-    manager = PoetManager(exp_name=_args.exp_name,
-                          gym_factory=gym_factory,
-                          network_factory=network_factory,
-                          registrar=registry)
-
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
-    manager.add_pair(network=network_factory.make()({}), generator=generator)
+
+    manager = PoetManager(exp_name=_args.exp_name,
+                          gym_factory=gym_factory,
+                          initial_pair=Pair(network_factory.make()({}), generator),
+                          mutation_strategy=EvolveStrategy(RandomValidator(), args.max_children, args.mutation_rate),
+                          network_factory=network_factory,
+                          registrar=registry)
 
     try:
         manager.run()

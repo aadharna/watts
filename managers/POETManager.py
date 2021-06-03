@@ -1,24 +1,28 @@
-import ray
 import numpy as np
-from typing import Tuple, Dict, Any
-
-from managers.base import Manager
+import ray
 
 from evaluators.remote_evaluate import async_evaluate_agent_on_level
-from optimization.optimize import optimize_agent_on_env
-
-from pair.agent_environment_pair import Pair
-from generators.base import BaseGenerator
-
 from gym_factory import GridGameFactory
-from network_factory import NetworkFactory
-from utils.register import Registrar
-
 from itertools import product
+from managers.base import Manager
+from mutation.mutation_strategy import MutationStrategy
+from network_factory import NetworkFactory
+from optimization.optimize import optimize_agent_on_env
+from pair.agent_environment_pair import Pair
+from typing import Dict, Any
+from utils.register import Registrar
 
 
 class PoetManager(Manager):
-    def __init__(self, exp_name: str, gym_factory: GridGameFactory, network_factory: NetworkFactory, registrar: Registrar):
+    def __init__(
+            self,
+            exp_name: str,
+            gym_factory: GridGameFactory,
+            initial_pair: Pair,
+            mutation_strategy: MutationStrategy,
+            network_factory: NetworkFactory,
+            registrar: Registrar,
+    ):
         """Extends the manager class to instantiate the POET algorithm
 
         :param exp_name: exp_name from launch script
@@ -27,11 +31,9 @@ class PoetManager(Manager):
         :param registrar: class that dispenses necessary information e.g. num_poet_loops
         """
         super().__init__(exp_name, gym_factory, network_factory, registrar)
-        self.pairs = []
-        self.forgotton_pairs = []
-
-    def add_pair(self, network, generator: BaseGenerator):
-        self.pairs.append(Pair(network, generator))
+        self._mutation_strategy = mutation_strategy
+        self.pairs = [initial_pair]
+        self.forgotten_pairs = []
 
     def evaluate(self) -> list:
         """
@@ -47,50 +49,6 @@ class PoetManager(Manager):
                                                      generator_id=p.id)
                 for p in self.pairs]
         return refs
-
-    def mutate(self, pair_list: list) -> list:
-        """Execute a mutation step of the existing generator_archive.
-
-        The mutation strategy used here should be allowed to vary widely. For example, do we pick the environments
-            which will be parents based on the ability of the agents in the current PAIR list? Do we randomly pick
-            the parents? Do we pick parents based off of some completely other criteria that the user can set?
-
-        :param pair_list: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
-        :return:
-        """
-        def is_level_minimally_valid(generator) -> bool:
-            """Minimal Criteria for the newly created levels.
-            In POET, this takes the form of agent ability on the newly created level
-                Can the parent walker travel at least a minimum and not more than a maximum distance in the new map?
-            In PINSKY, this takes the form of checking if a random agent can solve the level and if a "good" agent
-                cannot solve the level (e.g. MCTS). In PINSKY, we used agents as the bounds to ensure the created
-                level was playable.
-
-            The MC should be its own whole modular piece that is part of the evolutionary half of Engima.
-
-            For example, we should be able to check the similarity of this level to existing levels and
-                if they are "new" enough (e.g. novelty search), then it is an acceptable level.
-
-            #todo MODULARLIZE THIS INTO ITS OWN PIECE and add functionality!
-
-            :param generator: generator object that contains a level.
-            :return: boolean determining if the newly created level is allowed to exist
-            """
-            return True if np.random.rand() < 0.5 else False
-
-        child_list = []
-        # we should be able to choose how the parents get selected. Increasing score? Decreasing score? User-defined?
-        # set p in the np.random.choice function (leaving it blank is uniform probability).
-        potential_parents = [pair_list[i] for i in np.random.choice(len(pair_list),
-                                                                    size=self.args.max_children)]
-
-        for parent in potential_parents:
-            new_generator = parent.generator.mutate(self.args.mutation_rate)
-            if is_level_minimally_valid(new_generator):
-                child_list.append((parent.solver, new_generator))
-                # todo track stats
-
-        return child_list
 
     def set_solver_weights(self, pair_id: int, new_weights: Dict):
         for p in self.pairs:
@@ -247,14 +205,14 @@ class PoetManager(Manager):
             print(f"loop {i} / {self.args.num_poet_loops}")
 
             if i % self.args.mutation_timer:
-                children = self.mutate(self.pairs)
+                children = self._mutation_strategy.mutate(self.pairs)
                 for solver, generator in children:
-                    self.add_pair(solver, generator)
+                    self.pairs.append(Pair(solver, generator))
 
                 if len(self.pairs) > self.args.max_envs:
                     aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
                     self.pairs = aged_pairs[:self.args.max_envs]
-                    self.forgotton_pairs.extend(aged_pairs[self.args.max_envs:])
+                    self.forgotten_pairs.extend(aged_pairs[self.args.max_envs:])
                     del aged_pairs
 
             opt_refs = self.optimize()
@@ -263,7 +221,7 @@ class PoetManager(Manager):
                 updated_weights = opt_return['weights']
                 pair_id = opt_return['pair_id']
                 self.set_solver_weights(pair_id, updated_weights)
-                self.pairs[pair_id].results.append(opt_return['result_dict'])
+                self.pairs[pair_id].results.append(opt_return['result_dict']) # TODO does this work as expected?
 
             eval_refs = self.evaluate()
             eval_returns = ray.get(eval_refs)
