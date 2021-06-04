@@ -150,22 +150,3 @@ class Registrar:
     @property
     def get_generator_config(self):
         return copy.deepcopy(self.generator_config)
-
-
-if __name__ == "__main__":
-    from utils.loader import load_from_yaml
-    import os
-    os.chdir('..')
-    arg_path = os.path.join('args.yaml')
-    file_args = load_from_yaml(arg_path)
-
-    Registry = Registrar(file_args)
-    print(Registry.env_name)
-    print(Registry.get_nn_build_info)
-    print(Registry.get_config_to_build_rllib_env)
-    print(Registry.get_generator_config)
-
-    env = RLlibEnv(Registry.get_config_to_build_rllib_env)
-    state = env.reset()
-    ns, r, d, info = env.step(env.action_space.sample())
-    print(info)

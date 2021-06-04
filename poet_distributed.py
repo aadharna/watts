@@ -30,7 +30,7 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=0)
+    ray.init(num_gpus=0, ignore_reinit_error=True, local_mode=True)
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -44,7 +44,8 @@ if __name__ == "__main__":
 
     manager = PoetManager(exp_name=_args.exp_name,
                           gym_factory=gym_factory,
-                          initial_pair=Pairing(network_factory.make()({}), generator),
+                          initial_pair=Pairing(solver=SingleAgentSolver([network_factory.make()({})]),
+                                               generator=generator),
                           mutation_strategy=EvolveStrategy(RandomValidator(), args.max_children, args.mutation_rate),
                           network_factory=network_factory,
                           registrar=registry)

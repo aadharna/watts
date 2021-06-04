@@ -12,8 +12,6 @@ from itertools import product
 from managers.base import Manager
 from mutation.mutation_strategy import MutationStrategy
 from network_factory import NetworkFactory
-from optimization.optimize import optimize_agent_on_env
-from pair.agent_environment_pair import Pair
 from typing import Dict, Any
 from utils.register import Registrar
 
@@ -23,7 +21,7 @@ class PoetManager(Manager):
             self,
             exp_name: str,
             gym_factory: GridGameFactory,
-            initial_pair: Pair,
+            initial_pair: Pairing,
             mutation_strategy: MutationStrategy,
             network_factory: NetworkFactory,
             registrar: Registrar,
@@ -60,6 +58,11 @@ class PoetManager(Manager):
         for p in self.pairs:
             if p.id == pair_id:
                 p.update_solver_weights([new_weights])
+
+    def append_solver_result(self, pair_id: int, result_dict):
+        for p in self.pairs:
+            if p.id == pair_id:
+                p.results.append(result_dict)
 
     def set_win_status(self, pair_id: int, generator_solved_status: bool):
         for p in self.pairs:
@@ -215,7 +218,8 @@ class PoetManager(Manager):
             if i % self.args.mutation_timer:
                 children = self._mutation_strategy.mutate(self.pairs)
                 for solver, generator in children:
-                    self.add_pair(SingleAgentSolver([solver.agent]), generator)
+                    self.pairs.append(Pairing(solver=SingleAgentSolver([solver.agent]),
+                                              generator=generator))
 
                 if len(self.pairs) > self.args.max_envs:
                     aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
@@ -229,7 +233,7 @@ class PoetManager(Manager):
                 updated_weights = opt_return[0]['weights']
                 pair_id = opt_return[0]['pair_id']
                 self.set_solver_weights(pair_id, updated_weights)
-                self.pairs[pair_id].results.append(opt_return[0]['result_dict'])
+                self.append_solver_result(pair_id, opt_return[0]['result_dict'])
 
             eval_refs = self.evaluate()
             eval_returns = ray.get(eval_refs)
