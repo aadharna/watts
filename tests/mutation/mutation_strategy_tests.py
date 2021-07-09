@@ -2,9 +2,10 @@ import numpy as np
 import unittest
 
 from generators.base import BaseGenerator
+from solvers.base import BaseSolver
 from mutation.level_validator import AlwaysValidator
 from mutation.mutation_strategy import EvolveStrategy
-from pair.agent_environment_pair import Pair
+from pair.agent_environment_pair import Pairing
 from torch.nn import Module
 
 
@@ -29,7 +30,7 @@ class TestMutationStrategy(unittest.TestCase):
         def __str__(self):
             raise NotImplementedError
 
-    class MockSolver(Module):
+    class MockSolver(BaseSolver):
         pass
 
     def test_single_selection_evolve(self):
@@ -39,7 +40,7 @@ class TestMutationStrategy(unittest.TestCase):
         solver = self.MockSolver()
         generator = self.MockGenerator(mutation_rate)
 
-        result_solver, result_generator = evolve_strategy.mutate([Pair(solver, generator)])[0]
+        result_solver, result_generator = evolve_strategy.mutate([Pairing(solver, generator)])[0]
 
         assert solver == result_solver
         assert generator == result_generator
@@ -49,7 +50,7 @@ class TestMutationStrategy(unittest.TestCase):
         mutation_rate = 0.5
         evolve_strategy = EvolveStrategy(AlwaysValidator(), max_children=5, mutation_rate=mutation_rate, rand=rand)
 
-        results = evolve_strategy.mutate([Pair(self.MockSolver(), self.MockGenerator(mutation_rate)) for _ in range(3)])
+        results = evolve_strategy.mutate([Pairing(self.MockSolver(), self.MockGenerator(mutation_rate)) for _ in range(3)])
 
         solvers, generators = zip(*results)
 
