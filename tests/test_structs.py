@@ -65,8 +65,8 @@ example_pcgrl_state_dict = {
     "rnn.weight_hh": rand((8112, 2704)),
     "rnn.bias_ih": rand(8112),
     "rnn.bias_hh": rand(8112),
-    "fc.weight": rand((169, 2704)),
-    "fc.bias": rand(169),
+    "fc.weight": rand((7, 2704)),
+    "fc.bias": rand(7),
     "val.weight": rand((1, 2704)),
     "val.bias": rand(1)
 }
