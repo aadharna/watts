@@ -2,9 +2,7 @@ from generators.PCGRLGenerator import PCGRLGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
 from generators.static_generator import StaticGenerator
 from generators.RandomSelectionGenerator import RandomSelectionGenerator
-
 from mutation.level_validator import RandomAgentValidator, GraphValidator
-
 import gym_factory
 
 from tests.test_structs import example_network_factory_build_info
@@ -39,6 +37,7 @@ class TestLevelValidators(unittest.TestCase):
         gf = gym_factory.GridGameFactory("foo", [])
         generator = StaticGenerator(level_string=level_string)
         validator = RandomAgentValidator()
-        assert (validator.validate_level(generator,
+        res = validator.validate_level(generator,
                                          gym_factory_monad=gf.make(),
-                                         config={'yaml_file': os.path.join('levels', 'limited_zelda.yaml')}))
+                                         config={'yaml_file': os.path.join('levels', 'limited_zelda.yaml')})
+        print(res)
