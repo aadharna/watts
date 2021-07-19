@@ -1,3 +1,5 @@
+import numpy as np
+
 from typing import Tuple
 from generators.base import BaseGenerator
 
@@ -11,6 +13,18 @@ class StaticGenerator(BaseGenerator):
         """
         BaseGenerator.__init__(self)
         self.level = level_string
+        if level_string[-1] != "\n":
+            level_string += "\n"
+        f = level_string.split('\n')[:-1]  # remove blank line.
+        height = len(f)
+        tile = [list(row) for row in f]
+
+        npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
+        self.lvl_shape = npa.shape
+
+    @property
+    def shape(self):
+        return self.lvl_shape
 
     def mutate(self, **kwargs):
         return StaticGenerator(self.level)
