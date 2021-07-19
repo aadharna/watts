@@ -39,4 +39,4 @@ class TestLevelValidators(unittest.TestCase):
         validator = RandomAgentValidator()
         assert (validator.validate_level(generator,
                                          gym_factory_monad=gf.make(),
-                                         config={'yaml_file': os.path.join('..', '..', 'levels', 'limited_zelda.yaml')}))
+                                         config={'yaml_file': os.path.join('levels', 'limited_zelda.yaml')}))
