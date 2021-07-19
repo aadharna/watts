@@ -45,12 +45,13 @@ class PCGRLGenerator(BaseGenerator):
         self._num_objects = obs_space.shape[2]
         self.length = model_config.get('length', 15)
         self.width = model_config.get('width', 15)
+        self.lvl_shape = (self.length, self.width)
         self.placements = model_config.get('placements', 50)
         self.boundary_walls_height = list(product([0, self.length - 1], range(self.width)))
         self.boundary_walls_length = list(product(range(self.length), [0, self.width - 1]))
 
     def mutate(self, **kwargs):
-        pass
+        return self
 
     def update(self, level, **kwargs):
         pass
@@ -61,6 +62,10 @@ class PCGRLGenerator(BaseGenerator):
             level_string = self.to_string(map)
             return level_string, data
         return _generate
+
+    @property
+    def shape(self):
+        return self.lvl_shape
 
     def __str__(self):
         """This function is necessary for our generators. This function will take whatever
@@ -136,6 +141,7 @@ class PCGRLGenerator(BaseGenerator):
 
 if __name__ == "__main__":
     import gym
+    from utils.returns import compute_gae
     from tests.test_structs import example_network_factory_build_info
     import torch.optim as optim
 
@@ -148,17 +154,6 @@ if __name__ == "__main__":
     generator = PCGRLGenerator(**build_info)
     optimizer = optim.Adam(generator.network.parameters(), lr=0.003)
     mazes = []
-
-
-    def compute_gae(next_value, rewards, masks, values, gamma=0.99, tau=0.95):
-        values = torch.cat((values, next_value), 0)
-        gae = 0
-        returns = []
-        for step in reversed(range(len(rewards))):
-            delta = rewards[step] + gamma * values[step + 1] * masks[step] - values[step]
-            gae = delta + gamma * tau * masks[step] * gae
-            returns.insert(0, gae + values[step])
-        return returns
 
     for _ in range(15):
         maze, info_dict = generator.generate()

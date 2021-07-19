@@ -28,12 +28,12 @@ class EvolutionaryGenerator(BaseGenerator):
         tile = [list(row) for row in f]
 
         npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
-        shape = npa.shape
+        self.lvl_shape = npa.shape
 
-        self._length = shape[0]
-        self._height = shape[1]
+        self._length = self.shape[0]
+        self._height = self.shape[1]
 
-        # set boundary values to 'w' in Zelda
+        # set boundary values to 'w' in Zelda/GVGAI games
         range_height = list(product([0, self._length - 1], range(self._height)))
         range_length = list(product(range(self._length), [0, self._height - 1]))
 
@@ -45,6 +45,10 @@ class EvolutionaryGenerator(BaseGenerator):
 
         self.id = EvolutionaryGenerator.id
         EvolutionaryGenerator.id += 1
+
+    @property
+    def shape(self):
+        return self.lvl_shape
 
     def update(self, level):
         """
