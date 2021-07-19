@@ -24,6 +24,8 @@ class TestLevelValidators(unittest.TestCase):
 
         generator = PCGRLGenerator(**build_info)
         validator = GraphValidator()
+        res = validator.validate_level(generator)
+        print(res)
 
 
     def test_graph_validator_on_static(self):
