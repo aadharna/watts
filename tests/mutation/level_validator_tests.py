@@ -2,13 +2,8 @@ from generators.PCGRLGenerator import PCGRLGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
 from generators.static_generator import StaticGenerator
 from generators.RandomSelectionGenerator import RandomSelectionGenerator
-<<<<<<< HEAD
-from mutation.level_validator import RandomAgentValidator, GraphValidator
-=======
-
 from mutation.level_validator import RandomAgentValidator, GraphValidator
 
->>>>>>> create substantial level validators
 import gym_factory
 
 from tests.test_structs import example_network_factory_build_info
