@@ -15,6 +15,19 @@ class RandomSelectionGenerator(BaseGenerator):
         BaseGenerator.__init__(self)
         self.levels = level_strings
         self.current_level = 0
+        level_string = level_strings[0]
+        if level_string[-1] != "\n":
+            level_string += "\n"
+        f = level_string.split('\n')[:-1]  # remove blank line.
+        height = len(f)
+        tile = [list(row) for row in f]
+
+        npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
+        self.lvl_shape = npa.shape
+
+    @property
+    def shape(self):
+        return self.lvl_shape
 
     def mutate(self, **kwargs):
         return RandomSelectionGenerator(self.levels)

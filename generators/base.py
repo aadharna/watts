@@ -26,3 +26,7 @@ class BaseGenerator(abc.ABC):
         :return:
         """
         raise NotImplementedError
+
+    @property
+    def shape(self):
+        raise NotImplementedError
