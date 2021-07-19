@@ -2,7 +2,13 @@ from generators.PCGRLGenerator import PCGRLGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
 from generators.static_generator import StaticGenerator
 from generators.RandomSelectionGenerator import RandomSelectionGenerator
+<<<<<<< HEAD
 from mutation.level_validator import RandomAgentValidator, GraphValidator
+=======
+
+from mutation.level_validator import RandomAgentValidator, GraphValidator
+
+>>>>>>> create substantial level validators
 import gym_factory
 
 from tests.test_structs import example_network_factory_build_info
@@ -24,7 +30,6 @@ class TestLevelValidators(unittest.TestCase):
         validator = GraphValidator()
         res = validator.validate_level(generator)
         print(res)
-
 
     def test_graph_validator_on_static(self):
         level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
