@@ -5,8 +5,10 @@ class BaseSolver:
         self.id = BaseSolver.id
         BaseSolver.id += 1
 
-    @staticmethod
-    def evaluate(actors, env) -> dict:
+    def evaluate(self, env) -> dict:
+        raise NotImplementedError
+
+    def optimize(self, trainer_constructor, trainer_config, registered_gym_name, level_string_monad, **kwargs):
         raise NotImplementedError
 
     def get_weights(self) -> list:

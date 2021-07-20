@@ -1,6 +1,7 @@
 import ray
 from solvers.base import BaseSolver
 from evaluators.rollout import rollout
+from griddly.util.rllib.environment.core import RLlibEnv
 
 
 class SingleAgentSolver(BaseSolver):
@@ -11,22 +12,20 @@ class SingleAgentSolver(BaseSolver):
 
         # todo switch to having factories in here?
         self.agent = solver[0]
+        self.key = 0
 
-    @staticmethod
-    def evaluate(actors: list, env) -> dict:
+    def evaluate(self, env: RLlibEnv) -> dict:
         """Run one rollout of the given actor(s) in the given env
 
-        :param actors: list of NN's to evaluate
         :param env: RLlibEnv environment to run the simulation
         :return: result information e.g. final score, win_status, etc.
         """
-        info, states, actions, rewards, win, logps, entropies = rollout(actors[0], env)
+        info, states, actions, rewards, win, logps, entropies = rollout(self.agent, env)
         kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps, 'entropy': entropies}
 
-        return {0: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': kwargs}}
+        return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': kwargs}}
 
-    @staticmethod
-    def optimize(trainer_constructor, trainer_config, registered_gym_name, level_string_monad, network_weights,
+    def optimize(self, trainer_constructor, trainer_config, registered_gym_name, level_string_monad,
                  **kwargs):
         """Run one step of optimization!!
 
@@ -44,17 +43,17 @@ class SingleAgentSolver(BaseSolver):
         #  That will allow something like PAIRED to function?
         trainer_config['env_config']['level_string'], _ = level_string_monad()
         trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
-        trainer.get_policy().model.load_state_dict(network_weights)
+        trainer.get_policy().model.load_state_dict(self.agent.state_dict())
         result = trainer.train()
 
-        return {0: {'weights': trainer.get_policy().model.state_dict(),
-                    "result_dict": result,
-                    'pair_id': kwargs.get('pair_id', 0)
-                    }
+        return {self.key: {'weights': trainer.get_policy().model.state_dict(),
+                           "result_dict": result,
+                           'pair_id': kwargs.get('pair_id', 0)
+                           }
                 }
 
-    def get_weights(self) -> list:
-        return [self.agent.state_dict()]
+    def get_weights(self) -> dict:
+        return {self.key: self.agent.state_dict()}
 
     def set_weights(self, new_weights: list):
-        self.agent.load_state_dict(new_weights[0])
+        self.agent.load_state_dict(new_weights[self.key])

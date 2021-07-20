@@ -39,7 +39,6 @@ class EvolveStrategy(MutationStrategy):
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self._mutation_rate)
             if self._level_validator.validate_level(new_generator):
-                child_list.append((parent.solver, new_generator))
-                # todo track stats
+                child_list.append((parent.solver, new_generator, parent.id))
 
         return child_list

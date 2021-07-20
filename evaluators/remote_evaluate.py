@@ -5,9 +5,7 @@ import ray
 def async_evaluate_agent_on_level(gym_factory_monad,
                                   rllib_env_config,
                                   level_string_monad,
-                                  network_factory_monad,
                                   evaluate_monad,
-                                  network_weights,
                                   solver_id,
                                   generator_id):
     """
@@ -23,14 +21,13 @@ def async_evaluate_agent_on_level(gym_factory_monad,
     :return: dict of rollout information
     """
 
-    actor = network_factory_monad(network_weights)
     # todo will probably have to change this to first instantiate a generator model
     # and then query it for the levels.
     #  That will allow something like PAIRED to function.
     rllib_env_config['level_string'], _ = level_string_monad()
     env = gym_factory_monad(rllib_env_config)
 
-    result_dictionary = evaluate_monad([actor], env)
+    result_dictionary = evaluate_monad(env)
     result_dictionary.update({'solver_id': solver_id, 'generator_id': generator_id})
 
     env.close()
