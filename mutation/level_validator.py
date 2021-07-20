@@ -49,13 +49,13 @@ class RandomVariableValidator(LevelValidator):
 # I don't really like the way I did this.
 # What's the better way?
 class RandomAgentValidator(LevelValidator):
+    def __init__(self, gym_factory_monad, env_config):
+        self.gf = gym_factory_monad
+        self.config = env_config
+
     def validate_level(self, generator: BaseGenerator, **kwargs) -> bool:
         result = None
-        gym_factory_monad = kwargs.get('gym_factory_monad', lambda x: None)
-        gym_args = kwargs.get('config', {'yaml_file': os.path.join('levels', 'limited_zelda.yaml')})
-        if gym_factory_monad(gym_args) is None:
-            return False
-        env = gym_factory_monad(gym_args)
+        env = self.gf(self.config)
         level = str(generator)
         state = env.reset(level_string=level)
         done = False
@@ -110,15 +110,13 @@ class GraphValidator(LevelValidator):
 
 
 class PINSKYValidator(LevelValidator):
+    def __init__(self, gym_factory_monad, env_config):
+        self.random_agent_validator = RandomAgentValidator(gym_factory_monad, env_config)
+        self.graph_validator = GraphValidator()
+
     def validate_level(self, generator: BaseGenerator, **kwargs) -> bool:
-        gym_factory_monad = kwargs.get('gym_factory_monad', lambda x: None)
-        config = kwargs.get('config', {'yaml_file': os.path.join('levels', 'limited_zelda.yaml')})
-        too_easy_validator = RandomAgentValidator()
-        won_game_randomly = too_easy_validator.validate_level(generator,
-                                                              gym_factory_monad=gym_factory_monad,
-                                                              config=config)
-        too_hard_validator = GraphValidator()
-        path_exists = too_hard_validator.validate_level(generator)
+        won_game_randomly = self.random_agent_validator.validate_level(generator)
+        path_exists = self.graph_validator.validate_level(generator)
 
         if not won_game_randomly and path_exists:
             return True
