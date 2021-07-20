@@ -7,7 +7,9 @@ from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
 from mutation.mutation_strategy import EvolveStrategy
-from mutation.level_validator import RandomValidator
+from transfer.score_strategy import ZeroShotCartesian
+from transfer.rank_strategy import GetBestSolver
+from mutation.level_validator import GraphValidator, RandomVariableValidator
 from network_factory import NetworkFactory
 from generators.static_generator import StaticGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
@@ -44,10 +46,12 @@ if __name__ == "__main__":
 
     manager = PoetManager(exp_name=_args.exp_name,
                           gym_factory=gym_factory,
+                          network_factory=network_factory,
                           initial_pair=Pairing(solver=SingleAgentSolver([network_factory.make()({})]),
                                                generator=generator),
-                          mutation_strategy=EvolveStrategy(RandomValidator(), args.max_children, args.mutation_rate),
-                          network_factory=network_factory,
+                          mutation_strategy=EvolveStrategy(GraphValidator(), args.max_children, args.mutation_rate),
+                          transfer_strategy=GetBestSolver(ZeroShotCartesian(gym_factory=gym_factory,
+                                                                            config=registry.get_config_to_build_rllib_env)),
                           registrar=registry)
 
     try:
@@ -55,5 +59,8 @@ if __name__ == "__main__":
         print("finished algorithm")
     except Exception as e:
         print(e)
+        print('_'*40)
+        print(next(manager.pairs[0].solver.agent.parameters()).device, "for solver class")
+
     print(f"{len(manager.pairs)} PAIR objects: \n {manager.pairs}")
     ray.shutdown()
