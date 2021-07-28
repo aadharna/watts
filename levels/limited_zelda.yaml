@@ -184,8 +184,8 @@ Actions:
       Inputs:
         1:
           Description: attack front
-          OrientationVector: [ -1, 0 ]
-          VectorToDest: [-1, 0]
+          OrientationVector: [ 1, 0 ]
+          VectorToDest: [1, 0]
       Relative: true
     Behaviours:
       - Src:
@@ -193,9 +193,15 @@ Actions:
           Commands:
             - spawn: attack_fire
         Dst:
-          Object: [spider, _empty]
+          Object: spider
           Commands:
             - remove: true
+      - Src:
+          Object: avatar
+          Commands:
+            - spawn: attack_fire
+        Dst:
+          Object: _empty
 Objects:
   - Name: avatar
     Z: 3
