@@ -47,7 +47,11 @@ if __name__ == "__main__":
     manager = PoetManager(exp_name=_args.exp_name,
                           gym_factory=gym_factory,
                           network_factory=network_factory,
-                          initial_pair=Pairing(solver=SingleAgentSolver([network_factory.make()({})]),
+                          initial_pair=Pairing(solver=SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
+                                                                               trainer_config=registry.trainer_config,
+                                                                               registered_gym_name=registry.env_name,
+                                                                               network_factory=network_factory,
+                                                                               gym_factory=gym_factory),
                                                generator=generator),
                           mutation_strategy=EvolveStrategy(GraphValidator(), args.max_children, args.mutation_rate),
                           transfer_strategy=GetBestSolver(ZeroShotCartesian(gym_factory=gym_factory,
@@ -58,9 +62,9 @@ if __name__ == "__main__":
         manager.run()
         print("finished algorithm")
     except Exception as e:
-        print(e)
+        error = e
+        print(error)
         print('_'*40)
-        print(next(manager.pairs[0].solver.agent.parameters()).device, "for solver class")
 
     print(f"{len(manager.pairs)} PAIR objects: \n {manager.pairs}")
     ray.shutdown()

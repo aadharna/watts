@@ -8,7 +8,6 @@ from pair.agent_environment_pair import Pairing
 from solvers.SingleAgentSolver import SingleAgentSolver
 
 from gym_factory import GridGameFactory
-from itertools import product
 from managers.base import Manager
 from mutation.mutation_strategy import MutationStrategy
 from transfer.rank_strategy import RankStrategy
@@ -47,7 +46,7 @@ class PoetManager(Manager):
     def set_solver_weights(self, pair_id: int, new_weights: Dict):
         for p in self.pairs:
             if p.id == pair_id:
-                p.update_solver_weights([new_weights])
+                p.update_solver_weights(new_weights)
 
     def append_solver_result(self, pair_id: int, result_dict):
         for p in self.pairs:
@@ -65,13 +64,23 @@ class PoetManager(Manager):
         Evaluate each NN-pair on its PAIRED environment
         :return: list of future-refs to the evaluated objects
         """
-        refs = [async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
-                                                     rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-                                                     level_string_monad=p.generator.generate_fn_wrapper(),
-                                                     evaluate_monad=p.solver.evaluate,
-                                                     solver_id=p.id,
-                                                     generator_id=p.id)
-                for p in self.pairs]
+        # refs = [async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
+        #                                              rllib_env_config=self.registrar.get_config_to_build_rllib_env,
+        #                                              level_string_monad=p.generator.generate_fn_wrapper(),
+        #                                              evaluate_monad=p.solver.evaluate,
+        #                                              solver_id=p.id,
+        #                                              generator_id=p.id)
+        #         for p in self.pairs]
+
+        refs = []
+        for p in self.pairs:
+            config = self.registrar.get_config_to_build_rllib_env
+            config['level_string'], _ = p.generator.generate_fn_wrapper()()
+            refs.append(p.solver.evaluate.remote(env_generator_fn=self.gym_factory.make(),
+                                                 env_config=config,
+                                                 solver_id=p.id,
+                                                 generator_id=p.id))
+
         return refs
 
     def optimize(self) -> list:
@@ -79,13 +88,19 @@ class PoetManager(Manager):
         Optimize each NN-pair on its PAIRED environment
         :return: list of future-refs to the new optimized weights
         """
-        refs = [async_optimize_solver_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
-                                                    trainer_config=self.registrar.trainer_config,
-                                                    registered_gym_name=self.registrar.name,
-                                                    level_string_monad=p.generator.generate_fn_wrapper(),
-                                                    optimize_monad=p.solver.optimize,
-                                                    pair_id=p.id)
-                for p in self.pairs]
+        # refs = [async_optimize_solver_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
+        #                                             trainer_config=self.registrar.trainer_config,
+        #                                             registered_gym_name=self.registrar.name,
+        #                                             level_string_monad=p.generator.generate_fn_wrapper(),
+        #                                             optimize_monad=p.solver.optimize,
+        #                                             pair_id=p.id)
+        #         for p in self.pairs]
+
+        refs = []
+        for p in self.pairs:
+            refs.append(p.solver.optimize.remote(trainer_config=self.registrar.trainer_config,
+                                                 level_string_monad=p.generator.generate_fn_wrapper(),
+                                                 pair_id=p.id))
         return refs
 
     def run(self):
@@ -124,14 +139,22 @@ class PoetManager(Manager):
             if i % self.args.mutation_timer:
                 children = self._mutation_strategy.mutate(self.pairs)
                 for solver, generator, parent_id in children:
-                    self.pairs.append(Pairing(solver=SingleAgentSolver([solver.agent]),
+                    weights = ray.get(solver.get_weights.remote())
+                    self.pairs.append(Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
+                                                                              trainer_config=self.registrar.trainer_config,
+                                                                              registered_gym_name=self.registrar.env_name,
+                                                                              network_factory=self.network_factory,
+                                                                              gym_factory=self.gym_factory,
+                                                                              weights=weights),
                                               generator=generator))
                     self.stats['lineage'].append((parent_id, self.pairs[-1].id))
 
                 if len(self.pairs) > self.args.max_envs:
                     aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
                     self.pairs = aged_pairs[:self.args.max_envs]
-                    self.forgotten_pairs.extend(aged_pairs[self.args.max_envs:])
+                    finished_pairs = aged_pairs[self.args.max_envs:]
+                    [p.solver.release.remote() for p in finished_pairs]
+                    self.forgotten_pairs.extend(finished_pairs)
                     del aged_pairs
 
             opt_refs = self.optimize()

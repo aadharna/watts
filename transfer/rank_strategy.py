@@ -39,7 +39,7 @@ class GetBestSolver(RankStrategy):
         new_weights = {}
         for i, generator_id in enumerate(id_map):
             best_s = -np.inf
-            best_w = solvers[i].get_weights()[0]
+            best_w = ray.get(solvers[i].get_weights.remote())
             best_id = generator_id
             for j, r in enumerate(results):
 
@@ -48,7 +48,7 @@ class GetBestSolver(RankStrategy):
                     solver = r['solver_id']
                     if score > best_s:
                         best_s = score
-                        best_w = solvers[id_map.index(solver)].get_weights()[0]
+                        best_w = ray.get(solvers[id_map.index(solver)].get_weights.remote())
                         best_id = solver
             new_weights[generator_id] = (best_w, best_id)
             # todo track this info for analysis purposes

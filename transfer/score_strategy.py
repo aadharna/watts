@@ -29,13 +29,11 @@ class ZeroShotCartesian(ScoreStrategy):
             # todo: I don't like this. We need a better way of getting the solver/generator ids.
             # this is the same to do as below.
             solver_id, generator_id = id_map[i]
-            ref = async_evaluate_agent_on_level.remote(gym_factory_monad=self.gf.make(),
-                                                       rllib_env_config=self.env_config,
-                                                       level_string_monad=g.generate_fn_wrapper(),
-                                                       evaluate_monad=s.evaluate,
-                                                       solver_id=solver_id,
-                                                       generator_id=generator_id)
-            refs.append(ref)
+            self.env_config['level_string'], _ = g.generate_fn_wrapper()()
+            refs.append(s.evaluate.remote(env_generator_fn=self.gf.make(),
+                                          env_config=self.env_config,
+                                          solver_id=solver_id,
+                                          generator_id=generator_id))
         return refs
 
 
