@@ -23,6 +23,7 @@ Installation:
 		* Note, you should grab the correct install from here: https://pytorch.org/get-started/locally/
 	* pip install griddly
 		* Make sure that vulkan is installed since Griddly depends on Vulkan for its rendering.
+    * pip install networkx
 
 If you see stuff like:
 ```
