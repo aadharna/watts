@@ -7,7 +7,7 @@ from griddly.util.rllib.environment.core import RLlibEnv
 
 @ray.remote
 class SingleAgentSolver(BaseSolver):
-    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory):
+    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={}):
         BaseSolver.__init__(self)
         # todo We might want to name these agents to access via keys
         #  rather than a convention of [network].
@@ -16,24 +16,29 @@ class SingleAgentSolver(BaseSolver):
         # self.agent = solver[0]
         self.key = 0
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
-        self.agent = network_factory.make()({})
+        self.agent = network_factory.make()(weights)
+        self.env = gym_factory.make()(trainer_config['env_config'])
 
     @ray.method(num_returns=1)
-    def evaluate(self, env_generator_fn, env_config) -> dict:
+    def evaluate(self, env_generator_fn, env_config, solver_id, generator_id) -> dict:
         """Run one rollout of the given actor(s) in the given env
 
         :param env_generator_fn: fn to generate RLlibEnv environment to run the simulation
         :param env_config: dict of generator details
+        :param solver_id: id of solver being evaluated
+        :param generator_id: id of generator the solver is being evaluated in
         :return: result information e.g. final score, win_status, etc.
         """
 
-        env = env_generator_fn(env_config)
-        agent_weights = self.trainer.get_weights()
+        _ = self.env.reset(level_string=env_config['level_string'])
+        agent_weights = self.get_weights()
         self._update_local_agent(agent_weights)
-        info, states, actions, rewards, win, logps, entropies = rollout(self.agent, env, 'cpu')
-        kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps, 'entropy': entropies}
+        info, states, actions, rewards, win, logps, entropies = rollout(self.agent, self.env, 'cpu')
+        return_kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps,
+                         'entropy': entropies}
 
-        return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': kwargs}}
+        return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': return_kwargs},
+                'solver_id': solver_id, 'generator_id': generator_id}
 
     @ray.method(num_returns=1)
     def optimize(self, trainer_config, level_string_monad, **kwargs):
@@ -47,7 +52,7 @@ class SingleAgentSolver(BaseSolver):
         trainer_config['env_config']['level_string'], _ = level_string_monad()
         self.trainer.reset_config(trainer_config)
         result = self.trainer.train()
-        self._update_local_agent(self.trainer.get_weights())
+        self._update_local_agent(self.get_weights())
 
         return {self.key: {'weights': self.agent.state_dict(),
                            "result_dict": result,
@@ -56,15 +61,19 @@ class SingleAgentSolver(BaseSolver):
                 }
 
     def _update_local_agent(self, weights):
-        state_dict = {k: torch.FloatTensor(v) for k, v in weights['default_policy'].items()}
-        self.agent.load_state_dict(state_dict)
+        self.agent.load_state_dict(weights)
 
     def get_weights(self) -> dict:
-        return {self.key: self.trainer.get_weights()}
+        weights = self.trainer.get_weights()
+        tensor_weights = {k: torch.FloatTensor(v) for k, v in weights['default_policy'].items()}
+        return tensor_weights
 
     def set_weights(self, new_weights: dict):
         self.trainer.set_weights(weights=new_weights)
         # self.agent.load_state_dict(new_weights[self.key])
+
+    def release(self):
+        ray.actor.exit_actor()
 
 
 if __name__ == "__main__":
