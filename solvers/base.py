@@ -8,7 +8,7 @@ class BaseSolver:
     def evaluate(self, env) -> dict:
         raise NotImplementedError
 
-    def optimize(self, trainer_constructor, trainer_config, registered_gym_name, level_string_monad, **kwargs):
+    def optimize(self, trainer_config, level_string_monad, **kwargs):
         raise NotImplementedError
 
     def get_weights(self) -> list:
