@@ -2,7 +2,7 @@ from models.categorical_action_sampler import ActionSampler
 import torch
 
 
-def rollout(actor, env):
+def rollout(actor, env, device):
     """
 
     :param actor: NN solver to be evaluated
@@ -15,8 +15,8 @@ def rollout(actor, env):
     done = False
 
     # use_cuda = torch.cuda.is_available()
-    use_cuda = False
-    device = torch.device("cuda" if use_cuda else "cpu")
+    # use_cuda = False
+    # device = torch.device("cuda" if use_cuda else "cpu")
     actor.to(device)
 
     rewards = []
