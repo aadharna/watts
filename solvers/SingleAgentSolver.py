@@ -5,7 +5,7 @@ from evaluators.rollout import rollout
 from griddly.util.rllib.environment.core import RLlibEnv
 
 
-# @ray.remote
+@ray.remote
 class SingleAgentSolver(BaseSolver):
     def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory):
         BaseSolver.__init__(self)
@@ -18,12 +18,16 @@ class SingleAgentSolver(BaseSolver):
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
         self.agent = network_factory.make()({})
 
-    def evaluate(self, env: RLlibEnv) -> dict:
+    @ray.method(num_returns=1)
+    def evaluate(self, env_generator_fn, env_config) -> dict:
         """Run one rollout of the given actor(s) in the given env
 
-        :param env: RLlibEnv environment to run the simulation
+        :param env_generator_fn: fn to generate RLlibEnv environment to run the simulation
+        :param env_config: dict of generator details
         :return: result information e.g. final score, win_status, etc.
         """
+
+        env = env_generator_fn(env_config)
         agent_weights = self.trainer.get_weights()
         self._update_local_agent(agent_weights)
         info, states, actions, rewards, win, logps, entropies = rollout(self.agent, env, 'cpu')
@@ -31,6 +35,7 @@ class SingleAgentSolver(BaseSolver):
 
         return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': kwargs}}
 
+    @ray.method(num_returns=1)
     def optimize(self, trainer_config, level_string_monad, **kwargs):
         """Run one step of optimization!!
 
@@ -92,12 +97,19 @@ if __name__ == "__main__":
     gf = GridGameFactory(env_name=registry.env_name, env_wrappers=[])
     nf = NetworkFactory(registry.network_name, registry.get_nn_build_info)
     # print(registry.trainer_config['model'])
-    sas = SingleAgentSolver(trainer_constructor=registry.trainer_constr, trainer_config=registry.trainer_config,
-                            registered_gym_name=registry.env_name, network_factory=nf)
+    sas = SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
+                                   trainer_config=registry.trainer_config,
+                                   registered_gym_name=registry.env_name,
+                                   network_factory=nf)
 
-    eval_res = sas.evaluate(gf.make()(registry.trainer_config['env_config']))
-    opt_res  = sas.optimize(registry.trainer_config, generator.generate_fn_wrapper(), pair_id=4)
-    m = sas.trainer.get_policy()
-    print(next(m.model.parameters()).device, "for solver class")
+    eval_res = sas.evaluate.remote(gf.make(), registry.trainer_config['env_config'])
+    opt_res  = sas.optimize.remote(registry.trainer_config, generator.generate_fn_wrapper(), pair_id=4)
 
-    ray.shutdown()
+    eval_res = ray.get(eval_res)
+    opt_res = ray.get(opt_res)
+    w = sas.get_weights.remote()
+    print(w[0]['default_policy'].keys())
+    # m = sas.trainer.get_policy()
+    # print(next(m.model.parameters()).device, "for solver class")
+
+    # ray.shutdown()
