@@ -2,7 +2,7 @@
 
 # game args
 engine: GDY
-game: limited_zelda        # alternate solarfox. Use commented out params.
+game: limited_zelda        # alternate solarfox or foragers with . Use commented out params.
 lvl_dir: levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
@@ -46,4 +46,8 @@ start_fresh: True
 
 
 # gym Env Wrappers
-wrappers: ["Aligned"]
+wrappers: ["Aligned", "ResetCallback"]
+
+
+# trainer helper args
+custom_trainer_config_override: True
