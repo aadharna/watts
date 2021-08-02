@@ -19,7 +19,7 @@ Installation:
 	* conda activate NAME  
 	* pip install ray  
 	* pip install ray[rllib]  
-	* conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  
+	* conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c conda-forge  
 		* Note, you should grab the correct install from here: https://pytorch.org/get-started/locally/
 	* pip install griddly
 		* Make sure that vulkan is installed since Griddly depends on Vulkan for its rendering.
