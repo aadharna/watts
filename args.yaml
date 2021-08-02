@@ -46,7 +46,7 @@ start_fresh: True
 
 
 # gym Env Wrappers
-wrappers: ["Aligned", "ResetCallback"]
+wrappers: ["Aligned"] #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
 
 
 # trainer helper args
