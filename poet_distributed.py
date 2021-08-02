@@ -32,7 +32,7 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=0, ignore_reinit_error=True, local_mode=True)
+    ray.init(num_gpus=0, ignore_reinit_error=True)#, local_mode=True)
 
     args = load_from_yaml(fpath=_args.args_file)
 
