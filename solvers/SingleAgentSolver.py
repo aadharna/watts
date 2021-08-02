@@ -69,7 +69,7 @@ class SingleAgentSolver(BaseSolver):
         return tensor_weights
 
     def set_weights(self, new_weights: dict):
-        self.trainer.set_weights(weights=new_weights)
+        self.trainer.set_weights(weights={'default_policy': new_weights})
         # self.agent.load_state_dict(new_weights[self.key])
 
     def release(self):
