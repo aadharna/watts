@@ -7,9 +7,12 @@ from gym.spaces import MultiDiscrete, Discrete
 
 import griddly
 from griddly import gd
-from griddly.util.rllib.environment.core import RLlibEnv
+from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
 
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
+from ray.rllib.utils import add_mixins
+
+from utils.trainer_reset import ResetConfigOverride
 
 import copy
 
@@ -72,9 +75,15 @@ class Registrar:
                                  }
 
         env = RLlibEnv(self.rllib_env_config)
-        _ = env.reset()
+        if 'MultiAgent' in self.file_args.wrappers:
+            env = RLlibMultiAgentWrapper(env, self.rllib_env_config)
+        state = env.reset()
         self.act_space = env.action_space
         self.obs_space = env.observation_space
+        
+        if isinstance(state, dict):
+            agent_keys = list(state.keys())
+        
         self.n_actions = 0
 
         # In Griddly, the zero-th action of each Discrete action in a no-op.
@@ -116,6 +125,8 @@ class Registrar:
 
         # Trainer Config for selected algorithm
         self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+        if self.file_args.custom_trainer_config_override:
+            self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
 
         self.trainer_config['env_config'] = self.rllib_env_config
         self.trainer_config['env'] = self.name

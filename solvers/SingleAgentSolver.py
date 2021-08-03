@@ -50,7 +50,7 @@ class SingleAgentSolver(BaseSolver):
         """
 
         trainer_config['env_config']['level_string'], _ = level_string_monad()
-        self.trainer.reset_config(trainer_config)
+        is_updated = self.update_lvl_in_trainer(trainer_config)
         result = self.trainer.train()
         self._update_local_agent(self.get_weights())
 
@@ -59,6 +59,9 @@ class SingleAgentSolver(BaseSolver):
                            'pair_id': kwargs.get('pair_id', 0)
                            }
                 }
+
+    def update_lvl_in_trainer(self, new_config):
+        return self.trainer.reset_config(new_config)
 
     def _update_local_agent(self, weights):
         self.agent.load_state_dict(weights)
