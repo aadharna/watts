@@ -7,8 +7,7 @@ class ScoreStrategy:
 
 
 class ZeroShotCartesian(ScoreStrategy):
-    def __init__(self, gym_factory, config):
-        self.gf = gym_factory
+    def __init__(self, config):
         self.env_config = config
 
     def score(self, solvers, generators, id_map) -> list:
@@ -27,8 +26,7 @@ class ZeroShotCartesian(ScoreStrategy):
             # this is the same to do as below.
             solver_id, generator_id = id_map[i]
             self.env_config['level_string'], _ = g.generate_fn_wrapper()()
-            refs.append(s.evaluate.remote(env_generator_fn=self.gf.make(),
-                                          env_config=self.env_config,
+            refs.append(s.evaluate.remote(env_config=self.env_config,
                                           solver_id=solver_id,
                                           generator_id=generator_id))
         return refs

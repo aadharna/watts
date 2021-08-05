@@ -66,8 +66,7 @@ class PoetManager(Manager):
         for p in self.pairs:
             config = self.registrar.get_config_to_build_rllib_env
             config['level_string'], _ = p.generator.generate_fn_wrapper()()
-            refs.append(p.solver.evaluate.remote(env_generator_fn=self.gym_factory.make(),
-                                                 env_config=config,
+            refs.append(p.solver.evaluate.remote(env_config=config,
                                                  solver_id=p.id,
                                                  generator_id=p.id))
 
@@ -81,7 +80,7 @@ class PoetManager(Manager):
 
         refs = []
         for p in self.pairs:
-            refs.append(p.solver.optimize.remote(trainer_config=self.registrar.trainer_config,
+            refs.append(p.solver.optimize.remote(trainer_config=self.registrar.get_trainer_config,
                                                  level_string_monad=p.generator.generate_fn_wrapper(),
                                                  pair_id=p.id))
         return refs

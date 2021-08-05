@@ -57,8 +57,7 @@ if __name__ == "__main__":
                                                                            env_config=registry.get_config_to_build_rllib_env),
                                                            args.max_children,
                                                            args.mutation_rate),
-                          transfer_strategy=GetBestSolver(ZeroShotCartesian(gym_factory=gym_factory,
-                                                                            config=registry.get_config_to_build_rllib_env)),
+                          transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                           registrar=registry)
 
     try:
