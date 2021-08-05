@@ -3,7 +3,6 @@ import os
 import ray
 import sys
 
-from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
 from mutation.mutation_strategy import EvolveStrategy
