@@ -22,7 +22,7 @@ class SingleAgentSolver(BaseSolver):
             self.set_weights(weights)
 
     @ray.method(num_returns=1)
-    def evaluate(self, env_generator_fn, env_config, solver_id, generator_id) -> dict:
+    def evaluate(self, env_config, solver_id, generator_id) -> dict:
         """Run one rollout of the given actor(s) in the given env
 
         :param env_generator_fn: fn to generate RLlibEnv environment to run the simulation
