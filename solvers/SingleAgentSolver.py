@@ -78,6 +78,7 @@ class SingleAgentSolver(BaseSolver):
         # self.agent.load_state_dict(new_weights[self.key])
 
     def release(self):
+        self.env.game.release()
         ray.actor.exit_actor()
 
 
