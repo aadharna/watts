@@ -7,6 +7,7 @@ def rollout(actor, env, device):
 
     :param actor: NN solver to be evaluated
     :param env: An RLlibEnv to evaluate the solver in
+    :param device: string of where you want the rollout to happen (e.g. cpu or gpu:0)
     :return: evaluation result state
     """
     sampler = ActionSampler(env.action_space)
@@ -16,7 +17,7 @@ def rollout(actor, env, device):
 
     # use_cuda = torch.cuda.is_available()
     # use_cuda = False
-    # device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device(device)
     actor.to(device)
 
     rewards = []
