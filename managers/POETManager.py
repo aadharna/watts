@@ -1,9 +1,6 @@
 import numpy as np
 import ray
 
-from evaluators.remote_evaluate import async_evaluate_agent_on_level
-from optimization.remote_optimize import async_optimize_solver_on_env
-
 from pair.agent_environment_pair import Pairing
 from solvers.SingleAgentSolver import SingleAgentSolver
 
