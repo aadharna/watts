@@ -46,21 +46,18 @@ class RandomVariableValidator(LevelValidator):
         return np.random.rand() < 0.5
 
 
-# I don't really like the way I did this.
-# What's the better way?
 class RandomAgentValidator(LevelValidator):
     def __init__(self, gym_factory_monad, env_config):
         self.gf = gym_factory_monad
         self.config = env_config
+        self.env = self.gf(self.config)
 
     def validate_level(self, generator: BaseGenerator, **kwargs) -> bool:
         result = None
-        env = self.gf(self.config)
-        level = str(generator)
-        state = env.reset(level_string=level)
+        _ = self.env.reset(level_string=str(generator))
         done = False
         while not done:
-            ns, r, done, i = env.step(env.action_space.sample())
+            ns, r, done, i = self.env.step(self.env.action_space.sample())
         if "PlayerResults" in i:
             result = i['PlayerResults']['1']
         return result == 'Win'
@@ -122,3 +119,17 @@ class PINSKYValidator(LevelValidator):
             return True
         else:
             return False
+
+"""
+Example of a novelty validator useful for EC tests? (this can be removed until we support archives)
+
+class NoveltyValidator(LevelValidator):
+    def __init__(self, archive):
+        self.archive = archive
+
+    def validate_level(self, generator: BaseGenerator, **kwargs) -> bool:
+        is_novel = self.archive.is_new(generator)
+        if is_novel:
+            self.archive.add(generator)
+        return is_novel
+"""
