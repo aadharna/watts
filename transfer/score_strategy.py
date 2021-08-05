@@ -1,8 +1,5 @@
 from itertools import product
 
-from evaluators.remote_evaluate import async_evaluate_agent_on_level
-from optimization.remote_optimize import async_optimize_solver_on_env
-
 
 class ScoreStrategy:
     def score(self, solvers, generators, id_map) -> list:
