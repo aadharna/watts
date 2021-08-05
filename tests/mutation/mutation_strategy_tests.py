@@ -40,7 +40,7 @@ class TestMutationStrategy(unittest.TestCase):
         solver = self.MockSolver()
         generator = self.MockGenerator(mutation_rate)
 
-        result_solver, result_generator = evolve_strategy.mutate([Pairing(solver, generator)])[0]
+        result_solver, result_generator, parent_id = evolve_strategy.mutate([Pairing(solver, generator)])[0]
 
         assert solver == result_solver
         assert generator == result_generator
@@ -52,7 +52,7 @@ class TestMutationStrategy(unittest.TestCase):
 
         results = evolve_strategy.mutate([Pairing(self.MockSolver(), self.MockGenerator(mutation_rate)) for _ in range(3)])
 
-        solvers, generators = zip(*results)
+        solvers, generators, parent_ids = zip(*results)
 
         assert len(solvers) == 5
         assert len(generators) == 5
