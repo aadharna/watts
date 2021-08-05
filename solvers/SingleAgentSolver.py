@@ -18,6 +18,8 @@ class SingleAgentSolver(BaseSolver):
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
         self.agent = network_factory.make()(weights)
         self.env = gym_factory.make()(trainer_config['env_config'])
+        if bool(weights):
+            self.set_weights(weights)
 
     @ray.method(num_returns=1)
     def evaluate(self, env_generator_fn, env_config, solver_id, generator_id) -> dict:
