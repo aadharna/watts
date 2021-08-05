@@ -61,13 +61,6 @@ class PoetManager(Manager):
         Evaluate each NN-pair on its PAIRED environment
         :return: list of future-refs to the evaluated objects
         """
-        # refs = [async_evaluate_agent_on_level.remote(gym_factory_monad=self.gym_factory.make(),
-        #                                              rllib_env_config=self.registrar.get_config_to_build_rllib_env,
-        #                                              level_string_monad=p.generator.generate_fn_wrapper(),
-        #                                              evaluate_monad=p.solver.evaluate,
-        #                                              solver_id=p.id,
-        #                                              generator_id=p.id)
-        #         for p in self.pairs]
 
         refs = []
         for p in self.pairs:
@@ -85,13 +78,6 @@ class PoetManager(Manager):
         Optimize each NN-pair on its PAIRED environment
         :return: list of future-refs to the new optimized weights
         """
-        # refs = [async_optimize_solver_on_env.remote(trainer_constructor=self.registrar.trainer_constr,
-        #                                             trainer_config=self.registrar.trainer_config,
-        #                                             registered_gym_name=self.registrar.name,
-        #                                             level_string_monad=p.generator.generate_fn_wrapper(),
-        #                                             optimize_monad=p.solver.optimize,
-        #                                             pair_id=p.id)
-        #         for p in self.pairs]
 
         refs = []
         for p in self.pairs:
