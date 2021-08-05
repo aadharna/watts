@@ -10,6 +10,7 @@ from mutation.mutation_strategy import EvolveStrategy
 from transfer.score_strategy import ZeroShotCartesian
 from transfer.rank_strategy import GetBestSolver
 from mutation.level_validator import GraphValidator, RandomVariableValidator
+from mutation.level_validator import PINSKYValidator
 from network_factory import NetworkFactory
 from generators.static_generator import StaticGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
@@ -48,12 +49,15 @@ if __name__ == "__main__":
                           gym_factory=gym_factory,
                           network_factory=network_factory,
                           initial_pair=Pairing(solver=SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
-                                                                               trainer_config=registry.trainer_config,
+                                                                               trainer_config=registry.get_trainer_config,
                                                                                registered_gym_name=registry.env_name,
                                                                                network_factory=network_factory,
                                                                                gym_factory=gym_factory),
                                                generator=generator),
-                          mutation_strategy=EvolveStrategy(GraphValidator(), args.max_children, args.mutation_rate),
+                          mutation_strategy=EvolveStrategy(PINSKYValidator(gym_factory_monad=gym_factory.make(),
+                                                                           env_config=registry.get_config_to_build_rllib_env),
+                                                           args.max_children,
+                                                           args.mutation_rate),
                           transfer_strategy=GetBestSolver(ZeroShotCartesian(gym_factory=gym_factory,
                                                                             config=registry.get_config_to_build_rllib_env)),
                           registrar=registry)
