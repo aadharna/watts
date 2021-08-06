@@ -3,23 +3,21 @@ import os
 import ray
 import sys
 
+from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
 from mutation.mutation_strategy import EvolveStrategy
-from transfer.score_strategy import ZeroShotCartesian
-from transfer.rank_strategy import GetBestSolver
 from mutation.level_validator import GraphValidator, RandomVariableValidator
 from mutation.level_validator import PINSKYValidator
 from network_factory import NetworkFactory
-from generators.static_generator import StaticGenerator
-from generators.AIIDE_generator import EvolutionaryGenerator
 from pair.agent_environment_pair import Pairing
-
 from solvers.SingleAgentSolver import SingleAgentSolver
-
+from transfer.score_strategy import ZeroShotCartesian
+from transfer.rank_strategy import GetBestSolver
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, help='exp name')

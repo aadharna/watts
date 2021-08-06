@@ -12,11 +12,8 @@ def rollout(actor, env, device):
     """
     sampler = ActionSampler(env.action_space)
     state = env.reset()
-    # print(state.shape)
     done = False
 
-    # use_cuda = torch.cuda.is_available()
-    # use_cuda = False
     device = torch.device(device)
     actor.to(device)
 

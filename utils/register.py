@@ -1,20 +1,14 @@
-import os
 import argparse
-
-import gym
-from gym.spaces import MultiDiscrete, Discrete
-
-
+import copy
 import griddly
 from griddly import gd
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
-
+import gym
+from gym.spaces import MultiDiscrete, Discrete
+import os
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 from ray.rllib.utils import add_mixins
-
 from utils.trainer_reset import ResetConfigOverride
-
-import copy
 
 
 def get_default_trainer_config_and_constructor(opt_algo):

@@ -1,13 +1,12 @@
-from typing import Tuple
-from itertools import product
 from enum import Enum
+from itertools import product
+import numpy as np
+from typing import Tuple
+import torch
 
 from generators.base import BaseGenerator
 from models.PCGRL_network import PCGRLAdversarial
 from models.categorical_action_sampler import ActionSampler
-
-import torch
-import numpy as np
 
 
 class Items(Enum):
@@ -59,8 +58,7 @@ class PCGRLGenerator(BaseGenerator):
     def generate_fn_wrapper(self):
         def _generate() -> Tuple[str, dict]:
             map, data = self.generate()
-            level_string = self.to_string(map)
-            return level_string, data
+            return self.to_string(map), data
         return _generate
 
     @property
@@ -74,9 +72,8 @@ class PCGRLGenerator(BaseGenerator):
 
         :return:
         """
-        map, data = self.generate()
-        level_string = self.to_string(map)
-        return level_string
+        map, _ = self.generate()
+        return self.to_string(map)
 
     def generate(self):
         length = self.length

@@ -1,6 +1,6 @@
 import numpy as np
-
 from typing import Tuple
+
 from generators.base import BaseGenerator
 
 class StaticGenerator(BaseGenerator):

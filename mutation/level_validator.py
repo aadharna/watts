@@ -1,7 +1,7 @@
 import os
-import numpy as np
 import networkx as nx
 from networkx import grid_graph
+import numpy as np
 
 from generators.base import BaseGenerator
 
@@ -90,13 +90,13 @@ class GraphValidator(LevelValidator):
         passable = False
         for key in key_pos:
 
-            to_key   = nx.has_path(graph,
-                                   source=agent_start_pos,
-                                   target=key)
+            to_key = nx.has_path(graph,
+                                 source=agent_start_pos,
+                                 target=key)
 
-            to_door  = nx.has_path(graph,
-                                   source=key,
-                                   target=goal_pos)
+            to_door = nx.has_path(graph,
+                                  source=key,
+                                  target=goal_pos)
 
             if to_key and to_door:
                 passable = True

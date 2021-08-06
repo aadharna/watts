@@ -75,56 +75,7 @@ class SingleAgentSolver(BaseSolver):
 
     def set_weights(self, new_weights: dict):
         self.trainer.set_weights(weights={'default_policy': new_weights})
-        # self.agent.load_state_dict(new_weights[self.key])
 
     def release(self):
         self.env.game.release()
         ray.actor.exit_actor()
-
-
-if __name__ == "__main__":
-    import ray
-    import os
-    import sys
-
-    from utils.register import Registrar
-    from utils.loader import load_from_yaml
-    from gym_factory import GridGameFactory
-    from network_factory import NetworkFactory
-    from generators.AIIDE_generator import EvolutionaryGenerator
-
-
-    os.chdir('..')
-    sep = os.pathsep
-    os.environ['PYTHONPATH'] = sep.join(sys.path)
-
-    ray.init(num_gpus=1)
-
-    args_file = os.path.join('args.yaml')
-    args = load_from_yaml(args_file)
-
-    registry = Registrar(file_args=args)
-
-    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
-
-    # print(registry)
-    gf = GridGameFactory(env_name=registry.env_name, env_wrappers=[])
-    nf = NetworkFactory(registry.network_name, registry.get_nn_build_info)
-    # print(registry.trainer_config['model'])
-    sas = SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
-                                   trainer_config=registry.trainer_config,
-                                   registered_gym_name=registry.env_name,
-                                   network_factory=nf)
-
-    eval_res = sas.evaluate.remote(gf.make(), registry.trainer_config['env_config'])
-    opt_res  = sas.optimize.remote(registry.trainer_config, generator.generate_fn_wrapper(), pair_id=4)
-
-    eval_res = ray.get(eval_res)
-    opt_res = ray.get(opt_res)
-    w = sas.get_weights.remote()
-    print(w[0]['default_policy'].keys())
-    # m = sas.trainer.get_policy()
-    # print(next(m.model.parameters()).device, "for solver class")
-
-    # ray.shutdown()

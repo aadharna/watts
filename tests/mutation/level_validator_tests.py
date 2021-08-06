@@ -6,10 +6,8 @@ from generators.PCGRLGenerator import PCGRLGenerator
 from generators.AIIDE_generator import EvolutionaryGenerator
 from generators.static_generator import StaticGenerator
 from generators.RandomSelectionGenerator import RandomSelectionGenerator
-from mutation.level_validator import RandomAgentValidator, GraphValidator
-
 import gym_factory
-
+from mutation.level_validator import RandomAgentValidator, GraphValidator
 from tests.test_structs import example_network_factory_build_info
 
 
