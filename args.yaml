@@ -32,15 +32,15 @@ opt_algo: "PPO"
 #n_opt_games: 1000
 
 # algo generation args
-mutation_timer: 2
+mutation_timer: 25
 mutation_rate: 0.8
-max_children: 2
-max_envs: 5
+max_children: 3
+max_envs: 10
 comp_agent: mcts
 
 # algo general args
-num_poet_loops: 6
-transfer_timer: 3
+num_poet_loops: 100
+transfer_timer: 10
 result_prefix: .. # DO NOT CHANGE!!
 start_fresh: True
 
