@@ -118,7 +118,7 @@ class PoetManager(Manager):
             print(f"loop {i} / {self.args.num_poet_loops}")
             self.stats[i] = {}
 
-            if i % self.args.mutation_timer:
+            if i % self.args.mutation_timer == 0:
                 children = self._mutation_strategy.mutate(self.pairs)
                 for solver, generator, parent_id in children:
                     weights = ray.get(solver.get_weights.remote())
@@ -154,9 +154,9 @@ class PoetManager(Manager):
                 pair_id = eval_return['generator_id']
                 self.set_win_status(pair_id, solved_status)
 
-            if i % self.args.transfer_timer:
-                nets = [(p.solver, i) for i, p in enumerate(self.pairs)]
-                lvls = [(p.generator, i) for i,  p in enumerate(self.pairs)]
+            if i % self.args.transfer_timer == 0:
+                nets = [(p.solver, j) for j, p in enumerate(self.pairs)]
+                lvls = [(p.generator, j) for j,  p in enumerate(self.pairs)]
                 id_map = [p.id for p in self.pairs]
                 new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
 
