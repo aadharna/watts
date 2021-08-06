@@ -136,30 +136,30 @@ class PCGRLGenerator(BaseGenerator):
         return level
 
 
-if __name__ == "__main__":
-    import gym
-    from utils.returns import compute_gae
-    from tests.test_structs import example_network_factory_build_info
-    import torch.optim as optim
-
-    build_info = example_network_factory_build_info
-    build_info['action_space'] = gym.spaces.Discrete(169)
-    build_info['num_outputs'] = 169
-    build_info['name'] = 'adversary'
-    build_info['model_config'] = {'length': 15, 'width': 15, "placements": 75}
-
-    generator = PCGRLGenerator(**build_info)
-    optimizer = optim.Adam(generator.network.parameters(), lr=0.003)
-    mazes = []
-
-    for _ in range(15):
-        maze, info_dict = generator.generate()
-        mazes.append(maze)
-        returns = compute_gae(generator.network.value_function(), info_dict['rewards'], info_dict['masks'], info_dict['values'])
-        returns = torch.cat(returns)
-        advantage = returns - info_dict['values']
-        loss = (info_dict['logps'] * advantage).mean()
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+# if __name__ == "__main__":
+#     import gym
+#     from utils.returns import compute_gae
+#     from tests.test_structs import example_network_factory_build_info
+#     import torch.optim as optim
+#
+#     build_info = example_network_factory_build_info
+#     build_info['action_space'] = gym.spaces.Discrete(169)
+#     build_info['num_outputs'] = 169
+#     build_info['name'] = 'adversary'
+#     build_info['model_config'] = {'length': 15, 'width': 15, "placements": 75}
+#
+#     generator = PCGRLGenerator(**build_info)
+#     optimizer = optim.Adam(generator.network.parameters(), lr=0.003)
+#     mazes = []
+#
+#     for _ in range(15):
+#         maze, info_dict = generator.generate()
+#         mazes.append(maze)
+#         returns = compute_gae(generator.network.value_function(), info_dict['rewards'], info_dict['masks'], info_dict['values'])
+#         returns = torch.cat(returns)
+#         advantage = returns - info_dict['values']
+#         loss = (info_dict['logps'] * advantage).mean()
+#
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
