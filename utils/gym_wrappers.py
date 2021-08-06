@@ -1,4 +1,5 @@
 import gym
+from griddly import gd
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
 
 
@@ -72,6 +73,97 @@ class SetLevelWithCallback(gym.Wrapper):
 
     def __str__(self):
         return f"<ResetCallback{str(self.env)}>"
+
+
+from griddly.util.environment_generator_generator import EnvironmentGeneratorGenerator
+from ray.rllib.env import MultiAgentEnv
+
+
+class HierarchicalBuilderEnv(MultiAgentEnv):
+    def __init__(self, env, env_config, game_yaml_path, board_shape):
+        super().__init__(env, env_config)
+        self.egg = EnvironmentGeneratorGenerator(yaml_file=game_yaml_path)
+        self.board_shape = board_shape
+        generator_yaml = self.egg.generate_env_yaml(self.board_shape)
+        game = 'builder'
+
+        build_rllib_config = {'environment_name': game,
+                              'yaml_string': generator_yaml,
+                              'max_steps': env_config.get('max_steps', 50),
+                              'global_observer_type': gd.ObserverType.ASCII,
+                              'player_observer_type': gd.ObserverType.ASCII,
+                              'random_level_on_reset': False,
+                              }
+        self.builder_env = RLlibEnv(build_rllib_config)
+        self.player_env = env
+
+    def reset(self):
+        self.cur_obs = self.flat_env.reset()
+        self.current_goal = None
+        self.steps_remaining_at_level = None
+        self.num_high_level_steps = 0
+        # current low level agent id. This must be unique for each high level
+        # step since agent ids cannot be reused.
+        self.low_level_agent_id = "low_level_{}".format(
+            self.num_high_level_steps)
+        return {
+            "builder_agent": self.cur_obs,
+        }
+
+    def step(self, action_dict):
+        assert len(action_dict) == 1, action_dict
+        if "builder_agent" in action_dict:
+            return self._high_level_step(action_dict["builder_agent"])
+        else:
+            return self._low_level_step(list(action_dict.values())[0])
+
+    def _high_level_step(self, action):
+        # logger.debug("High level agent sets goal")
+        self.current_goal = action
+        self.steps_remaining_at_level = 250
+        self.num_high_level_steps += 1
+        self.low_level_agent_id = "low_level_{}".format(
+            self.num_high_level_steps)
+        obs = {self.low_level_agent_id: [self.cur_obs, self.current_goal]}
+        rew = {self.low_level_agent_id: 0}
+        done = {"__all__": False}
+        return obs, rew, done, {}
+
+    def _low_level_step(self, action):
+        # logger.debug("Low level agent step {}".format(action))
+        self.steps_remaining_at_level -= 1
+        cur_pos = tuple(self.cur_obs[0])
+        goal_pos = self.flat_env._get_new_pos(cur_pos, self.current_goal)
+
+        # Step in the actual env
+        f_obs, f_rew, f_done, _ = self.flat_env.step(action)
+        new_pos = tuple(f_obs[0])
+        self.cur_obs = f_obs
+
+        # Calculate low-level agent observation and reward
+        obs = {self.low_level_agent_id: [f_obs, self.current_goal]}
+        if new_pos != cur_pos:
+            if new_pos == goal_pos:
+                rew = {self.low_level_agent_id: 1}
+            else:
+                rew = {self.low_level_agent_id: -1}
+        else:
+            rew = {self.low_level_agent_id: 0}
+
+        # Handle env termination & transitions back to higher level
+        done = {"__all__": False}
+        if f_done:
+            done["__all__"] = True
+            # logger.debug("high level final reward {}".format(f_rew))
+            rew["builder_agent"] = f_rew
+            obs["builder_agent"] = f_obs
+        elif self.steps_remaining_at_level == 0:
+            done[self.low_level_agent_id] = True
+            rew["builder_agent"] = 0
+            obs["builder_agent"] = f_obs
+
+        return obs, rew, done, {}
+
 
 
 def add_wrappers(str_list: list) -> list:

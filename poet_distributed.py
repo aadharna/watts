@@ -32,7 +32,7 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=1, ignore_reinit_error=True)#, local_mode=True)
+    ray.init(num_gpus=1, ignore_reinit_error=True)#, log_to_driver=False, local_mode=True)
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -53,8 +53,7 @@ if __name__ == "__main__":
                                                                                network_factory=network_factory,
                                                                                gym_factory=gym_factory),
                                                generator=generator),
-                          mutation_strategy=EvolveStrategy(PINSKYValidator(gym_factory_monad=gym_factory.make(),
-                                                                           env_config=registry.get_config_to_build_rllib_env),
+                          mutation_strategy=EvolveStrategy(GraphValidator(),
                                                            args.max_children,
                                                            args.mutation_rate),
                           transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
