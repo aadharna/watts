@@ -2,10 +2,10 @@ import numpy as np
 import unittest
 
 from generators.base import BaseGenerator
-from solvers.base import BaseSolver
 from mutation.level_validator import AlwaysValidator
 from mutation.mutation_strategy import EvolveStrategy
 from pair.agent_environment_pair import Pairing
+from solvers.base import BaseSolver
 from torch.nn import Module
 
 

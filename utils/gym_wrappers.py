@@ -1,6 +1,8 @@
 import gym
 from griddly import gd
+from griddly.util.environment_generator_generator import EnvironmentGeneratorGenerator
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
+from ray.rllib.env import MultiAgentEnv
 
 
 class AlignedReward(gym.Wrapper, RLlibEnv):
@@ -73,10 +75,6 @@ class SetLevelWithCallback(gym.Wrapper):
 
     def __str__(self):
         return f"<ResetCallback{str(self.env)}>"
-
-
-from griddly.util.environment_generator_generator import EnvironmentGeneratorGenerator
-from ray.rllib.env import MultiAgentEnv
 
 
 class HierarchicalBuilderEnv(MultiAgentEnv):

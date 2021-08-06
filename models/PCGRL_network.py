@@ -1,12 +1,9 @@
-
-import numpy as np
-
-import torch
-import torch.nn as nn
-
 import gym
+import numpy as np
 from ray.rllib.models.torch.torch_modelv2 import ModelConfigDict
 from ray.rllib.models.torch.recurrent_net import RecurrentNetwork
+import torch
+import torch.nn as nn
 
 
 class PCGRLAdversarial(RecurrentNetwork, nn.Module):

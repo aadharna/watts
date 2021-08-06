@@ -1,7 +1,7 @@
+import numpy as np
 from typing import Tuple
 
 from generators.base import BaseGenerator
-import numpy as np
 
 
 class RandomSelectionGenerator(BaseGenerator):

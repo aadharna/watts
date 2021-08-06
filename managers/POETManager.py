@@ -1,15 +1,13 @@
-import numpy as np
 import ray
-
-from pair.agent_environment_pair import Pairing
-from solvers.SingleAgentSolver import SingleAgentSolver
+from typing import Dict, Any
 
 from gym_factory import GridGameFactory
 from managers.base import Manager
 from mutation.mutation_strategy import MutationStrategy
-from transfer.rank_strategy import RankStrategy
 from network_factory import NetworkFactory
-from typing import Dict, Any
+from pair.agent_environment_pair import Pairing
+from solvers.SingleAgentSolver import SingleAgentSolver
+from transfer.rank_strategy import RankStrategy
 from utils.register import Registrar
 
 
@@ -45,7 +43,7 @@ class PoetManager(Manager):
             if p.id == pair_id:
                 p.update_solver_weights(new_weights)
 
-    def append_solver_result(self, pair_id: int, result_dict):
+    def append_solver_result(self, pair_id: int, result_dict: Dict):
         for p in self.pairs:
             if p.id == pair_id:
                 p.results.append(result_dict)
