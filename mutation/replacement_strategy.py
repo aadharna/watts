@@ -3,7 +3,7 @@
 class ReplacementStrategy:
     def __init__(self, max_pairings: int = 10):
         self.max_pairings = max_pairings
-        self.overflow = []
+        self.archive_history = []
 
     def update(self, archive) -> list:
         raise NotImplementedError()
@@ -19,7 +19,7 @@ class ReplaceOldest(ReplacementStrategy):
             archive = aged_pairs[:self.max_pairings]
             finished_pairs = aged_pairs[self.max_pairings:]
             [p.solver.release.remote() for p in finished_pairs]
-            self.overflow.extend(finished_pairs)
+            self.archive_history.extend(finished_pairs)
             del aged_pairs
 
         return archive

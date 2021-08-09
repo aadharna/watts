@@ -36,7 +36,7 @@ class PoetManager(Manager):
         self._transfer_strategy = transfer_strategy
         self._replacement_strategy = replacement_strategy
         self.active_population = [initial_pair]
-        self.archive_history = self._replacement_strategy.overflow
+        self.archive_history = self._replacement_strategy.archive_history
         self.stats = {}
         self.stats['lineage'] = []
         self.stats['transfer'] = []
