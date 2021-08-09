@@ -56,6 +56,4 @@ class TestReplacementStrategy(unittest.TestCase):
         replacement_strategy = ReplaceOldest(max_pairings=4)
         archive = replacement_strategy.update([MockPair(MockSolver(), MockGenerator(0.01)) for i in range(6)])
         alive_ids = [p.id for p in archive]
-        assert (len(archive) == 4)
-        assert(alive_ids == [5, 4, 3, 2])
-
+        assert(len(archive) == 4)
