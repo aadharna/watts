@@ -6,9 +6,10 @@ import sys
 from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
-from mutation.mutation_strategy import EvolveStrategy
 from mutation.level_validator import GraphValidator, RandomVariableValidator
 from mutation.level_validator import PINSKYValidator
+from mutation.mutation_strategy import EvolveStrategy
+from mutation.replacement_strategy import ReplaceOldest
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from solvers.SingleAgentSolver import SingleAgentSolver
@@ -54,6 +55,7 @@ if __name__ == "__main__":
                           mutation_strategy=EvolveStrategy(GraphValidator(),
                                                            args.max_children,
                                                            args.mutation_rate),
+                          replacement_strategy=ReplaceOldest(args.max_envs),
                           transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                           registrar=registry)
 
@@ -65,5 +67,5 @@ if __name__ == "__main__":
         print(error)
         print('_'*40)
 
-    print(f"{len(manager.pairs)} PAIR objects: \n {manager.pairs}")
+    print(f"{len(manager.active_population)} PAIR objects: \n {manager.active_population}")
     ray.shutdown()

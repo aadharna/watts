@@ -4,6 +4,7 @@ from typing import Dict, Any
 from gym_factory import GridGameFactory
 from managers.base import Manager
 from mutation.mutation_strategy import MutationStrategy
+from mutation.replacement_strategy import ReplacementStrategy
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from solvers.SingleAgentSolver import SingleAgentSolver
@@ -18,6 +19,7 @@ class PoetManager(Manager):
             gym_factory: GridGameFactory,
             initial_pair: Pairing,
             mutation_strategy: MutationStrategy,
+            replacement_strategy: ReplacementStrategy,
             transfer_strategy: RankStrategy,
             network_factory: NetworkFactory,
             registrar: Registrar,
@@ -32,24 +34,25 @@ class PoetManager(Manager):
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self._mutation_strategy = mutation_strategy
         self._transfer_strategy = transfer_strategy
-        self.pairs = [initial_pair]
-        self.forgotten_pairs = []
+        self._replacement_strategy = replacement_strategy
+        self.active_population = [initial_pair]
+        self.overflow_container = self._replacement_strategy.overflow
         self.stats = {}
         self.stats['lineage'] = []
         self.stats['transfer'] = []
 
     def set_solver_weights(self, pair_id: int, new_weights: Dict):
-        for p in self.pairs:
+        for p in self.active_population:
             if p.id == pair_id:
                 p.update_solver_weights(new_weights)
 
     def append_solver_result(self, pair_id: int, result_dict: Dict):
-        for p in self.pairs:
+        for p in self.active_population:
             if p.id == pair_id:
                 p.results.append(result_dict)
 
     def set_win_status(self, pair_id: int, generator_solved_status: bool):
-        for p in self.pairs:
+        for p in self.active_population:
             if p.id == pair_id:
                 p.solved = generator_solved_status
                 break
@@ -61,7 +64,7 @@ class PoetManager(Manager):
         """
 
         refs = []
-        for p in self.pairs:
+        for p in self.active_population:
             config = self.registrar.get_config_to_build_rllib_env
             config['level_string'], _ = p.generator.generate_fn_wrapper()()
             refs.append(p.solver.evaluate.remote(env_config=config,
@@ -77,7 +80,7 @@ class PoetManager(Manager):
         """
 
         refs = []
-        for p in self.pairs:
+        for p in self.active_population:
             refs.append(p.solver.optimize.remote(trainer_config=self.registrar.get_trainer_config,
                                                  level_string_monad=p.generator.generate_fn_wrapper(),
                                                  pair_id=p.id))
@@ -117,25 +120,19 @@ class PoetManager(Manager):
             self.stats[i] = {}
 
             if i % self.args.mutation_timer == 0:
-                children = self._mutation_strategy.mutate(self.pairs)
+                children = self._mutation_strategy.mutate(self.active_population)
                 for solver, generator, parent_id in children:
                     weights = ray.get(solver.get_weights.remote())
-                    self.pairs.append(Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
-                                                                              trainer_config=self.registrar.trainer_config,
-                                                                              registered_gym_name=self.registrar.env_name,
-                                                                              network_factory=self.network_factory,
-                                                                              gym_factory=self.gym_factory,
-                                                                              weights=weights),
-                                              generator=generator))
-                    self.stats['lineage'].append((parent_id, self.pairs[-1].id))
+                    self.active_population.append(Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
+                                                                                          trainer_config=self.registrar.trainer_config,
+                                                                                          registered_gym_name=self.registrar.env_name,
+                                                                                          network_factory=self.network_factory,
+                                                                                          gym_factory=self.gym_factory,
+                                                                                          weights=weights),
+                                                          generator=generator))
+                    self.stats['lineage'].append((parent_id, self.active_population[-1].id))
 
-                if len(self.pairs) > self.args.max_envs:
-                    aged_pairs = sorted(self.pairs, key=lambda x: x.id, reverse=True)
-                    self.pairs = aged_pairs[:self.args.max_envs]
-                    finished_pairs = aged_pairs[self.args.max_envs:]
-                    [p.solver.release.remote() for p in finished_pairs]
-                    self.forgotten_pairs.extend(finished_pairs)
-                    del aged_pairs
+                self.active_population = self._replacement_strategy.update(self.active_population)
 
             opt_refs = self.optimize()
             opt_returns = ray.get(opt_refs)
@@ -153,15 +150,11 @@ class PoetManager(Manager):
                 self.set_win_status(pair_id, solved_status)
 
             if i % self.args.transfer_timer == 0:
-                nets = [(p.solver, j) for j, p in enumerate(self.pairs)]
-                lvls = [(p.generator, j) for j,  p in enumerate(self.pairs)]
-                id_map = [p.id for p in self.pairs]
+                nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
+                lvls = [(p.generator, j) for j,  p in enumerate(self.active_population)]
+                id_map = [p.id for p in self.active_population]
                 new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
 
                 for j, (best_w, best_id) in new_weights.items():
                     self.set_solver_weights(j, best_w)
                     self.stats['transfer'].append((best_id, j, i))
-
-
-if __name__ == "__main__":
-    pass
