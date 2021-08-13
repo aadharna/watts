@@ -1,44 +1,20 @@
 import numpy as np
 import unittest
 
-from generators.base import BaseGenerator
 from mutation.level_validator import AlwaysValidator
 from mutation.mutation_strategy import EvolveStrategy
 from pair.agent_environment_pair import Pairing
-from solvers.base import BaseSolver
-from torch.nn import Module
+from tests.test_classes import MockGenerator, MockPair, MockSolver
 
 
 class TestMutationStrategy(unittest.TestCase):
-    class MockGenerator(BaseGenerator):
-        def __init__(self, expected_mutation_rate: float):
-            super().__init__()
-            self._expected_mutation_rate = expected_mutation_rate
-
-        def mutate(self, mutation_rate: float):
-            assert self._expected_mutation_rate == mutation_rate
-            return self
-
-        def update_from_lvl_string(self, level_string):
-            raise NotImplementedError
-
-        def generate_fn_wrapper(self):
-            def _generate() -> str:
-                raise NotImplementedError
-            return _generate
-
-        def __str__(self):
-            raise NotImplementedError
-
-    class MockSolver(BaseSolver):
-        pass
 
     def test_single_selection_evolve(self):
         mutation_rate = 0.5
         evolve_strategy = EvolveStrategy(AlwaysValidator(), max_children=1, mutation_rate=mutation_rate)
 
-        solver = self.MockSolver()
-        generator = self.MockGenerator(mutation_rate)
+        solver = MockSolver()
+        generator = MockGenerator(mutation_rate)
 
         result_solver, result_generator, parent_id = evolve_strategy.mutate([Pairing(solver, generator)])[0]
 
@@ -50,7 +26,7 @@ class TestMutationStrategy(unittest.TestCase):
         mutation_rate = 0.5
         evolve_strategy = EvolveStrategy(AlwaysValidator(), max_children=5, mutation_rate=mutation_rate, rand=rand)
 
-        results = evolve_strategy.mutate([Pairing(self.MockSolver(), self.MockGenerator(mutation_rate)) for _ in range(3)])
+        results = evolve_strategy.mutate([MockPair(MockSolver(), MockGenerator(mutation_rate)) for _ in range(3)])
 
         solvers, generators, parent_ids = zip(*results)
 
