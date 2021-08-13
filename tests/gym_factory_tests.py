@@ -1,7 +1,6 @@
-from griddly.util.rllib.environment.core import RLlibEnv
-import gym
 import gym_factory
 import unittest
+from tests.test_classes import SimpleGymWrapper
 
 
 class TestGymFactory(unittest.TestCase):
@@ -23,9 +22,4 @@ class TestGymFactory(unittest.TestCase):
         assert g.foo == 5
 
 
-class SimpleGymWrapper(gym.Wrapper, RLlibEnv):
-    def __init__(self, env, env_config):
-        gym.Wrapper.__init__(self, env=env)
-        RLlibEnv.__init__(self, env_config=env_config)
 
-        self.foo = 5
