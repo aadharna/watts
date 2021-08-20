@@ -82,7 +82,7 @@ class PCGRLGenerator(BaseGenerator):
 
         blankMap = np.zeros((1, self._num_objects, length, width))
         level = torch.FloatTensor(blankMap)
-        actions = torch.zeros(self.placements, 3)
+        actions = torch.zeros(self.placements, len(self.network.action_space.sample()))
         states = torch.zeros((self.placements, self._num_objects, length, width))
         rewards = torch.zeros((self.placements, 1))
         values = torch.zeros((self.placements, 1))

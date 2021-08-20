@@ -10,6 +10,8 @@ import unittest
 
 def run_network_factory_test(name: str, constructor, state_dict):
     build_info = copy.copy(test_structs.example_network_factory_build_info)
+    if name == 'Adversarial_PCGRL':
+        build_info = copy.copy(test_structs.example_pcgrl_network_factory_build_info)
     build_info['name'] = name
     nf = network_factory.NetworkFactory(name, build_info)
     assert nf.network_name == name
