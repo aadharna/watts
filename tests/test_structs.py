@@ -2,12 +2,19 @@ from gym.spaces import Box, MultiDiscrete
 import numpy as np
 from torch import rand
 
-
 example_network_factory_build_info = {
     'action_space': MultiDiscrete([2, 5]),
     'obs_space': Box(0.0, 255.0, (5, 5, 6), np.float64),
     'model_config': {},
     'num_outputs': 7,
+    # 'name' needs to be added based on which network is being run
+}
+
+example_pcgrl_network_factory_build_info = {
+    'action_space': MultiDiscrete([15, 15, 6, 2]),
+    'obs_space': Box(0.0, 255.0, (15, 15, 4), np.float64),
+    'model_config': {'length': 15, 'width': 15, 'placements': 50},
+    'num_outputs': sum([15, 15, 6, 2]),
     # 'name' needs to be added based on which network is being run
 }
 
@@ -59,14 +66,14 @@ example_gap_state_dict = {
 }
 
 example_pcgrl_state_dict = {
-    "conv.weight": rand((16, 6, 3, 3)),
+    "conv.weight": rand((16, 4, 3, 3)),
     "conv.bias": rand(16),
     "rnn.weight_ih": rand((8112, 2704)),
     "rnn.weight_hh": rand((8112, 2704)),
     "rnn.bias_ih": rand(8112),
     "rnn.bias_hh": rand(8112),
-    "fc.weight": rand((7, 2704)),
-    "fc.bias": rand(7),
+    "fc.weight": rand((38, 2704)),
+    "fc.bias": rand(38),
     "val.weight": rand((1, 2704)),
     "val.bias": rand(1)
 }
