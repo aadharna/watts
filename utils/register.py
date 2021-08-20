@@ -54,9 +54,10 @@ class Registrar:
             self.observer = gd.ObserverType.VECTOR
 
         self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
+        self.base_path = os.getcwd()
 
         self.rllib_env_config = {'environment_name': self.name,
-                                 'yaml_file': self.gdy_file,
+                                 'yaml_file': os.path.join(self.base_path, self.gdy_file),
                                  'level': self.file_args.init_lvl,
                                  'max_steps': self.file_args.game_len,
                                  'global_observer_type': self.observer,
