@@ -60,7 +60,7 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
         """
         h = [self.conv.weight.new(
-                1, self.cell_size).zero_()]
+                1, self.cell_size).zero_().squeeze(0)]
         return h
 
 
