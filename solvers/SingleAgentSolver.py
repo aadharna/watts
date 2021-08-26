@@ -54,6 +54,7 @@ class SingleAgentSolver(BaseSolver):
         trainer_config['env_config']['level_string'], _ = level_string_monad()
         is_updated = self.update_lvl_in_trainer(trainer_config)
         result = self.trainer.train()
+        self.trainer.log_result(result)
         self._update_local_agent(self.get_weights())
 
         return {self.key: {'weights': self.agent.state_dict(),
