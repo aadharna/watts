@@ -81,31 +81,35 @@ class PCGRLGenerator(BaseGenerator):
         sampler = ActionSampler(self.network.action_space)
 
         blankMap = np.zeros((1, self._num_objects, length, width))
-        level = torch.FloatTensor(blankMap)
-        actions = torch.zeros(self.placements, len(self.network.action_space.sample()))
+        level = torch.flatten(torch.FloatTensor(blankMap))
+        actions = torch.zeros(self.placements, len(self.network.action_space.sample()) - 1)
         states = torch.zeros((self.placements, self._num_objects, length, width))
         rewards = torch.zeros((self.placements, 1))
         values = torch.zeros((self.placements, 1))
         masks = torch.zeros((self.placements, 1)) + 1
         logps = torch.zeros((self.placements, 1))
-        h = torch.zeros((1, 2704))
+        h = self.network.get_initial_state()
         tokenList = [Items.AVATAR, Items.DOOR, Items.KEY] + [Items.WALL for _ in range(self.placements - 3)]
         for i, TOKEN in enumerate(tokenList):
-            logits, h = self.network.forward_rnn({'obs': level}, h, 1)
+            logits, h = self.network.forward_rnn(level, h, 1)
             torch_action, logp, entropy = sampler.sample(logits)
-            predicted = torch_action.cpu().item()
+            predicted = torch_action.cpu().numpy()
             #
             # The mutable part of the map is a 13x13 subgrid of the 15x15 space
             # (0, 0) -> (1, 1); (i, j) -> (i+1, j+1)
             # Therefore, to ensure that the blocks get placed
             # into the 13x13 middle of the 15x15 grid, we use a 13x13 grid and shift the indices by +1, +1
-            y = int(predicted % (length - 2)) + 1
-            x = int(predicted // (width - 2)) + 1
-            blankMap[0, TOKEN.value, y, x] = 1
+            x = int(predicted[0][0])
+            y = int(predicted[0][1])
+            tile = int(predicted[0][2])
+            # y = int(predicted % (length - 2)) + 1
+            # x = int(predicted // (width - 2)) + 1
+            blankMap[0, tile, y, x] = 1
             level = torch.FloatTensor(blankMap)
             logps[i] = logp
-            actions[i] = torch.FloatTensor([TOKEN.value, y, x])
+            actions[i] = torch.FloatTensor([tile, y, x])
             states[i] = level.clone()
+            level = torch.flatten(level)
             values[i] = self.network.value_function()
 
         for i, j in self.boundary_walls_length:
