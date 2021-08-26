@@ -105,8 +105,10 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
 
         self.final_antag = []
         self.antag_rollouts = 0
+        self.sum_antag_rollout_reward = []
         self.final_protag = []
         self.protag_rollouts = 0
+        self.sum_protag_rollout_reward = []
         self.final_adversary = 0
         self.num_high_level_steps = 0
         self.antagonist_agent = 'antagonist'
@@ -124,6 +126,8 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         self.antag_rollouts = 0
         self.final_antag = []
         self.final_protag = []
+        self.sum_protag_rollout_reward = []
+        self.sum_antag_rollout_reward = []
         # current low level agent id. This must be unique for each high level
         # step since agent ids cannot be reused.
         self.protagonist_agent_id = "{}_{}".format(
@@ -141,7 +145,6 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         obs = {}
         reward = {}
         info = {}
-        print(action_dict.keys())
 
         # build new level steps [0, 50)
         # if self.steps_this_episode < self.builder_steps:
@@ -172,15 +175,17 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             # ...
             next_state, step_reward, player_done, player_info = self.player_env.step(
                 action_dict[self.antagonist_agent_id])
-            if player_done:
-                self.antag_rollouts += 1
-                lvl = self.builder_env.render(observer='global')
-                next_state = self.player_env.reset(level_string=lvl)
             obs[self.antagonist_agent_id] = next_state
             reward[self.antagonist_agent_id] = step_reward
             info[self.antagonist_agent_id] = player_info
             self.final_antag.append(step_reward)
             # info['who'] = self.antagonist_agent_id
+            if player_done:
+                self.antag_rollouts += 1
+                lvl = self.builder_env.render(observer='global')
+                next_state = self.player_env.reset(level_string=lvl)
+                self.sum_antag_rollout_reward.append(sum(self.final_antag))
+                self.final_antag.clear()
 
             # if the step that just occurred was final, then move on to next agent
             # if self.steps_this_episode == (self.antagonist_steps + self.builder_steps - 1):
@@ -188,7 +193,6 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
                 lvl = self.builder_env.render(observer='global')
                 _obs = self.player_env.reset(level_string=lvl)
                 obs[self.protagonist_agent_id] = _obs
-                reward[self.protagonist_agent_id] = 0
                 # info['who'] = self.protagonist_agent_id
                 self.phase_counter += 1
                 done[self.antagonist_agent_id] = True
@@ -200,30 +204,32 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             # ...
             next_state, step_reward, player_done, player_info = self.player_env.step(
                 action_dict[self.protagonist_agent_id])
-            if player_done:
-                self.protag_rollouts += 1
-                lvl = self.builder_env.render(observer='global')
-                next_state = self.player_env.reset(level_string=lvl)
             obs[self.protagonist_agent_id] = next_state
             reward[self.protagonist_agent_id] = step_reward
             info[self.protagonist_agent_id] = player_info
             self.final_protag.append(step_reward)
             # info['who'] = self.protagonist_agent_id
+            if player_done:
+                self.protag_rollouts += 1
+                lvl = self.builder_env.render(observer='global')
+                next_state = self.player_env.reset(level_string=lvl)
+                self.sum_protag_rollout_reward.append(sum(self.final_protag))
+                self.final_protag.clear()
 
             if player_done and self.protag_rollouts == 5:
                 # info['who'] = self.protagonist_agent_id
                 self.phase_counter += 1
                 done[self.protagonist_agent_id] = True
-
-        if self.phase_counter == 3:
-            done["__all__"] = True
-            # info['who'] = 'builder'
-            self.regret = max(self.final_antag) - (sum(self.final_protag) / self.protag_rollouts)
-            for agent in [self.antagonist_agent_id, self.protagonist_agent_id, "builder"]:
-                if agent == self.antagonist_agent_id or agent == 'builder':
-                    reward[agent] = self.regret
-                else:
-                    reward[agent] = -self.regret
+                # print(f"antag: {self.sum_antag_rollout_reward}")
+                # print(f"protag: {self.sum_protag_rollout_reward}")
+                self.regret = max(self.sum_antag_rollout_reward) - (sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
+                # print(f"regret: {self.regret}")
+                for agent in [self.antagonist_agent_id, self.protagonist_agent_id, "builder"]:
+                    if agent == self.antagonist_agent_id or agent == 'builder':
+                        reward[agent] = self.regret
+                    else:
+                        reward[agent] = -self.regret
+                done["__all__"] = True
 
         self.steps_this_episode += 1
         return obs, reward, done, info
@@ -236,8 +242,11 @@ def add_wrappers(str_list: list) -> list:
             wraps.append(AlignedReward)
         elif "ResetCallback" in w:
             wraps.append(SetLevelWithCallback)
-        elif "MultiAgent" in w:
-            wraps.append(RLlibMultiAgentWrapper)
+        # I don't think having this does anything for us.
+        # elif "MultiAgent" in w:
+        #     wraps.append(RLlibMultiAgentWrapper)
+        elif "HierarchicalBuilder" in w:
+            wraps.append(HierarchicalBuilderEnv)
         else:
             raise ValueError("Requested wrapper does not exist. Please make it.")
 
@@ -279,7 +288,6 @@ if __name__ == "__main__":
 
 
     def make_env(config):
-        print(config['yaml_file'])
         env = RLlibEnv(config)
         env = AlignedReward(env, config)
         h_env = HierarchicalBuilderEnv(env, config)
@@ -307,32 +315,12 @@ if __name__ == "__main__":
     from ray.rllib.policy.sample_batch import SampleBatch
     from typing import Dict, Optional
 
-    # class PairedTrainingCallback(DefaultCallbacks):
-    #     def __init__(self):
-    #         super().__init__()
-    #
-    #     def on_postprocess_trajectory(
-    #             self, *,
-    #             worker: "RolloutWorker",
-    #             episode: MultiAgentEpisode,
-    #             agent_id: AgentID,
-    #             policy_id: PolicyID,
-    #             policies: Dict[PolicyID, Policy],
-    #             postprocessed_batch: SampleBatch,
-    #             original_batches: Dict[AgentID, SampleBatch], **kwargs) -> None:
-    #         print(episode)
-    #         print(agent_id, policy_id)
-    #         print(original_batches.keys())
-    #         print(original_batches.values())
-    #         print(postprocessed_batch.keys())
-
-
     h_env = make_env(config)
     # print(h_env.builder_env.action_space)
     _ = h_env.reset()
     config2 = {
         'env': 'h_zelda',
-        'num_workers': 1,
+        'num_workers': 2,
         "num_envs_per_worker": 2,
         'env_config': config,
         # "callbacks": PairedTrainingCallback,
@@ -353,32 +341,11 @@ if __name__ == "__main__":
         "framework": 'torch',
     }
 
-    try:
-        trainer = PPOTrainer(config=config2, env="h_zelda")
+    # try:
+    trainer = PPOTrainer(config=config2, env="h_zelda")
+    rs = []
+    for i in range(5):
         result = trainer.train()
-        pass
-    except Exception as e:
-        error = e
-        print(error)
-        ray.shutdown()
-    ray.shutdown()
+        trainer.log_result(result)
 
-    #
-    #
-    #
-    # rs = []
-    # obs = []
-    # dones = []
-    # done = {'__all__': False}
-    # infos = {}
-    # infos['who'] = 'builder'
-    # while not done['__all__']:
-    #     if infos['who'] == 'builder':
-    #         action = h_env.builder_env.action_space.sample()
-    #     else:
-    #         action = h_env.player_env.action_space.sample()
-    #     action_dict = {f"{infos['who']}": action}
-    #     ns, reward, done, infos = h_env.step(action_dict)
-    #     rs.append(reward)
-    #     obs.append(ns)
-    #     dones.append(done)
+    ray.shutdown()
