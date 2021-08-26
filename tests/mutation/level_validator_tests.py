@@ -8,18 +8,14 @@ from generators.static_generator import StaticGenerator
 from generators.RandomSelectionGenerator import RandomSelectionGenerator
 import gym_factory
 from mutation.level_validator import RandomAgentValidator, GraphValidator
-from tests.test_structs import example_network_factory_build_info
+from tests.test_structs import example_pcgrl_network_factory_build_info
 
 
 class TestLevelValidators(unittest.TestCase):
 
     def test_graph_validator_on_PCGRL(self):
-        build_info = example_network_factory_build_info
-        build_info['action_space'] = gym.spaces.Discrete(169)
-        build_info['num_outputs'] = 169
-        build_info['name'] = 'adversary'
-        build_info['model_config'] = {'length': 15, 'width': 15, "placements": 75}
-
+        build_info = example_pcgrl_network_factory_build_info
+        build_info['name'] = 'pcgrl_test'
         generator = PCGRLGenerator(**build_info)
         validator = GraphValidator()
         res = validator.validate_level(generator)

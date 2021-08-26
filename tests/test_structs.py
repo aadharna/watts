@@ -12,7 +12,7 @@ example_network_factory_build_info = {
 
 example_pcgrl_network_factory_build_info = {
     'action_space': MultiDiscrete([15, 15, 6, 2]),
-    'obs_space': Box(0.0, 255.0, (15, 15, 4), np.float64),
+    'obs_space': Box(0.0, 255.0, (15, 15, 6), np.float64),
     'model_config': {'length': 15, 'width': 15, 'placements': 50},
     'num_outputs': sum([15, 15, 6, 2]),
     # 'name' needs to be added based on which network is being run
