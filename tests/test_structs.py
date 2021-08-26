@@ -66,7 +66,7 @@ example_gap_state_dict = {
 }
 
 example_pcgrl_state_dict = {
-    "conv.weight": rand((16, 4, 3, 3)),
+    "conv.weight": rand((16, 6, 3, 3)),
     "conv.bias": rand(16),
     "rnn.weight_ih": rand((8112, 2704)),
     "rnn.weight_hh": rand((8112, 2704)),
