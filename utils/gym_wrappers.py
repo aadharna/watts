@@ -77,7 +77,6 @@ class SetLevelWithCallback(gym.Wrapper):
         return f"<ResetCallback{str(self.env)}>"
 
 
-
 class HierarchicalBuilderEnv(MultiAgentEnv):
     def __init__(self, env, env_config):
         super().__init__()
@@ -95,7 +94,7 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
                               'random_level_on_reset': False,
                               }
         self.builder_env = RLlibEnv(build_rllib_config)
-        self.player_env = env
+        self.env = env
 
         self.builder_steps = env_config.get('builder_max_steps', 50)
         self.antagonist_steps = env_config.get('max_steps', 250)
@@ -115,10 +114,9 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         self.protagonist_agent = 'protagonist'
         self.phase_counter = 0
 
-
     def reset(self):
         self.cur_obs = self.builder_env.reset()
-        _ = self.player_env.reset()
+        _ = self.env.reset()
         self.num_high_level_steps += 1
         self.steps_this_episode = 0
         self.phase_counter = 0
@@ -149,51 +147,47 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         # build new level steps [0, 50)
         # if self.steps_this_episode < self.builder_steps:
         if self.phase_counter == 0:
-            # perform singular build step
             next_state, step_reward, builder_done, builder_info = self.builder_env.step(action_dict["builder"])
             obs['builder'] = next_state
             reward['builder'] = step_reward
             info['builder'] = builder_info
             self.final_adversary += step_reward
             done['builder'] = builder_done
-            # info['who'] = 'builder'
 
             # if final build step, move on to playing the level
             # if self.steps_this_episode == (self.builder_steps - 1):
             if builder_done:
                 self.phase_counter += 1
                 lvl = self.builder_env.render(observer='global')
-                _obs = self.player_env.reset(level_string=lvl)
+                _obs = self.env.reset(level_string=lvl)
                 obs[self.antagonist_agent_id] = _obs
                 reward[self.antagonist_agent_id] = 0
-                # info['who'] = self.antagonist_agent_id
+                done['builder'] = True
 
         # run antagonist agent steps [50, 300)
         # elif self.steps_this_episode < (self.antagonist_steps + self.builder_steps):
         elif self.phase_counter == 1 and self.antag_rollouts < 5:
             # perform the step for this agent
             # ...
-            next_state, step_reward, player_done, player_info = self.player_env.step(
+            next_state, step_reward, player_done, player_info = self.env.step(
                 action_dict[self.antagonist_agent_id])
-            obs[self.antagonist_agent_id] = next_state
             reward[self.antagonist_agent_id] = step_reward
             info[self.antagonist_agent_id] = player_info
             self.final_antag.append(step_reward)
-            # info['who'] = self.antagonist_agent_id
             if player_done:
                 self.antag_rollouts += 1
                 lvl = self.builder_env.render(observer='global')
-                next_state = self.player_env.reset(level_string=lvl)
+                next_state = self.env.reset(level_string=lvl)
                 self.sum_antag_rollout_reward.append(sum(self.final_antag))
                 self.final_antag.clear()
+            obs[self.antagonist_agent_id] = next_state
 
             # if the step that just occurred was final, then move on to next agent
             # if self.steps_this_episode == (self.antagonist_steps + self.builder_steps - 1):
             if player_done and self.antag_rollouts == 5:
                 lvl = self.builder_env.render(observer='global')
-                _obs = self.player_env.reset(level_string=lvl)
+                _obs = self.env.reset(level_string=lvl)
                 obs[self.protagonist_agent_id] = _obs
-                # info['who'] = self.protagonist_agent_id
                 self.phase_counter += 1
                 done[self.antagonist_agent_id] = True
 
@@ -202,37 +196,54 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         elif self.phase_counter == 2 and self.protag_rollouts < 5:
             # perform the step for this agent
             # ...
-            next_state, step_reward, player_done, player_info = self.player_env.step(
+            next_state, step_reward, player_done, player_info = self.env.step(
                 action_dict[self.protagonist_agent_id])
-            obs[self.protagonist_agent_id] = next_state
             reward[self.protagonist_agent_id] = step_reward
             info[self.protagonist_agent_id] = player_info
             self.final_protag.append(step_reward)
-            # info['who'] = self.protagonist_agent_id
             if player_done:
                 self.protag_rollouts += 1
                 lvl = self.builder_env.render(observer='global')
-                next_state = self.player_env.reset(level_string=lvl)
+                next_state = self.env.reset(level_string=lvl)
                 self.sum_protag_rollout_reward.append(sum(self.final_protag))
                 self.final_protag.clear()
+            obs[self.protagonist_agent_id] = next_state
 
             if player_done and self.protag_rollouts == 5:
-                # info['who'] = self.protagonist_agent_id
                 self.phase_counter += 1
                 done[self.protagonist_agent_id] = True
-                # print(f"antag: {self.sum_antag_rollout_reward}")
-                # print(f"protag: {self.sum_protag_rollout_reward}")
-                self.regret = max(self.sum_antag_rollout_reward) - (sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
-                # print(f"regret: {self.regret}")
-                for agent in [self.antagonist_agent_id, self.protagonist_agent_id, "builder"]:
-                    if agent == self.antagonist_agent_id or agent == 'builder':
-                        reward[agent] = self.regret
-                    else:
-                        reward[agent] = -self.regret
                 done["__all__"] = True
 
         self.steps_this_episode += 1
         return obs, reward, done, info
+
+    def __str__(self):
+        return f"<HierarchicalBuilder{str(self.env)}>"
+
+
+class Regret(HierarchicalBuilderEnv):
+    def __init__(self, env, env_config):
+        HierarchicalBuilderEnv.__init__(self, env, env_config)
+        self.regret = 0
+
+    def step(self, action_dict):
+        ns, rew, d, info = super().step(action_dict)
+        if d['__all__']:
+            self.regret = max(self.sum_antag_rollout_reward) - (
+                        sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
+            # print(f"regret: {self.regret}")
+            for agent in [self.antagonist_agent_id, self.protagonist_agent_id, "builder"]:
+                if agent == self.antagonist_agent_id or agent == 'builder':
+                    rew[agent] = self.regret
+                else:
+                    rew[agent] = -self.regret
+        return ns, rew, d, info
+
+    def reset(self):
+        return super().reset()
+
+    def __str__(self):
+        return f"<Regret{str(self.env)}>"
 
 
 def add_wrappers(str_list: list) -> list:
@@ -242,11 +253,13 @@ def add_wrappers(str_list: list) -> list:
             wraps.append(AlignedReward)
         elif "ResetCallback" in w:
             wraps.append(SetLevelWithCallback)
-        # I don't think having this does anything for us.
-        # elif "MultiAgent" in w:
-        #     wraps.append(RLlibMultiAgentWrapper)
+        # This is useful; see the griddly multiagent rllib interface doc page
+        elif "MultiAgent" in w:
+            wraps.append(RLlibMultiAgentWrapper)
         elif "HierarchicalBuilder" in w:
             wraps.append(HierarchicalBuilderEnv)
+        elif 'Regret' in w:
+            wraps.append(Regret)
         else:
             raise ValueError("Requested wrapper does not exist. Please make it.")
 
@@ -290,7 +303,7 @@ if __name__ == "__main__":
     def make_env(config):
         env = RLlibEnv(config)
         env = AlignedReward(env, config)
-        h_env = HierarchicalBuilderEnv(env, config)
+        h_env = Regret(env, config)
         return h_env
 
 
@@ -329,11 +342,11 @@ if __name__ == "__main__":
                 'builder': (None, h_env.builder_env.observation_space,
                             h_env.builder_env.action_space, {'model': {'custom_model': 'PCGRL',
                                                                        'custom_model_config': {'cell_size': 2704}}}),
-                'antagonist': (None, h_env.player_env.observation_space,
-                               h_env.player_env.action_space, {'model': {'custom_model': 'AIIDE',
+                'antagonist': (None, h_env.env.observation_space,
+                               h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
                                                                          'custom_model_config': {}}}),
-                'protagonist': (None, h_env.player_env.observation_space,
-                                h_env.player_env.action_space, {'model': {'custom_model': 'AIIDE',
+                'protagonist': (None, h_env.env.observation_space,
+                                h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
                                                                           'custom_model_config': {}}})
             },
             'policy_mapping_fn': policy_mapping_fn
@@ -341,10 +354,28 @@ if __name__ == "__main__":
         "framework": 'torch',
     }
 
+    from datetime import datetime
+    import tempfile
+    from ray.tune.logger import UnifiedLogger
+    def custom_log_creator(custom_path, custom_str):
+
+        timestr = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
+        logdir_prefix = "{}_{}".format(custom_str, timestr)
+
+        def logger_creator(config):
+            if not os.path.exists(custom_path):
+                os.makedirs(custom_path)
+            logdir = tempfile.mkdtemp(prefix=logdir_prefix, dir=custom_path)
+            return UnifiedLogger(config, logdir, loggers=None)
+
+        return logger_creator
+
     # try:
-    trainer = PPOTrainer(config=config2, env="h_zelda")
+    trainer = PPOTrainer(config=config2, env="h_zelda",
+                         logger_creator=custom_log_creator('.',
+                                                           'paired'))
     rs = []
-    for i in range(5):
+    for i in range(500):
         result = trainer.train()
         trainer.log_result(result)
 
