@@ -1,4 +1,4 @@
-from mutation.replacement_strategy import ReplaceOldest
+from evolution.replacement_strategy import ReplaceOldest
 from tests.test_classes import MockGenerator, MockPair, MockSolver
 import unittest
 

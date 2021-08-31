@@ -3,8 +3,8 @@ from typing import Dict, Any
 
 from gym_factory import GridGameFactory
 from managers.base import Manager
-from mutation.mutation_strategy import MutationStrategy
-from mutation.replacement_strategy import ReplacementStrategy
+from evolution.evolution_strategy import EvolutionStrategy
+from evolution.replacement_strategy import ReplacementStrategy
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from serializer.POETManagerSerializer import POETManagerSerializer
@@ -19,7 +19,7 @@ class PoetManager(Manager):
             exp_name: str,
             gym_factory: GridGameFactory,
             initial_pair: Pairing,
-            mutation_strategy: MutationStrategy,
+            evolution_strategy: EvolutionStrategy,
             replacement_strategy: ReplacementStrategy,
             transfer_strategy: RankStrategy,
             network_factory: NetworkFactory,
@@ -33,7 +33,7 @@ class PoetManager(Manager):
         :param registrar: class that dispenses necessary information e.g. num_poet_loops
         """
         super().__init__(exp_name, gym_factory, network_factory, registrar)
-        self._mutation_strategy = mutation_strategy
+        self._evolution_strategy = evolution_strategy
         self._transfer_strategy = transfer_strategy
         self._replacement_strategy = replacement_strategy
         self.active_population = [initial_pair]
@@ -122,8 +122,8 @@ class PoetManager(Manager):
             print(f"loop {i} / {self.args.num_poet_loops}")
             self.stats[i] = {}
 
-            if i % self.args.mutation_timer == 0:
-                children = self._mutation_strategy.mutate(self.active_population)
+            if i % self.args.evolution_timer == 0:
+                children = self._evolution_strategy.evolve(self.active_population)
                 for solver, generator, parent_id in children:
                     weights = ray.get(solver.get_weights.remote())
                     self.active_population.append(Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
