@@ -22,12 +22,11 @@ class AlignedReward(gym.Wrapper, RLlibEnv):
         self.play_length = env_config.get('max_steps', 500)
 
     def step(self, action):
-        assert (self.play_length is not None)
+        assert(self.play_length is not None)
         action, reward, done, info = super().step(action)
         self.steps += 1
         if "PlayerResults" in info:
             self.win = info['PlayerResults']['1']
-            # print(f"set win to: {self.win}")
 
         if self.win == 'Win':
             reward = 1 - (self.steps / self.play_length)
@@ -66,7 +65,7 @@ class SetLevelWithCallback(gym.Wrapper):
         level_string, info_dict = self.create_level_fn()
         self.lvl = level_string
         self.generation_data = info_dict
-        assert (isinstance(level_string, str) or level_string is None)
+        assert(isinstance(level_string, str) or level_string is None)
         kwargs['level_string'] = level_string
         return self.env.reset(**kwargs)
 
@@ -138,7 +137,6 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         }
 
     def step(self, action_dict):
-        # assert len(action_dict) == 1, action_dict
         done = {"__all__": False}
         obs = {}
         reward = {}
@@ -228,6 +226,7 @@ class Regret(HierarchicalBuilderEnv):
 
     def step(self, action_dict):
         ns, rew, d, info = super().step(action_dict)
+        # if episode is over, calculate regret
         if d['__all__']:
             self.regret = max(self.sum_antag_rollout_reward) - (
                         sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
@@ -237,6 +236,10 @@ class Regret(HierarchicalBuilderEnv):
                     rew[agent] = self.regret
                 else:
                     rew[agent] = -self.regret
+        # else zero out the reward
+        else:
+            for k, v in rew.items():
+                rew[k] = 0
         return ns, rew, d, info
 
     def reset(self):
@@ -254,6 +257,7 @@ def add_wrappers(str_list: list) -> list:
         elif "ResetCallback" in w:
             wraps.append(SetLevelWithCallback)
         # This is useful; see the griddly multiagent rllib interface doc page
+        # https://griddly.readthedocs.io/en/latest/rllib/multi-agent/index.html
         elif "MultiAgent" in w:
             wraps.append(RLlibMultiAgentWrapper)
         elif "HierarchicalBuilder" in w:
@@ -269,17 +273,16 @@ def add_wrappers(str_list: list) -> list:
 if __name__ == "__main__":
     import gym
     import os
+    from datetime import datetime
     from griddly.util.rllib.environment.core import RLlibEnv
     from utils.register import Registrar
     from utils.loader import load_from_yaml
+    import tempfile
     import ray
-    from ray import tune
-    from ray.tune import function
+    from ray.tune.logger import UnifiedLogger
     from ray.tune.registry import register_env
     from ray.rllib.agents.ppo import PPOTrainer
     from ray.rllib.models import ModelCatalog
-    # from ray.rllib.examples.self_play_with_open_spiel_connect_4 import config as spiel_config
-    # from ray.rllib.examples.hierarchical_training import
     import sys
 
     from models.AIIDE_network import AIIDEActor
@@ -320,14 +323,6 @@ if __name__ == "__main__":
     ModelCatalog.register_custom_model('PCGRL', PCGRLAdversarial)
     register_env('h_zelda', make_env)
 
-    from ray.rllib.agents.callbacks import DefaultCallbacks
-    from ray.rllib.env import BaseEnv
-    from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
-    from ray.rllib.policy import Policy
-    from ray.rllib.utils.typing import AgentID, PolicyID
-    from ray.rllib.policy.sample_batch import SampleBatch
-    from typing import Dict, Optional
-
     h_env = make_env(config)
     # print(h_env.builder_env.action_space)
     _ = h_env.reset()
@@ -344,19 +339,16 @@ if __name__ == "__main__":
                                                                        'custom_model_config': {'cell_size': 2704}}}),
                 'antagonist': (None, h_env.env.observation_space,
                                h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
-                                                                         'custom_model_config': {}}}),
+                                                                  'custom_model_config': {}}}),
                 'protagonist': (None, h_env.env.observation_space,
                                 h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
-                                                                          'custom_model_config': {}}})
+                                                                   'custom_model_config': {}}})
             },
             'policy_mapping_fn': policy_mapping_fn
         },
         "framework": 'torch',
     }
 
-    from datetime import datetime
-    import tempfile
-    from ray.tune.logger import UnifiedLogger
     def custom_log_creator(custom_path, custom_str):
 
         timestr = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")

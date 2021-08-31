@@ -94,16 +94,9 @@ class PCGRLGenerator(BaseGenerator):
             logits, h = self.network.forward_rnn(level, h, 1)
             torch_action, logp, entropy = sampler.sample(logits)
             predicted = torch_action.cpu().numpy()
-            #
-            # The mutable part of the map is a 13x13 subgrid of the 15x15 space
-            # (0, 0) -> (1, 1); (i, j) -> (i+1, j+1)
-            # Therefore, to ensure that the blocks get placed
-            # into the 13x13 middle of the 15x15 grid, we use a 13x13 grid and shift the indices by +1, +1
             x = int(predicted[0][0])
             y = int(predicted[0][1])
             tile = int(predicted[0][2])
-            # y = int(predicted % (length - 2)) + 1
-            # x = int(predicted // (width - 2)) + 1
             blankMap[0, tile, y, x] = 1
             level = torch.FloatTensor(blankMap)
             logps[i] = logp

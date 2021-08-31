@@ -34,6 +34,9 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
         x = self.conv(x)
         x = self.flat(x)
         h_in = state[0].reshape(-1, self.cell_size)
+        # I am temporarily choosing to keep this debug code in here
+        # because the base issue is not resolved in ray
+        # https://discuss.ray.io/t/gru-hidden-state-tensor-batch-dimension-is-incompatible-with-sample-batch/3295/4
         # print(f"seq_len {seq_lens}")
         # print(f"x.shape {x.shape}, h_in.shape {h_in.shape}")
         if not h_in.shape[0] == x.shape[0]:
@@ -42,8 +45,6 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
         h = self.rnn(x, h_in)
         self.value = self.val(h)
         logits = self.fc(h)
-        # print(f"h.shape {h.shape}, logits.shape {logits.shape}, self.value.shape {self.value.shape}")
-        # print('_'*60)
         return logits, [h]
 
     @override(ModelV2)
@@ -51,7 +52,7 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
         return self.value.squeeze(1)
 
     @override(ModelV2)
-    def get_initial_state(self):  # -> List[np.ndarray]:
+    def get_initial_state(self):
         """Get the initial recurrent state values for the model.
 
         Returns:
