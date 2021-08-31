@@ -32,8 +32,8 @@ opt_algo: "PPO"
 #n_opt_games: 1000
 
 # algo generation args
-mutation_timer: 25
-mutation_rate: 0.8
+evolution_timer: 25
+evolution_rate: 0.8
 max_children: 3
 max_envs: 10
 comp_agent: mcts

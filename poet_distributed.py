@@ -6,10 +6,10 @@ import sys
 from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
-from mutation.level_validator import GraphValidator, RandomVariableValidator
-from mutation.level_validator import PINSKYValidator
-from mutation.mutation_strategy import EvolveStrategy
-from mutation.replacement_strategy import ReplaceOldest
+from evolution.level_validator import GraphValidator, RandomVariableValidator
+from evolution.level_validator import PINSKYValidator
+from evolution.evolution_strategy import BirthThenKillStrategy
+from evolution.replacement_strategy import ReplaceOldest
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from serializer.POETManagerSerializer import POETManagerSerializer
@@ -55,10 +55,10 @@ if __name__ == "__main__":
                                                                                    registered_gym_name=registry.env_name,
                                                                                    network_factory=network_factory,
                                                                                    gym_factory=gym_factory),
-                                                   generator=generator),
-                              mutation_strategy=EvolveStrategy(GraphValidator(),
-                                                               args.max_children,
-                                                               args.mutation_rate),
+                                                                                   generator=generator),
+                              evolution_strategy=BirthThenKillStrategy(GraphValidator(),
+                                                                       args.max_children,
+                                                                       args.evolution_rate),
                               replacement_strategy=ReplaceOldest(args.max_envs),
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               registrar=registry)
