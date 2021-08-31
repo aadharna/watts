@@ -7,6 +7,7 @@ from mutation.mutation_strategy import MutationStrategy
 from mutation.replacement_strategy import ReplacementStrategy
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
+from serializer.POETManagerSerializer import POETManagerSerializer
 from solvers.SingleAgentSolver import SingleAgentSolver
 from transfer.rank_strategy import RankStrategy
 from utils.register import Registrar
@@ -40,6 +41,7 @@ class PoetManager(Manager):
         self.stats = {}
         self.stats['lineage'] = []
         self.stats['transfer'] = []
+        self.i = 1
 
     def set_solver_weights(self, pair_id: int, new_weights: Dict):
         for p in self.active_population:
@@ -115,7 +117,8 @@ class PoetManager(Manager):
         #       * etc
 
         """
-        for i in range(self.args.num_poet_loops):
+        while self.i <= self.args.num_poet_loops:
+            i = self.i
             print(f"loop {i} / {self.args.num_poet_loops}")
             self.stats[i] = {}
 
@@ -158,3 +161,9 @@ class PoetManager(Manager):
                 for j, (best_w, best_id) in new_weights.items():
                     self.set_solver_weights(j, best_w)
                     self.stats['transfer'].append((best_id, j, i))
+
+            # Iterate i before snapshotting to avoid a duplicate loop iteration when loading from a snapshot
+            self.i += 1
+
+            if i % self.args.snapshot_timer == 0:
+                POETManagerSerializer(self).serialize()

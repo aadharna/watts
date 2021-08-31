@@ -42,7 +42,8 @@ comp_agent: mcts
 num_poet_loops: 100
 transfer_timer: 10
 result_prefix: .. # DO NOT CHANGE!!
-start_fresh: True
+snapshot_timer: 20
+use_snapshot: False
 
 
 # gym Env Wrappers
