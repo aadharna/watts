@@ -15,6 +15,10 @@ class SingleAgentSolver(BaseSolver):
         # todo switch to having factories in here?
         # self.agent = solver[0]
         self.key = 0
+        self.trainer_config = trainer_config
+        self.registered_gym_name = registered_gym_name
+        self.network_factory = network_factory
+        self.gym_factory = gym_factory
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
         self.agent = network_factory.make()(weights)
         self.env = gym_factory.make()(trainer_config['env_config'])
@@ -80,3 +84,13 @@ class SingleAgentSolver(BaseSolver):
     def release(self):
         self.env.game.release()
         ray.actor.exit_actor()
+
+    @ray.method(num_returns=1)
+    def get_picklable_state(self):
+        return {
+            'trainer_config': self.trainer_config,
+            'registered_gym_name': self.registered_gym_name,
+            'network_factory': self.network_factory,
+            'gym_factory': self.gym_factory,
+            'weights': self.get_weights()
+        }

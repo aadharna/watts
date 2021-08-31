@@ -12,6 +12,7 @@ from mutation.mutation_strategy import EvolveStrategy
 from mutation.replacement_strategy import ReplaceOldest
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
+from serializer.POETManagerSerializer import POETManagerSerializer
 from solvers.SingleAgentSolver import SingleAgentSolver
 from transfer.score_strategy import ZeroShotCartesian
 from transfer.rank_strategy import GetBestSolver
@@ -43,21 +44,24 @@ if __name__ == "__main__":
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
     generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
 
-    manager = PoetManager(exp_name=_args.exp_name,
-                          gym_factory=gym_factory,
-                          network_factory=network_factory,
-                          initial_pair=Pairing(solver=SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
-                                                                               trainer_config=registry.get_trainer_config,
-                                                                               registered_gym_name=registry.env_name,
-                                                                               network_factory=network_factory,
-                                                                               gym_factory=gym_factory),
-                                               generator=generator),
-                          mutation_strategy=EvolveStrategy(GraphValidator(),
-                                                           args.max_children,
-                                                           args.mutation_rate),
-                          replacement_strategy=ReplaceOldest(args.max_envs),
-                          transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
-                          registrar=registry)
+    if args.use_snapshot:
+        manager = POETManagerSerializer.deserialize()
+    else:
+        manager = PoetManager(exp_name=_args.exp_name,
+                              gym_factory=gym_factory,
+                              network_factory=network_factory,
+                              initial_pair=Pairing(solver=SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
+                                                                                   trainer_config=registry.get_trainer_config,
+                                                                                   registered_gym_name=registry.env_name,
+                                                                                   network_factory=network_factory,
+                                                                                   gym_factory=gym_factory),
+                                                   generator=generator),
+                              mutation_strategy=EvolveStrategy(GraphValidator(),
+                                                               args.max_children,
+                                                               args.mutation_rate),
+                              replacement_strategy=ReplaceOldest(args.max_envs),
+                              transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
+                              registrar=registry)
 
     try:
         manager.run()

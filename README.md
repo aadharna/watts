@@ -15,7 +15,7 @@ by a user, and to cleanly scale to arbitrary compute.
 
 Installation:  
 
-	* conda create -n NAME python=3.7.10  
+	* conda create -n NAME python=3.7.10
 	* conda activate NAME  
 	* pip install ray  
 	* pip install ray[rllib]  
@@ -24,6 +24,7 @@ Installation:
 	* pip install griddly
 		* Make sure that vulkan is installed since Griddly depends on Vulkan for its rendering.
     * pip install networkx
+    * pip install torch
 
 If you see stuff like:
 ```
