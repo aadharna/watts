@@ -67,8 +67,9 @@ class SingleAgentSolver(BaseSolver):
                            }
                 }
 
-    def update_lvl_in_trainer(self, new_config):
-        return self.trainer.reset_config(new_config)
+    def update_lvl_in_trainer(self, config_with_new_level):
+        self.trainer_config = config_with_new_level
+        return self.trainer.reset_config(config_with_new_level)
 
     def _update_local_agent(self, weights):
         self.agent.load_state_dict(weights)
