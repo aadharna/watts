@@ -1,10 +1,9 @@
 import ray
-from typing import Dict, Any
+from typing import Dict, List, Tuple
 
 from gym_factory import GridGameFactory
 from managers.base import Manager
 from evolution.evolution_strategy import EvolutionStrategy
-from evolution.replacement_strategy import ReplacementStrategy
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from serializer.POETManagerSerializer import POETManagerSerializer
@@ -20,7 +19,6 @@ class PoetManager(Manager):
             gym_factory: GridGameFactory,
             initial_pair: Pairing,
             evolution_strategy: EvolutionStrategy,
-            replacement_strategy: ReplacementStrategy,
             transfer_strategy: RankStrategy,
             network_factory: NetworkFactory,
             registrar: Registrar,
@@ -35,9 +33,7 @@ class PoetManager(Manager):
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self._evolution_strategy = evolution_strategy
         self._transfer_strategy = transfer_strategy
-        self._replacement_strategy = replacement_strategy
         self.active_population = [initial_pair]
-        self.archive_history = self._replacement_strategy.archive_history
         self.stats = {}
         self.stats['lineage'] = []
         self.stats['transfer'] = []
@@ -88,6 +84,21 @@ class PoetManager(Manager):
                                                  pair_id=p.id))
         return refs
 
+    def build_children(self, children: List[Tuple]) -> List[Pairing]:
+        built_children = []
+        for solver, generator, parent_id in children:
+            parent_weights = ray.get(solver.get_weights.remote())
+            new_child = Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
+                                                                trainer_config=self.registrar.trainer_config,
+                                                                registered_gym_name=self.registrar.env_name,
+                                                                network_factory=self.network_factory,
+                                                                gym_factory=self.gym_factory,
+                                                                weights=parent_weights),
+                                generator=generator)
+            built_children.append(new_child)
+            self.stats['lineage'].append((parent_id, new_child.id))
+        return built_children
+
     def run(self):
         """
         # Paired Open Ended Trailblazer main loop
@@ -123,19 +134,10 @@ class PoetManager(Manager):
             self.stats[i] = {}
 
             if i % self.args.evolution_timer == 0:
-                children = self._evolution_strategy.evolve(self.active_population)
-                for solver, generator, parent_id in children:
-                    weights = ray.get(solver.get_weights.remote())
-                    self.active_population.append(Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
-                                                                                          trainer_config=self.registrar.trainer_config,
-                                                                                          registered_gym_name=self.registrar.env_name,
-                                                                                          network_factory=self.network_factory,
-                                                                                          gym_factory=self.gym_factory,
-                                                                                          weights=weights),
-                                                          generator=generator))
-                    self.stats['lineage'].append((parent_id, self.active_population[-1].id))
-
-                self.active_population = self._replacement_strategy.update(self.active_population)
+                self.active_population = self._evolution_strategy.evolve(
+                    pair_list=self.active_population,
+                    birth_func=self.build_children
+                )
 
             opt_refs = self.optimize()
             opt_returns = ray.get(opt_refs)
@@ -154,7 +156,7 @@ class PoetManager(Manager):
 
             if i % self.args.transfer_timer == 0:
                 nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
-                lvls = [(p.generator, j) for j,  p in enumerate(self.active_population)]
+                lvls = [(p.generator, j) for j, p in enumerate(self.active_population)]
                 id_map = [p.id for p in self.active_population]
                 new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
 
