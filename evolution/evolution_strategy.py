@@ -1,6 +1,5 @@
-import numpy as np
-
 from evolution.level_validator import LevelValidator
+from evolution.selection_strategy import SelectionStrategy
 
 
 class EvolutionStrategy:
@@ -12,14 +11,12 @@ class BirthThenKillStrategy(EvolutionStrategy):
     def __init__(
             self,
             level_validator: LevelValidator,
-            max_children: int = 10,
+            selection_strategy: SelectionStrategy,
             evolution_rate: float = 0.8,
-            rand: np.random.RandomState = np.random.RandomState(),
     ):
         self._level_validator = level_validator
-        self._max_children = max_children
+        self._selection_strategy = selection_strategy
         self._evolution_rate = evolution_rate
-        self._rand = rand
 
     def evolve(self, pair_list: list) -> list:
         """Execute an evolution step of the existing generator_archive.
@@ -32,9 +29,7 @@ class BirthThenKillStrategy(EvolutionStrategy):
         :return:
         """
         child_list = []
-        # we should be able to choose how the parents get selected. Increasing score? Decreasing score? User-defined?
-        # set p in the np.random.choice function (leaving it blank is uniform probability).
-        potential_parents = [pair_list[i] for i in self._rand.choice(len(pair_list), size=self._max_children)]
+        potential_parents = self._selection_strategy.select(pair_list)
 
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self._evolution_rate)
