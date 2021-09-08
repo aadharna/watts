@@ -57,10 +57,10 @@ if __name__ == "__main__":
                                                                                    network_factory=network_factory,
                                                                                    gym_factory=gym_factory),
                                                                                    generator=generator),
-                              evolution_strategy=BirthThenKillStrategy(GraphValidator(),
-                                                                       SelectRandomly(args.max_children),
-                                                                       args.evolution_rate),
-                              replacement_strategy=ReplaceOldest(args.max_envs),
+                              evolution_strategy=BirthThenKillStrategy(level_validator=GraphValidator(),
+                                                                       replacement_strategy=ReplaceOldest(args.max_envs),
+                                                                       selection_strategy=SelectRandomly(args.max_children),
+                                                                       evolution_rate=args.evolution_rate),
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               registrar=registry)
 
