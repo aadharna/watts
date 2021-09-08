@@ -1,0 +1,31 @@
+import numpy as np
+import unittest
+
+from evolution.level_validator import AlwaysValidator
+from evolution.evolution_strategy import BirthThenKillStrategy
+from evolution.selection_strategy import SelectRandomly
+from pair.agent_environment_pair import Pairing
+from tests.test_classes import MockGenerator, MockPair, MockSolver
+
+
+class TestSelectionStrategy(unittest.TestCase):
+
+    def test_single_random_selection(self):
+        evolution_rate = 0.5
+        generator = MockGenerator(evolution_rate)
+        solver = MockSolver()
+
+        selection_strategy = SelectRandomly(max_children=1)
+
+        pairing = selection_strategy.select([Pairing(solver, generator)])[0]
+
+        assert solver == pairing.solver
+        assert generator == pairing.generator
+
+    def test_multi_random_selection(self):
+        evolution_rate = 0.5
+        selection_strategy = SelectRandomly(max_children=3)
+
+        pairings = selection_strategy.select([MockPair(MockSolver(), MockGenerator(evolution_rate)) for _ in range(5)])
+
+        assert len(pairings) == 3

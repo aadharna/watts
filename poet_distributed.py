@@ -3,6 +3,7 @@ import os
 import ray
 import sys
 
+from evolution.selection_strategy import SelectRandomly
 from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
@@ -57,7 +58,7 @@ if __name__ == "__main__":
                                                                                    gym_factory=gym_factory),
                                                                                    generator=generator),
                               evolution_strategy=BirthThenKillStrategy(GraphValidator(),
-                                                                       args.max_children,
+                                                                       SelectRandomly(args.max_children),
                                                                        args.evolution_rate),
                               replacement_strategy=ReplaceOldest(args.max_envs),
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
