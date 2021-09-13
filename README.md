@@ -17,7 +17,7 @@ Installation:
 
 	* conda create -n NAME python=3.7.10
 	* conda activate NAME  
-	* pip install ray[default]==1.5.2
+	* pip install ray[default]==1.6.0
 	* pip install ray[rllib]  
 	* conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c conda-forge  
 		* Note, you should grab the correct install from here: https://pytorch.org/get-started/locally/
