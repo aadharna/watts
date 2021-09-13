@@ -61,6 +61,8 @@ class SingleAgentSolver(BaseSolver):
         self.trainer.log_result(result)
         self._update_local_agent(self.get_weights())
 
+        del result['config'] # Remove large and unserializable config
+
         return {self.key: {'weights': self.agent.state_dict(),
                            "result_dict": result,
                            'pair_id': kwargs.get('pair_id', 0)
