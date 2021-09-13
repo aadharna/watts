@@ -86,15 +86,15 @@ class PoetManager(Manager):
 
     def build_children(self, children: List[Tuple]) -> List[Pairing]:
         built_children = []
-        for solver, generator, parent_id in children:
-            parent_weights = ray.get(solver.get_weights.remote())
+        for parent_solver, child_generator, parent_id in children:
+            parent_weights = ray.get(parent_solver.get_weights.remote())
             new_child = Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
                                                                 trainer_config=self.registrar.trainer_config,
                                                                 registered_gym_name=self.registrar.env_name,
                                                                 network_factory=self.network_factory,
                                                                 gym_factory=self.gym_factory,
                                                                 weights=parent_weights),
-                                generator=generator)
+                                generator=child_generator)
             built_children.append(new_child)
             self.stats['lineage'].append((parent_id, new_child.id))
         return built_children
@@ -135,7 +135,7 @@ class PoetManager(Manager):
 
             if i % self.args.evolution_timer == 0:
                 self.active_population = self._evolution_strategy.evolve(
-                    pair_list=self.active_population,
+                    active_population=self.active_population,
                     birth_func=self.build_children
                 )
 

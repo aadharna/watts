@@ -13,22 +13,22 @@ from tests.test_classes import MockGenerator, MockPair, MockSolver
 class TestEvolutionStrategy(unittest.TestCase):
 
     def test_single_selection_evolve(self):
-        evolution_rate = 0.5
+        mutation_rate = 0.5
         evolve_strategy = BirthThenKillStrategy(
             level_validator=AlwaysValidator(),
             replacement_strategy=ReplaceOldest(),
             selection_strategy=SelectRandomly(max_children=1),
-            evolution_rate=evolution_rate,
+            mutation_rate=mutation_rate,
         )
 
         solver = MockSolver()
-        generator = MockGenerator(evolution_rate)
+        generator = MockGenerator(mutation_rate)
 
         def birth_nop(children: List[Tuple]) -> List[Pairing]:
             return [Pairing(solver, generator) for _ in children]
 
         pairing = evolve_strategy.evolve(
-            pair_list=[Pairing(solver, generator)],
+            active_population=[Pairing(solver, generator)],
             birth_func=birth_nop,
         )[0]
 
@@ -37,20 +37,20 @@ class TestEvolutionStrategy(unittest.TestCase):
 
     def test_multi_selection_evolve(self):
         rand = np.random.RandomState(42)
-        evolution_rate = 0.5
+        mutation_rate = 0.5
         evolve_strategy = BirthThenKillStrategy(
             level_validator=AlwaysValidator(),
             replacement_strategy=ReplaceOldest(),
             selection_strategy=SelectRandomly(max_children=5, rand=rand),
-            evolution_rate=evolution_rate,
+            mutation_rate=mutation_rate,
         )
 
         def birth_nop(children: List[Tuple]) -> List[Pairing]:
-            return [Pairing(MockSolver(), MockGenerator(evolution_rate)) for _ in children]
+            return [Pairing(MockSolver(), MockGenerator(mutation_rate)) for _ in children]
 
         pairings = evolve_strategy.evolve(
-            pair_list=[MockPair(MockSolver(), MockGenerator(evolution_rate)) for _ in range(3)],
+            active_population=[MockPair(MockSolver(), MockGenerator(mutation_rate)) for _ in range(3)],
             birth_func=birth_nop
         )
 
-        assert len(pairings) == 5
+        assert len(pairings) == 8

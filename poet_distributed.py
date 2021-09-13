@@ -60,7 +60,7 @@ if __name__ == "__main__":
                               evolution_strategy=BirthThenKillStrategy(level_validator=GraphValidator(),
                                                                        replacement_strategy=ReplaceOldest(args.max_envs),
                                                                        selection_strategy=SelectRandomly(args.max_children),
-                                                                       evolution_rate=args.evolution_rate),
+                                                                       mutation_rate=args.mutation_rate),
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               registrar=registry)
 
