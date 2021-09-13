@@ -6,7 +6,7 @@ game: limited_zelda        # alternate solarfox or foragers with . Use commented
 lvl_dir: levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
-record_freq: 10000000
+record_freq: 5000
 
 # generator args, will change for each game
 mechanics: ['+', 'A', 'g', 'e', 'w'] #['b', 'A', 'w']
@@ -28,8 +28,6 @@ framework: "torch"
 # algo optimization args
 game_len: 500
 opt_algo: "PPO"
-#opt_popsize: 50
-#n_opt_games: 1000
 
 # algo generation args
 mutation_timer: 25
@@ -41,8 +39,7 @@ comp_agent: mcts
 # algo general args
 num_poet_loops: 100
 transfer_timer: 10
-result_prefix: .. # DO NOT CHANGE!!
-snapshot_timer: 20
+snapshot_timer: 200000
 use_snapshot: False
 
 
