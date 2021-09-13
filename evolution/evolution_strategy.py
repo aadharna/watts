@@ -5,7 +5,7 @@ from typing import Callable, List, Tuple
 
 
 class EvolutionStrategy:
-    def evolve(self, pair_list: list, birth_func) -> list:
+    def evolve(self, active_population: list, birth_func) -> list:
         raise NotImplementedError()
 
 
@@ -15,32 +15,34 @@ class BirthThenKillStrategy(EvolutionStrategy):
             level_validator: LevelValidator,
             replacement_strategy: ReplaceOldest,
             selection_strategy: SelectionStrategy,
-            evolution_rate: float = 0.8,
+            mutation_rate: float = 0.8,
     ):
         self._level_validator = level_validator
         self._replacement_strategy = replacement_strategy
         self._selection_strategy = selection_strategy
-        self._evolution_rate = evolution_rate
+        self._mutation_rate = mutation_rate
 
-    def evolve(self, pair_list: list, birth_func: Callable[[List[Tuple]], List]) -> list:
+    def evolve(self, active_population: list, birth_func: Callable[[List[Tuple]], List]) -> list:
         """Execute an evolution step of the existing generator_archive.
 
         The evolution strategy specifies how to combine Selection and Replacement.
         BirthThenKill first mutates parents to generate children using the SelectionStrategy,
         then kills them off using the ReplacementStrategy.
 
-        :param pair_list: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
         :param birth_func: a function describing how new pairs are created
         :return:
         """
         children = []
-        potential_parents = self._selection_strategy.select(pair_list)
+        potential_parents = self._selection_strategy.select(active_population)
 
         for parent in potential_parents:
-            new_generator = parent.generator.mutate(self._evolution_rate)
+            new_generator = parent.generator.mutate(self._mutation_rate)
             if self._level_validator.validate_level(new_generator):
                 children.append((parent.solver, new_generator, parent.id))
 
         children = birth_func(children)
 
-        return self._replacement_strategy.update(children)
+        active_population.extend(children)
+
+        return self._replacement_strategy.update(active_population)
