@@ -1,11 +1,9 @@
 class BaseSolver:
-    id = 0
 
     def __init__(self):
-        self.id = BaseSolver.id
-        BaseSolver.id += 1
+        pass
 
-    def evaluate(self, env_generator_fn, env_config) -> dict:
+    def evaluate(self, env_config, solver_id, generator_id) -> dict:
         raise NotImplementedError
 
     def optimize(self, trainer_config, level_string_monad, **kwargs):

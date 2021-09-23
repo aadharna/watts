@@ -1,13 +1,16 @@
+import os
 import ray
 import torch
 from solvers.base import BaseSolver
 from evaluators.rollout import rollout
 from griddly.util.rllib.environment.core import RLlibEnv
+from utils.gym_wrappers import custom_log_creator  # todo change where this comes from
 
 
 @ray.remote
 class SingleAgentSolver(BaseSolver):
-    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={}):
+    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={},
+                 log_id=0):
         BaseSolver.__init__(self)
         # todo We might want to name these agents to access via keys
         #  rather than a convention of [network].
@@ -15,11 +18,15 @@ class SingleAgentSolver(BaseSolver):
         # todo switch to having factories in here?
         # self.agent = solver[0]
         self.key = 0
+        self.log_id = log_id
         self.trainer_config = trainer_config
         self.registered_gym_name = registered_gym_name
         self.network_factory = network_factory
         self.gym_factory = gym_factory
-        self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name)
+        self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name,
+                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs'),
+                                                                             f'POET_{log_id}.')
+                                           )
         self.agent = network_factory.make()(weights)
         self.env = gym_factory.make()(trainer_config['env_config'])
         if bool(weights):
@@ -76,6 +83,13 @@ class SingleAgentSolver(BaseSolver):
     def _update_local_agent(self, weights):
         self.agent.load_state_dict(weights)
 
+    def get_key(self):
+        return self.key
+
+    def get_agent(self):
+        self._update_local_agent(self.get_weights())
+        return self.agent
+
     def get_weights(self) -> dict:
         weights = self.trainer.get_weights()
         tensor_weights = {k: torch.FloatTensor(v) for k, v in weights['default_policy'].items()}
@@ -89,11 +103,16 @@ class SingleAgentSolver(BaseSolver):
         ray.actor.exit_actor()
 
     @ray.method(num_returns=1)
+    def device(self):
+        return next(self.trainer.get_policy().model.parameters()).device
+
+    @ray.method(num_returns=1)
     def get_picklable_state(self):
         return {
             'trainer_config': self.trainer_config,
             'registered_gym_name': self.registered_gym_name,
             'network_factory': self.network_factory,
             'gym_factory': self.gym_factory,
-            'weights': self.get_weights()
+            'weights': self.get_weights(),
+            'log_id': self.log_id
         }

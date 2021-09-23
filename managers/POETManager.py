@@ -49,10 +49,10 @@ class PoetManager(Manager):
             if p.id == pair_id:
                 p.results.append(result_dict)
 
-    def set_win_status(self, pair_id: int, generator_solved_status: bool):
+    def append_win_status(self, pair_id: int, generator_solved_status: bool):
         for p in self.active_population:
             if p.id == pair_id:
-                p.solved = generator_solved_status
+                p.solved.append(generator_solved_status)
                 break
 
     def evaluate(self) -> list:
@@ -93,7 +93,8 @@ class PoetManager(Manager):
                                                                 registered_gym_name=self.registrar.env_name,
                                                                 network_factory=self.network_factory,
                                                                 gym_factory=self.gym_factory,
-                                                                weights=parent_weights),
+                                                                weights=parent_weights,
+                                                                log_id=f"{self.exp_name}_{Pairing.id}"),
                                 generator=child_generator)
             built_children.append(new_child)
             self.stats['lineage'].append((parent_id, new_child.id))
@@ -152,7 +153,7 @@ class PoetManager(Manager):
             for eval_return in eval_returns:
                 solved_status = eval_return[0]['win']
                 pair_id = eval_return['generator_id']
-                self.set_win_status(pair_id, solved_status)
+                self.append_win_status(pair_id, solved_status)
 
             if i % self.args.transfer_timer == 0:
                 nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
