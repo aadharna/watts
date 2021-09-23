@@ -8,7 +8,7 @@ from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
 from evolution.level_validator import GraphValidator, RandomVariableValidator
-from evolution.level_validator import PINSKYValidator
+from evolution.level_validator import PINSKYValidator, DeepMindValidator
 from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.replacement_strategy import ReplaceOldest
 from network_factory import NetworkFactory
@@ -20,7 +20,7 @@ from transfer.rank_strategy import GetBestSolver
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
-
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, help='exp name')
@@ -33,7 +33,12 @@ if __name__ == "__main__":
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
-    ray.init(num_gpus=1, ignore_reinit_error=True)#, log_to_driver=False, local_mode=True)
+    ray.init(num_gpus=1,
+             ignore_reinit_error=True,)
+             # log_to_driver=False,
+             # local_mode=True)
+
+    start = time.time()
 
     args = load_from_yaml(fpath=_args.args_file)
 
@@ -43,7 +48,8 @@ if __name__ == "__main__":
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
     level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string, file_args=registry.get_generator_config)
+    generator = EvolutionaryGenerator(level_string,
+                                      file_args=registry.get_generator_config)
 
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
@@ -55,8 +61,9 @@ if __name__ == "__main__":
                                                                                    trainer_config=registry.get_trainer_config,
                                                                                    registered_gym_name=registry.env_name,
                                                                                    network_factory=network_factory,
-                                                                                   gym_factory=gym_factory),
-                                                                                   generator=generator),
+                                                                                   gym_factory=gym_factory,
+                                                                                   log_id=f"{_args.exp_name}_{0}"),
+                                                   generator=generator),
                               evolution_strategy=BirthThenKillStrategy(level_validator=GraphValidator(),
                                                                        replacement_strategy=ReplaceOldest(args.max_envs),
                                                                        selection_strategy=SelectRandomly(args.max_children),
@@ -67,10 +74,13 @@ if __name__ == "__main__":
     try:
         manager.run()
         print("finished algorithm")
-    except Exception as e:
+    except (Exception, KeyboardInterrupt) as e:
         error = e
+        print('_'*40)
         print(error)
         print('_'*40)
-
-    print(f"{len(manager.active_population)} PAIR objects: \n {manager.active_population}")
-    ray.shutdown()
+    finally:
+        elapsed = time.time() - start
+        print(elapsed // 60, " minutes")
+        # print(f"{len(manager.active_population)} PAIR objects: \n {manager.active_population}")
+        ray.shutdown()

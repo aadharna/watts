@@ -1,4 +1,5 @@
 import gym
+import torch.cuda
 from griddly import gd
 from griddly.util.environment_generator_generator import EnvironmentGeneratorGenerator
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
@@ -156,8 +157,8 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             # if self.steps_this_episode == (self.builder_steps - 1):
             if builder_done:
                 self.phase_counter += 1
-                lvl = self.builder_env.render(observer='global')
-                _obs = self.env.reset(level_string=lvl)
+                self.lvl = self.builder_env.render(observer='global')
+                _obs = self.env.reset(level_string=self.lvl)
                 obs[self.antagonist_agent_id] = _obs
                 reward[self.antagonist_agent_id] = 0
                 done['builder'] = True
@@ -174,8 +175,7 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             self.final_antag.append(step_reward)
             if player_done:
                 self.antag_rollouts += 1
-                lvl = self.builder_env.render(observer='global')
-                next_state = self.env.reset(level_string=lvl)
+                next_state = self.env.reset(level_string=self.lvl)
                 self.sum_antag_rollout_reward.append(sum(self.final_antag))
                 self.final_antag.clear()
             obs[self.antagonist_agent_id] = next_state
@@ -183,8 +183,7 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             # if the step that just occurred was final, then move on to next agent
             # if self.steps_this_episode == (self.antagonist_steps + self.builder_steps - 1):
             if player_done and self.antag_rollouts == 5:
-                lvl = self.builder_env.render(observer='global')
-                _obs = self.env.reset(level_string=lvl)
+                _obs = self.env.reset(level_string=self.lvl)
                 obs[self.protagonist_agent_id] = _obs
                 self.phase_counter += 1
                 done[self.antagonist_agent_id] = True
@@ -201,8 +200,7 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             self.final_protag.append(step_reward)
             if player_done:
                 self.protag_rollouts += 1
-                lvl = self.builder_env.render(observer='global')
-                next_state = self.env.reset(level_string=lvl)
+                next_state = self.env.reset(level_string=self.lvl)
                 self.sum_protag_rollout_reward.append(sum(self.final_protag))
                 self.final_protag.clear()
             obs[self.protagonist_agent_id] = next_state
@@ -228,6 +226,9 @@ class Regret(HierarchicalBuilderEnv):
         ns, rew, d, info = super().step(action_dict)
         # if episode is over, calculate regret
         if d['__all__']:
+            # print(self.lvl)
+            # print(f"antag: {self.sum_antag_rollout_reward}")
+            # print(f"protag: {self.sum_protag_rollout_reward}")
             self.regret = max(self.sum_antag_rollout_reward) - (
                         sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
             # print(f"regret: {self.regret}")
@@ -269,19 +270,30 @@ def add_wrappers(str_list: list) -> list:
 
     return wraps
 
+from datetime import datetime
+from ray.tune.logger import UnifiedLogger
+import tempfile
+import os
+
+def custom_log_creator(custom_path, custom_str):
+
+    def logger_creator(config):
+        if not os.path.exists(custom_path):
+            os.makedirs(custom_path)
+        logdir = tempfile.mkdtemp(prefix=custom_str, dir=custom_path)
+        return UnifiedLogger(config, logdir, loggers=None)
+
+    return logger_creator
 
 if __name__ == "__main__":
     import gym
     import os
-    from datetime import datetime
     from griddly.util.rllib.environment.core import RLlibEnv
     from utils.register import Registrar
     from utils.loader import load_from_yaml
-    import tempfile
     import ray
-    from ray.tune.logger import UnifiedLogger
     from ray.tune.registry import register_env
-    from ray.rllib.agents.ppo import PPOTrainer
+    from ray.rllib.agents.ppo import PPOTrainer, DEFAULT_CONFIG
     from ray.rllib.models import ModelCatalog
     import sys
 
@@ -295,9 +307,9 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=1, ignore_reinit_error=True)  # , log_to_driver=False, local_mode=True)
 
-    registery = Registrar(file_args=load_from_yaml('args.yaml'))
+    registry = Registrar(file_args=load_from_yaml('args.yaml'))
 
-    config = registery.get_config_to_build_rllib_env
+    config = registry.get_config_to_build_rllib_env
     config['board_shape'] = (15, 15)
     config['builder_max_steps'] = 50
     config['max_steps'] = 250
@@ -321,13 +333,13 @@ if __name__ == "__main__":
 
     ModelCatalog.register_custom_model('AIIDE', AIIDEActor)
     ModelCatalog.register_custom_model('PCGRL', PCGRLAdversarial)
-    register_env('h_zelda', make_env)
+    register_env('h_maze', make_env)
 
     h_env = make_env(config)
     # print(h_env.builder_env.action_space)
     _ = h_env.reset()
     config2 = {
-        'env': 'h_zelda',
+        'env': 'h_maze',
         'num_workers': 2,
         "num_envs_per_worker": 2,
         'env_config': config,
@@ -347,28 +359,26 @@ if __name__ == "__main__":
             'policy_mapping_fn': policy_mapping_fn
         },
         "framework": 'torch',
+        "num_gpus": 1
     }
 
-    def custom_log_creator(custom_path, custom_str):
-
-        timestr = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
-        logdir_prefix = "{}_{}".format(custom_str, timestr)
-
-        def logger_creator(config):
-            if not os.path.exists(custom_path):
-                os.makedirs(custom_path)
-            logdir = tempfile.mkdtemp(prefix=logdir_prefix, dir=custom_path)
-            return UnifiedLogger(config, logdir, loggers=None)
-
-        return logger_creator
-
     # try:
-    trainer = PPOTrainer(config=config2, env="h_zelda",
-                         logger_creator=custom_log_creator('.',
-                                                           'paired'))
-    rs = []
-    for i in range(500):
-        result = trainer.train()
-        trainer.log_result(result)
+    # trainer = PPOTrainer(config=config2, env="h_zelda",
+    #                      logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs'),
+    #                                                        'paired'))
+
+    stop = {"timesteps_total": 500000}
+
+    from ray.tune import tune
+
+    results = tune.run(PPOTrainer, config=config2, stop=stop,
+                       local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
+
+    # for i in range(10):
+    #     print(i)
+    #     result = trainer.train()
+    #     trainer.log_result(result)
+    # print(f"cuda available: {torch.cuda.is_available()}")
+    # print(next(trainer.get_policy('builder').model.parameters()).device)
 
     ray.shutdown()

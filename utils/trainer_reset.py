@@ -27,6 +27,7 @@ if __name__ == "__main__":
     from solvers.SingleAgentSolver import SingleAgentSolver
 
     from ray.rllib.agents.ppo import PPOTrainer
+    from ray.rllib.agents.es.es import Worker
     from ray.rllib.utils import add_mixins
 
     os.chdir('..')

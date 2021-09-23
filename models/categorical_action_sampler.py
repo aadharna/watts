@@ -19,7 +19,7 @@ class ActionSampler:
         self._num_action_logits = np.sum(self._action_space_shape)
         self._num_action_parts = len(self._action_space_shape)
 
-    def sample(self, logits):
+    def sample(self, logits, max=False):
         """
 
         :param logits:
@@ -36,7 +36,7 @@ class ActionSampler:
         for i, (subset, subset_size) in enumerate(zip(split, self._action_space_shape)):
 
             dist = Categorical(logits=subset)
-            sampled = dist.sample()
+            sampled = dist.sample() if not max else torch.argmax(subset)
             logp = dist.log_prob(sampled)
             logps += logp
             entropies[i] = dist.entropy().mean()

@@ -53,5 +53,6 @@ class POETManagerSerializer():
                                                    registered_gym_name=pair.solver_state['registered_gym_name'],
                                                    network_factory=pair.solver_state['network_factory'],
                                                    gym_factory=pair.solver_state['gym_factory'],
-                                                   weights=pair.solver_state['weights'])
+                                                   weights=pair.solver_state['weights'],
+                                                   log_id=f"{pair.solver_state['log_id']}")
             delattr(pair, 'solver_state')

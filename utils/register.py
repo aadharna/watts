@@ -6,6 +6,7 @@ from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
 import gym
 from gym.spaces import MultiDiscrete, Discrete
 import os
+from ray.rllib.agents.registry import get_trainer_class
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 from ray.rllib.utils import add_mixins
 from utils.trainer_reset import ResetConfigOverride
@@ -119,6 +120,7 @@ class Registrar:
         }
 
         # Trainer Config for selected algorithm
+        # self.trainer_constr, self.trainer_config = get_trainer_class(alg=self.file_args.opt_algo, return_config=True)
         self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
         if self.file_args.custom_trainer_config_override:
             self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
@@ -132,6 +134,7 @@ class Registrar:
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
         self.trainer_config["num_envs_per_worker"] = 2
+        self.trainer_config['simple_optimizer'] = True
 
     @property
     def get_nn_build_info(self):
