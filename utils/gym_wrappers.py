@@ -1,5 +1,4 @@
 import gym
-import torch.cuda
 from griddly import gd
 from griddly.util.environment_generator_generator import EnvironmentGeneratorGenerator
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
@@ -270,20 +269,6 @@ def add_wrappers(str_list: list) -> list:
 
     return wraps
 
-from datetime import datetime
-from ray.tune.logger import UnifiedLogger
-import tempfile
-import os
-
-def custom_log_creator(custom_path, custom_str):
-
-    def logger_creator(config):
-        if not os.path.exists(custom_path):
-            os.makedirs(custom_path)
-        logdir = tempfile.mkdtemp(prefix=custom_str, dir=custom_path)
-        return UnifiedLogger(config, logdir, loggers=None)
-
-    return logger_creator
 
 if __name__ == "__main__":
     import gym
@@ -293,7 +278,7 @@ if __name__ == "__main__":
     from utils.loader import load_from_yaml
     import ray
     from ray.tune.registry import register_env
-    from ray.rllib.agents.ppo import PPOTrainer, DEFAULT_CONFIG
+    from ray.rllib.agents.ppo import PPOTrainer
     from ray.rllib.models import ModelCatalog
     import sys
 
