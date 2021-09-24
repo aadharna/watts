@@ -4,7 +4,7 @@ import torch
 from solvers.base import BaseSolver
 from evaluators.rollout import rollout
 from griddly.util.rllib.environment.core import RLlibEnv
-from utils.gym_wrappers import custom_log_creator  # todo change where this comes from
+from utils.place_rllib_logger_util import custom_log_creator
 
 
 @ray.remote
