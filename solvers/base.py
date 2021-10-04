@@ -9,8 +9,11 @@ class BaseSolver:
     def optimize(self, trainer_config, level_string_monad, **kwargs):
         raise NotImplementedError
 
-    def get_weights(self) -> list:
+    def get_weights(self) -> dict:
         raise NotImplementedError
 
     def set_weights(self, new_weights):
+        raise NotImplementedError
+
+    def get_key(self):
         raise NotImplementedError
