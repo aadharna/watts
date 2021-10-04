@@ -8,7 +8,7 @@ from models.categorical_action_sampler import ActionSampler
 
 class TestActionSampler(unittest.TestCase):
 
-    def test_multiDiscrete_sampling(self):
+    def test_multi_discrete_sampling(self):
         action_space = MultiDiscrete([2, 5])
         sampler = ActionSampler(action_space=action_space)
         # obs_space = Box(0.0, 255.0, (5, 5, 6), np.float64)
@@ -20,7 +20,7 @@ class TestActionSampler(unittest.TestCase):
         print(logp)
         print(entropy)
 
-    def test_Discrete_sampling(self):
+    def test_discrete_sampling(self):
         action_space = Discrete(5)
         sampler = ActionSampler(action_space=action_space)
         # obs_space = Box(0.0, 255.0, (5, 5, 6), np.float64)
@@ -32,7 +32,7 @@ class TestActionSampler(unittest.TestCase):
         print(logp)
         print(entropy)
 
-    def test_Discrete_max_sampling(self):
+    def test_discrete_max_sampling(self):
         action_space = Discrete(5)
         sampler = ActionSampler(action_space=action_space)
         # obs_space = Box(0.0, 255.0, (5, 5, 6), np.float64)
@@ -43,7 +43,7 @@ class TestActionSampler(unittest.TestCase):
         actions, logp, entropy = sampler.sample(logits, max=True)
         assert(actions == 1)
 
-    def test_multiDiscrete_max_sampling(self):
+    def test_multi_discrete_max_sampling(self):
         action_space = MultiDiscrete([2, 5])
         sampler = ActionSampler(action_space=action_space)
         # obs_space = Box(0.0, 255.0, (5, 5, 6), np.float64)
