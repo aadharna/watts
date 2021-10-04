@@ -120,7 +120,6 @@ class Registrar:
         }
 
         # Trainer Config for selected algorithm
-        # self.trainer_constr, self.trainer_config = get_trainer_class(alg=self.file_args.opt_algo, return_config=True)
         self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
         if self.file_args.custom_trainer_config_override:
             self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
@@ -135,6 +134,8 @@ class Registrar:
         self.trainer_config["num_workers"] = 1
         self.trainer_config["num_envs_per_worker"] = 2
         self.trainer_config['simple_optimizer'] = True
+        # self.trainer_config['log_level'] = 'INFO'
+        # self.trainer_config['num_gpus'] = 0.1
 
     @property
     def get_nn_build_info(self):
