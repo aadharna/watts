@@ -47,10 +47,40 @@ class MockSolver(BaseSolver):
         super().__init__()
 
     @property
-    def release(self):
+    def evaluate(self, env_config, solver_id, generator_id):
+        class Foo:
+            def remote(self):
+                return {0: {
+                    'win': True,
+                    'score': 0
+                    }
+                }
+        return Foo()
 
+    @property
+    def get_key(self):
+        class Foo:
+            def remote(self):
+                return 0
+        return Foo()
+
+    @property
+    def set_weights(self, new_weights):
         class Foo:
             def remote(self):
                 return
+        return Foo()
 
+    @property
+    def get_weights(self) -> dict:
+        class Foo:
+            def remote(self):
+                return {}
+        return Foo()
+
+    @property
+    def release(self):
+        class Foo:
+            def remote(self):
+                return
         return Foo()
