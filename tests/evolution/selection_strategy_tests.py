@@ -1,8 +1,5 @@
-import numpy as np
 import unittest
 
-from evolution.level_validator import AlwaysValidator
-from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.selection_strategy import SelectRandomly
 from pair.agent_environment_pair import Pairing
 from tests.test_classes import MockGenerator, MockPair, MockSolver

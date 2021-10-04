@@ -1,4 +1,4 @@
-from evolution.level_validator import LevelValidator
+from validators.level_validator import LevelValidator
 from evolution.replacement_strategy import ReplaceOldest
 from evolution.selection_strategy import SelectionStrategy
 from typing import Callable, List, Tuple
@@ -38,8 +38,7 @@ class BirthThenKillStrategy(EvolutionStrategy):
 
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self._mutation_rate)
-            if self._level_validator.validate_level(generator=new_generator,
-                                                    solver=parent.solver):
+            if self._level_validator.validate_level(generator=new_generator, solver=parent.solver):
                 children.append((parent.solver, new_generator, parent.id))
 
         children = birth_func(children)

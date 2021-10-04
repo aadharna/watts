@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Tuple
 import unittest
 
-from evolution.level_validator import AlwaysValidator
+from validators.level_validator import AlwaysValidator
 from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.replacement_strategy import ReplaceOldest
 from evolution.selection_strategy import SelectRandomly

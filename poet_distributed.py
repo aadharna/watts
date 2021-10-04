@@ -2,15 +2,14 @@ import argparse
 import os
 import ray
 import sys
+import time
 
+from evolution.evolution_strategy import BirthThenKillStrategy
+from evolution.replacement_strategy import ReplaceOldest
 from evolution.selection_strategy import SelectRandomly
 from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
-from evolution.level_validator import GraphValidator, RandomVariableValidator
-from evolution.level_validator import PINSKYValidator, DeepMindValidator
-from evolution.evolution_strategy import BirthThenKillStrategy
-from evolution.replacement_strategy import ReplaceOldest
 from network_factory import NetworkFactory
 from pair.agent_environment_pair import Pairing
 from serializer.POETManagerSerializer import POETManagerSerializer
@@ -20,7 +19,8 @@ from transfer.rank_strategy import GetBestSolver
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
-import time
+from validators.graph_validator import GraphValidator
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, help='exp name')
