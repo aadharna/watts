@@ -225,12 +225,13 @@ class Regret(HierarchicalBuilderEnv):
         ns, rew, d, info = super().step(action_dict)
         # if episode is over, calculate regret
         if d['__all__']:
-            # print(self.lvl)
-            # print(f"antag: {self.sum_antag_rollout_reward}")
-            # print(f"protag: {self.sum_protag_rollout_reward}")
+            # R = max(antagonist) - mean(protagonist)
             self.regret = max(self.sum_antag_rollout_reward) - (
                         sum(self.sum_protag_rollout_reward) / len(self.sum_protag_rollout_reward))
-            # print(f"regret: {self.regret}")
+            # set builder to +reward
+            # set antagonist to +reward
+            # set protagonist to -reward
+            # send these values to rllib for them to optimize it
             for agent in [self.antagonist_agent_id, self.protagonist_agent_id, "builder"]:
                 if agent == self.antagonist_agent_id or agent == 'builder':
                     rew[agent] = self.regret
@@ -277,6 +278,7 @@ if __name__ == "__main__":
     from utils.register import Registrar
     from utils.loader import load_from_yaml
     import ray
+    from ray.tune import tune
     from ray.tune.registry import register_env
     from ray.rllib.agents.ppo import PPOTrainer
     from ray.rllib.models import ModelCatalog
@@ -321,7 +323,6 @@ if __name__ == "__main__":
     register_env('h_maze', make_env)
 
     h_env = make_env(config)
-    # print(h_env.builder_env.action_space)
     _ = h_env.reset()
     config2 = {
         'env': 'h_maze',
@@ -347,23 +348,9 @@ if __name__ == "__main__":
         "num_gpus": 1
     }
 
-    # try:
-    # trainer = PPOTrainer(config=config2, env="h_zelda",
-    #                      logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs'),
-    #                                                        'paired'))
-
     stop = {"timesteps_total": 500000}
-
-    from ray.tune import tune
 
     results = tune.run(PPOTrainer, config=config2, stop=stop,
                        local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
-
-    # for i in range(10):
-    #     print(i)
-    #     result = trainer.train()
-    #     trainer.log_result(result)
-    # print(f"cuda available: {torch.cuda.is_available()}")
-    # print(next(trainer.get_policy('builder').model.parameters()).device)
 
     ray.shutdown()
