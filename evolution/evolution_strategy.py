@@ -73,15 +73,15 @@ class TraditionalES(EvolutionStrategy):
         :return:
         """
         children = []
+        proto_children = []
         # remove (n-k) least performant individuals
         parents = self._replacement_strategy.update(active_population)
         # keep k elites
-        for parent in parents:
-            children.append((parent.solver, parent.generator, parent.id))
+        children.extend(parents)
         # spawn (n-k) individuals
-        potential_parents = self._selection_strategy.select(active_population)
+        potential_parents = self._selection_strategy.select(parents)
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self._mutation_rate)
-            children.append((parent.solver, new_generator, parent.id))
-
-        return birth_func(children)
+            proto_children.append((parent.solver, new_generator, parent.id))
+        children.extend(birth_func(proto_children))
+        return children
