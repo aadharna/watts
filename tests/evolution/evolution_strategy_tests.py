@@ -69,4 +69,6 @@ class TestEvolutionStrategy(unittest.TestCase):
             return built_children
 
         new_pop = es.evolve(pop, bf)
+        new_new_pop = es.evolve(new_pop, bf)
         assert len(new_pop) == 10
+        assert len(new_new_pop) == 10

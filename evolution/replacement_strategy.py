@@ -1,6 +1,3 @@
-import ray
-import numpy as np
-import time
 
 
 class ReplacementStrategy:
@@ -23,7 +20,6 @@ class ReplaceOldest(ReplacementStrategy):
             finished_pairs = aged_pairs[self.max_pairings:]
             for p in finished_pairs:
                 self.archive_history[p.id] = p.get_picklable_state()
-                time.sleep(1)
                 p.solver.release.remote()
 
         return archive
@@ -39,10 +35,10 @@ class KeepTopK(ReplacementStrategy):
         sorted_pairs = sorted(archive, key=lambda x: x.get_eval_metric(), reverse=True)
         keep = sorted_pairs[:self.max_pairings]
         finished_pairs = sorted_pairs[self.max_pairings:]
-        print(f'keep: {[p.id for p in keep]}')
-        print(f'kill: {[p.id for p in finished_pairs]}')
+        # used in debugging at the moment
+        # print(f'keep: {[p.id for p in keep]}')
+        # print(f'kill: {[p.id for p in finished_pairs]}')
         for p in finished_pairs:
             self.archive_history[p.id] = p.get_picklable_state()
-            time.sleep(5)
             p.solver.release.remote()
         return keep
