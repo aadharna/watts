@@ -38,7 +38,7 @@ class MockPair(Pairing):
     def __init__(self, solver, generator):
         super().__init__(solver, generator)
 
-    def serialize(self):
+    def get_picklable_state(self):
         return {}
 
 

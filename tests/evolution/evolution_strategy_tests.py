@@ -3,8 +3,8 @@ from typing import List, Tuple
 import unittest
 
 from validators.level_validator import AlwaysValidator
-from evolution.evolution_strategy import BirthThenKillStrategy
-from evolution.replacement_strategy import ReplaceOldest
+from evolution.evolution_strategy import BirthThenKillStrategy, TraditionalES
+from evolution.replacement_strategy import ReplaceOldest, KeepTopK
 from evolution.selection_strategy import SelectRandomly
 from pair.agent_environment_pair import Pairing
 from tests.test_classes import MockGenerator, MockPair, MockSolver
@@ -54,3 +54,19 @@ class TestEvolutionStrategy(unittest.TestCase):
         )
 
         assert len(pairings) == 8
+
+    def test_traditional_ES_10_choose_3_keep_elites(self):
+        n = 10
+        k = 3
+        pop = [MockPair(MockSolver(), MockGenerator(0.5)) for _ in range(n)]
+        es = TraditionalES(level_validator=AlwaysValidator(), replacement_strategy=KeepTopK(max_pairings=k),
+                           selection_strategy=SelectRandomly(max_children=n-k), mutation_rate=0.5)
+
+        def bf(children):
+            built_children = []
+            for s, g, i in children:
+                built_children.append(MockPair(s, g))
+            return built_children
+
+        new_pop = es.evolve(pop, bf)
+        assert len(new_pop) == 10
