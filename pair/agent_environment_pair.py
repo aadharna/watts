@@ -19,6 +19,7 @@ class Pairing:
 
         self.results = []
         self.solved = []
+        self.eval_scores = []
 
     def __str__(self):
         return str(self.generator)
@@ -29,12 +30,16 @@ class Pairing:
     def get_solver_weights(self):
         return self.solver.get_weights.remote()
 
-    def serialize(self):
+    def get_eval_metric(self):
+        return self.eval_scores[-1] if bool(self.eval_scores) else 0
+
+    def get_picklable_state(self):
         return {
             'solver': ray.get(self.solver.get_picklable_state.remote()),
             'generator': self.generator,
             'level_string': str(self.generator),
             'results': self.results,
             'solved': self.solved,
+            'eval_scores': self.eval_scores,
             'pair_id': self.id
         }

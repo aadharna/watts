@@ -55,6 +55,12 @@ class PoetManager(Manager):
                 p.solved.append(generator_solved_status)
                 break
 
+    def append_eval_score(self, pair_id: int, eval_score: float):
+        for p in self.active_population:
+            if p.id == pair_id:
+                p.eval_scores.append(eval_score)
+                break
+
     def evaluate(self) -> list:
         """
         Evaluate each NN-pair on its PAIRED environment
@@ -152,8 +158,10 @@ class PoetManager(Manager):
             eval_returns = ray.get(eval_refs)
             for eval_return in eval_returns:
                 solved_status = eval_return[0]['win']
+                eval_score = eval_return[0]['score']
                 pair_id = eval_return['generator_id']
                 self.append_win_status(pair_id, solved_status)
+                self.append_eval_score(pair_id, eval_score)
 
             if i % self.args.transfer_timer == 0:
                 nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
