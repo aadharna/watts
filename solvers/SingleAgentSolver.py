@@ -44,8 +44,6 @@ class SingleAgentSolver(BaseSolver):
         """
 
         _ = self.env.reset(level_string=env_config['level_string'])
-        agent_weights = self.get_weights()
-        self._update_local_agent(agent_weights)
         info, states, actions, rewards, win, logps, entropies = rollout(self.agent, self.env, 'cpu')
         return_kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps,
                          'entropy': entropies}
@@ -55,7 +53,7 @@ class SingleAgentSolver(BaseSolver):
 
     @ray.method(num_returns=1)
     def optimize(self, trainer_config, level_string_monad, **kwargs):
-        """Run one step of optimization!!
+        """Run one step of optimization!! Update local agent
 
         :param trainer_config: config dict for e.g. PPO.
         :param level_string_monad:  callback to allow for dynamically created strings
@@ -87,7 +85,6 @@ class SingleAgentSolver(BaseSolver):
         return self.key
 
     def get_agent(self):
-        self._update_local_agent(self.get_weights())
         return self.agent
 
     def get_weights(self) -> dict:
@@ -97,6 +94,7 @@ class SingleAgentSolver(BaseSolver):
 
     def set_weights(self, new_weights: dict):
         self.trainer.set_weights(weights={'default_policy': new_weights})
+        self._update_local_agent(new_weights)
 
     def release(self):
         self.env.game.release()
