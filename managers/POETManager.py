@@ -39,28 +39,6 @@ class PoetManager(Manager):
         self.stats['transfer'] = []
         self.i = 1
 
-    def set_solver_weights(self, pair_id: int, new_weights: Dict):
-        for p in self.active_population:
-            if p.id == pair_id:
-                p.update_solver_weights(new_weights)
-
-    def append_solver_result(self, pair_id: int, result_dict: Dict):
-        for p in self.active_population:
-            if p.id == pair_id:
-                p.results.append(result_dict)
-
-    def append_win_status(self, pair_id: int, generator_solved_status: bool):
-        for p in self.active_population:
-            if p.id == pair_id:
-                p.solved.append(generator_solved_status)
-                break
-
-    def append_eval_score(self, pair_id: int, eval_score: float):
-        for p in self.active_population:
-            if p.id == pair_id:
-                p.eval_scores.append(eval_score)
-                break
-
     def evaluate(self) -> list:
         """
         Evaluate each NN-pair on its PAIRED environment
@@ -146,13 +124,20 @@ class PoetManager(Manager):
                     birth_func=self.build_children
                 )
 
+            # this goes after the evolution_timer in case we add new objects to the active_population
+            # helper dict to access all members of the active population by id
+            # and then add things directly to their pair class state
+            # this replaces all 4 of the previous `setter` helper functions previously
+            active_populations = {p.id: p for p in self.active_population}
+
             opt_refs = self.optimize()
             opt_returns = ray.get(opt_refs)
             for opt_return in opt_returns:
                 updated_weights = opt_return[0]['weights']
                 pair_id = opt_return[0]['pair_id']
-                self.set_solver_weights(pair_id, updated_weights)
-                self.append_solver_result(pair_id, opt_return[0]['result_dict'])
+                return_dict = opt_return[0]['result_dict']
+                active_populations[pair_id].update_solver_weights(updated_weights)
+                active_populations[pair_id].results.append(return_dict)
 
             eval_refs = self.evaluate()
             eval_returns = ray.get(eval_refs)
@@ -160,8 +145,8 @@ class PoetManager(Manager):
                 solved_status = eval_return[0]['win']
                 eval_score = eval_return[0]['score']
                 pair_id = eval_return['generator_id']
-                self.append_win_status(pair_id, solved_status)
-                self.append_eval_score(pair_id, eval_score)
+                active_populations[pair_id].solved.append(solved_status)
+                active_populations[pair_id].eval_scores.append(eval_score)
 
             if i % self.args.transfer_timer == 0:
                 nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
@@ -170,7 +155,7 @@ class PoetManager(Manager):
                 new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
 
                 for j, (best_w, best_id) in new_weights.items():
-                    self.set_solver_weights(j, best_w)
+                    active_populations[j].update_solver_weights(best_w)
                     self.stats['transfer'].append((best_id, j, i))
 
             # Iterate i before snapshotting to avoid a duplicate loop iteration when loading from a snapshot

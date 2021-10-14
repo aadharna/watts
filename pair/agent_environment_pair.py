@@ -31,7 +31,9 @@ class Pairing:
         return self.solver.get_weights.remote()
 
     def get_eval_metric(self):
-        return self.eval_scores[-1] if bool(self.eval_scores) else 0
+        # if eval_score list is populated, return the latest evaluation
+        # Empty lists get evaluated as False. If that happens, return 0
+        return self.eval_scores[-1] if self.eval_scores else 0
 
     def get_picklable_state(self):
         return {
