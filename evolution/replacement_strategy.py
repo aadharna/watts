@@ -1,4 +1,15 @@
 
+def _release(archive, finished_list):
+    """helper function to clean up pair objects that are no longer being used going forward
+
+    :param archive: container to save meta-data in for the objects being destroyed
+    :param finished_list: list of objects to release
+    :return: n/a
+    """
+    for p in finished_list:
+        archive[p.id] = p.get_picklable_state()
+        p.solver.release.remote()
+
 
 class ReplacementStrategy:
     def __init__(self, max_pairings: int = 10):
@@ -18,9 +29,7 @@ class ReplaceOldest(ReplacementStrategy):
             aged_pairs = sorted(archive, key=lambda x: x.id, reverse=True)
             archive = aged_pairs[:self.max_pairings]
             finished_pairs = aged_pairs[self.max_pairings:]
-            for p in finished_pairs:
-                self.archive_history[p.id] = p.get_picklable_state()
-                p.solver.release.remote()
+            _release(self.archive_history, finished_pairs)
 
         return archive
 
@@ -35,10 +44,6 @@ class KeepTopK(ReplacementStrategy):
         sorted_pairs = sorted(archive, key=lambda x: x.get_eval_metric(), reverse=True)
         keep = sorted_pairs[:self.max_pairings]
         finished_pairs = sorted_pairs[self.max_pairings:]
-        # used in debugging at the moment
-        # print(f'keep: {[p.id for p in keep]}')
-        # print(f'kill: {[p.id for p in finished_pairs]}')
-        for p in finished_pairs:
-            self.archive_history[p.id] = p.get_picklable_state()
-            p.solver.release.remote()
+        _release(self.archive_history, finished_pairs)
+
         return keep
