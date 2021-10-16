@@ -8,6 +8,7 @@ import pickle
 from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.replacement_strategy import ReplaceOldest
 from evolution.selection_strategy import SelectRandomly
+from game.GameSchema import GameSchema
 from generators.AIIDE_generator import EvolutionaryGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
@@ -53,6 +54,7 @@ if __name__ == "__main__":
     args = load_from_yaml(fpath=_args.args_file)
 
     registry = Registrar(file_args=args)
+    game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
     wrappers = add_wrappers(args.wrappers)
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
@@ -74,7 +76,7 @@ if __name__ == "__main__":
                                                                                    gym_factory=gym_factory,
                                                                                    log_id=f"{_args.exp_name}_{0}"),
                                                    generator=generator),
-                              evolution_strategy=BirthThenKillStrategy(level_validator=RandomVariableValidator(),
+                              evolution_strategy=BirthThenKillStrategy(level_validator=GraphValidator(game_schema),
                                                                        replacement_strategy=ReplaceOldest(args.max_envs),
                                                                        selection_strategy=SelectRandomly(args.max_children),
                                                                        mutation_rate=args.mutation_rate),

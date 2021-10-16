@@ -1,19 +1,11 @@
 Version: "0.1"
 Environment:
-  Name: Partially Observable Zelda
-  Description: A port of the GVGAI game "Zelda", but partially observable. Pick up keys to reach doors and avoid enemies.
+  Name: Zelda
   Observers:
     Sprite2D:
       TileSize: 24
       BackgroundTile: gvgai/newset/floor2.png
   Player:
-    Observer:
-      RotateWithAvatar: true
-      TrackAvatar: true
-      Height: 5
-      Width: 5
-      OffsetX: 0
-      OffsetY: 2
     AvatarObject: avatar
   Termination:
     Win:
@@ -22,42 +14,35 @@ Environment:
       - eq: [avatar:count, 0]
   Levels:
     - |
-      wwwwwwwwwwwww
-      w...........w
-      w...........w
-      w.....A.....w
-      w...........w
-      w.........+.w
-      w......e....w
-      w.g.........w
-      wwwwwwwwwwwww
+      w w w w w w w w w w w w w
+      w . . . . . . . . . . . w
+      w . . . . . . . . . . . w
+      w . + . . . A . . . . . w
+      w . . . . . . . . . . . w
+      w . . . . . . . . . . . w
+      w . . . . . . e . . . . w
+      w . g . . . . . . . . . w
+      w w w w w w w w w w w w w
     - |
-      wwwwwwwwwwwwwww
-      w.............w
-      w......w......w
-      w......w......w
-      w......w......w
-      w..e...w..+...w
-      w......w......w
-      w......w......w
-      w.wwwwwwwwwww.w
-      w.....Aw......w
-      w......w......w
-      w......w......w
-      w......w......w
-      w......w......w
-      w...........g.w
-      wwwwwwwwwwwwwww
+      w w w w w w w w w w w w w
+      w . . . . . + . . + g . w
+      w . + . w . g . . . . . w
+      w . . . . . A g . . e . w
+      w + . . + . . . . . . . w
+      w . . . . w . . + . . . w
+      w . . . . . . . . . g . w
+      w . e . . . + + + . + w w
+      w w w w w w w w w w w w w
     - |
-      wwwwwwwwwwwwwwwwwwwwwwwwwwwwww
-      w........+....e..............w
-      w............................w
-      w...A.............e..........w
-      w............................w
-      w....................e.......w
-      w..............wwwwwwwwwwwwwww
-      w..........................g.w
-      wwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+      w w w w w w w w w w w w w w w w w w w w w w w w w w w w w w
+      w . . . . . . . . + . . . . e . . . . . . . . . . . . . . w
+      w . . . . . . . . . . . . . . . . . . . . . . . . . . . . w
+      w . . . A . . . . . . . . . . . . . e . . . . . . . . . . w
+      w . . . . . . . . . . . . . . . . . . . . . . . . . . . . w
+      w . . . . . . . . . . . . . . . . . . . . e . . . . . . . w
+      w . . . . . . . . . . . . . . w w w w w w w w w w w w w w w
+      w . . . . . . . . . . . . . . . . . . . . . . . . . . g . w
+      w w w w w w w w w w w w w w w w w w w w w w w w w w w w w w
 Actions:
   # Define action that cannot be controlled by the player.
   # (In this case the spider movement)

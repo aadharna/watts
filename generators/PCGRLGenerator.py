@@ -129,6 +129,8 @@ class PCGRLGenerator(BaseGenerator):
             for j in range(map_shape[3]):
                 tile = torch.argmax(map[0, :, i, j]).item()
                 level += Items.to_str(tile)
+                if j != map_shape[3] - 1:
+                    level += " "
             level += "\n"
         return level
 

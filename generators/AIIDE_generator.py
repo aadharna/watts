@@ -12,7 +12,7 @@ class EvolutionaryGenerator(BaseGenerator):
     def __init__(self, level_string, file_args):
         """generator for maps that operates on tiles in a direct encoding
 
-        :param level_string: string of level wwwwwwwwww\nw...
+        :param level_string: string of level w w w w w w w w w w\nw . . .
         :param file_args: arguments loaded from file via load_from_yaml and in the registry
         """
         super().__init__()
@@ -23,9 +23,8 @@ class EvolutionaryGenerator(BaseGenerator):
 
         if level_string[-1] != "\n":
             level_string += "\n"
-        f = level_string.split('\n')[:-1]  # remove blank line.
-        height = len(f)
-        tile = [list(row) for row in f]
+        tile = [row.split() for row in level_string.split('\n')[:-1]]  # remove blank line.
+        height = len(tile)
 
         npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
         self.lvl_shape = npa.shape
@@ -53,10 +52,10 @@ class EvolutionaryGenerator(BaseGenerator):
     def update(self, level):
         """
         Update Generator from flat lvl string
-        :param level: flat lvl string with \n chars
+        :param level: flat lvl string with \n chars and spaces
         :return:
         """
-        split_lvl = level.split('\n')[:-1]  # remove empty '' at the end
+        split_lvl = [row.split() for row in level.split('\n')[:-1]]  # remove empty '' at the end
 
         o = np.array([['0'] * self._height] * self._length, dtype=str)
         for i in range(self._length):
@@ -261,6 +260,8 @@ class EvolutionaryGenerator(BaseGenerator):
                 stringrep += tile_world[i][j]
                 if j == (len(tile_world[i]) - 1):
                     stringrep += '\n'
+                else:
+                    stringrep += ' '
         return stringrep
 
     def __str__(self):
@@ -275,7 +276,7 @@ if __name__ == "__main__":
 
     args = load_from_yaml('args.yaml')
     registry = Registrar(file_args=args)
-    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
+    level_string = '''w w w w w w w w w w w w w\nw . . . . + e . . . . . w\nw . . . . . . . . . . . w\nw . . A . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . w . . . . . w\nw . g . . . . . . . . . w\nw w w w w w w w w w w w w\n'''
     generator = EvolutionaryGenerator(level_string=level_string, file_args=registry.get_generator_config)
     g2 = generator.mutate(0.88)
 
