@@ -6,7 +6,7 @@ from utils.gym_wrappers import HierarchicalBuilderEnv, AlignedReward, SetLevelWi
 
 def run_wrapper_test(game, wrapper):
     env_config = {
-        'yaml_file': os.path.join('levels', f"{game}.yaml"),
+        'yaml_file': os.path.join('example_levels', f"{game}.yaml"),
     }
     base_env = RLlibEnv(env_config)
     env = wrapper(base_env, env_config)

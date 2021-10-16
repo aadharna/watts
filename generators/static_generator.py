@@ -15,9 +15,8 @@ class StaticGenerator(BaseGenerator):
         self.level = level_string
         if level_string[-1] != "\n":
             level_string += "\n"
-        f = level_string.split('\n')[:-1]  # remove blank line.
-        height = len(f)
-        tile = [list(row) for row in f]
+        tile = [row.split() for row in level_string.split('\n')[:-1]]  # remove blank line.
+        height = len(tile)
 
         npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
         self.lvl_shape = npa.shape
@@ -42,7 +41,7 @@ class StaticGenerator(BaseGenerator):
 
 
 if __name__ == "__main__":
-    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
+    level_string = '''w w w w w w w w w w w w w\nw . . . . + e . . . . . w\nw . . . . . . . . . . . w\nw . . A . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . w . . . . . w\nw . g . . . . . . . . . w\nw w w w w w w w w w w w w\n'''
     generator = StaticGenerator(level_string)
     print(str(generator))
     print(generator.generate_fn_wrapper()())

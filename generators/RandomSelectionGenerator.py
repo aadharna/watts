@@ -18,9 +18,8 @@ class RandomSelectionGenerator(BaseGenerator):
         level_string = level_strings[0]
         if level_string[-1] != "\n":
             level_string += "\n"
-        f = level_string.split('\n')[:-1]  # remove blank line.
-        height = len(f)
-        tile = [list(row) for row in f]
+        tile = [row.split() for row in level_string.split('\n')[:-1]]  # remove blank line.
+        height = len(tile)
 
         npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
         self.lvl_shape = npa.shape
@@ -47,10 +46,10 @@ class RandomSelectionGenerator(BaseGenerator):
 
 if __name__ == "__main__":
     lvls = [
-        '''wwwwwwwwwwwww\nw....+.+++..w\nw....www....w\nw..A........w\nw...........w\nw...........w\nwwwwwww.....w\nw.g.......++w\nwwwwwwwwwwwww\n''',
-        '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n''',
-        '''wwwwwwwwwwwww\nw....+......w\nw........wwww\nw..A........w\nw...........w\nw.....wwwwwww\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n''',
-        '''wwwwwwwwwwwww\nwwww.+......w\nw...........w\nw..A......eew\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
+        '''w w w w w w w w w w w w w\nw . . . . + . + + + . . w\nw . . . . w w w . . . . w\nw . . A . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . . . . . . . w\nw w w w w w w . . . . . w\nw . g . . . . . . . + + w\nw w w w w w w w w w w w w\n''',
+        '''w w w w w w w w w w w w w\nw . . . . + e . . . . . w\nw . . . . . . . . . . . w\nw . . A . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . w . . . . . w\nw . g . . . . . . . . . w\nw w w w w w w w w w w w w\n''',
+        '''w w w w w w w w w w w w w\nw . . . . + . . . . . . w\nw . . . . . . . . w w w w\nw . . A . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . w w w w w w w\nw . . . . . w . . . . . w\nw . g . . . . . . . . . w\nw w w w w w w w w w w w w\n''',
+        '''w w w w w w w w w w w w w\nw w w w . + . . . . . . w\nw . . . . . . . . . . . w\nw . . A . . . . . . e e w\nw . . . . . . . . . . . w\nw . . . . . . . . . . . w\nw . . . . . w . . . . . w\nw . g . . . . . . . . . w\nw w w w w w w w w w w w w\n'''
     ]
 
     generator = RandomSelectionGenerator(lvls)

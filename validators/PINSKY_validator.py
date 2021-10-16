@@ -1,3 +1,4 @@
+from game.GameSchema import GameSchema
 from generators.base import BaseGenerator
 from solvers.base import BaseSolver
 from validators.agent_validator import RandomAgentValidator
@@ -14,7 +15,7 @@ class PINSKYValidator(LevelValidator):
     the moment, so we're doing a search on a graph now as a comparable thing.
 
     """
-    def __init__(self, network_factory_monad, env_config, n_repeats):
+    def __init__(self, network_factory_monad, env_config, n_repeats, game_schema: GameSchema):
         """
 
         :param network_factory_monad: network factory build fn for the random agent validator
@@ -22,7 +23,7 @@ class PINSKYValidator(LevelValidator):
         :param n_repeats: number of times to run an evaluate on random agent validator
         """
         self.random_agent_validator = RandomAgentValidator(network_factory_monad, env_config, n_repeats)
-        self.graph_validator = GraphValidator()
+        self.graph_validator = GraphValidator(game_schema)
 
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """

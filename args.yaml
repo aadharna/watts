@@ -3,7 +3,7 @@
 # game args
 engine: GDY
 game: limited_zelda        # alternate solarfox or foragers with . Use commented out params.
-lvl_dir: levels           # DO NOT CHANGE
+lvl_dir: example_levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
 record_freq: 5000
