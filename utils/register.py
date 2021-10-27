@@ -10,6 +10,7 @@ from ray.rllib.agents.registry import get_trainer_class
 from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
 from ray.rllib.utils import add_mixins
 from utils.trainer_reset import ResetConfigOverride
+from pprint import pprint
 
 
 def get_default_trainer_config_and_constructor(opt_algo):
@@ -30,6 +31,13 @@ def get_default_trainer_config_and_constructor(opt_algo):
     else:
         raise ValueError('Pick another opt_algo')
 
+def policy_mapping_function(policies):
+    def _map(agent_id):
+        for policy in policies.keys():
+            if agent_id.start_with(policy):
+                return policy
+
+    return _map
 
 class Registrar:
     id = 0
@@ -111,13 +119,27 @@ class Registrar:
             'probs': self.file_args.probs,
         })
 
-        self.nn_build_config = {
-                'action_space': self.act_space,
-                'obs_space': self.obs_space,
-                'model_config': {},
-                'num_outputs': self.n_actions,
-                'name': self.file_args.network_name
-        }
+        if 'MultiAgent' not in self.file_args.wrappers:
+            self.nn_build_config = {
+                    'action_space': self.act_space,
+                    'obs_space': self.obs_space,
+                    'model_config': {},
+                    'num_outputs': self.n_actions,
+                    'agent': 'default',
+                    'network_name': self.file_args.network_name
+            }
+        else:
+            self.nn_build_config = []
+            for policy in self.file_args.policies:
+                self.nn_build_config.append({
+                    'action_space': self.act_space,
+                    'obs_space': self.obs_space,
+                    'model_config': {},
+                    'num_outputs': self.n_actions,
+                    'agent': policy['agent'],
+                    'network_name': policy['network_name']
+                    })
+
 
         # Trainer Config for selected algorithm
         self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
@@ -126,16 +148,51 @@ class Registrar:
 
         self.trainer_config['env_config'] = self.rllib_env_config
         self.trainer_config['env'] = self.name
-        self.trainer_config["model"] = {
-                'custom_model': self.file_args.network_name,
-                'custom_model_config': {}
-            }
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
         self.trainer_config["num_envs_per_worker"] = 2
         self.trainer_config['simple_optimizer'] = True
+        if 'MultiAgent' in self.file_args.wrappers:
+            self.trainer_config['multiagent'] = {}
+            self.trainer_config['multiagent']['policies'] = {}
+            policies = {}
+            for policy in self.file_args.policies:
+                model_config = {
+                        'model': {
+                            'custom_model': policy['network_name'],
+                            'custom_model_config': {}
+                            }
+                        }
+                policy_config = (
+                            None,
+                            self.obs_space,
+                            self.act_space,
+                            model_config
+                            # How can we support different obs/act spaces for different agents?
+                        )
+                policies[policy['agent']] =  policy_config
+            self.trainer_config['multiagent'] = {
+                    'policies': {**policies},
+                    'policy_mapping_fn': policy_mapping_function(self.file_args.policies)
+                    
+                    }
+        else:
+            self.trainer_config["model"] = {
+                    'custom_model': self.file_args.network_name,
+                    'custom_model_config': {}
+                }
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.1
+
+    def __build_nn_config(self):
+        if 'policies' not in self.file_args:
+            return {
+                    'action_space': self.act_space,
+                    'obs_space': self.obs_space,
+                    'model_config': {},
+                    'num_outputs': self.n_actions,
+                    'name': self.file_args.network_name
+            }
 
     @property
     def get_nn_build_info(self):
