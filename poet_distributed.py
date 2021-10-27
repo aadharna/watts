@@ -9,6 +9,7 @@ from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.replacement_strategy import ReplaceOldest
 from evolution.selection_strategy import SelectRandomly
 from generators.AIIDE_generator import EvolutionaryGenerator
+from generators.static_generator import StaticGenerator
 from gym_factory import GridGameFactory
 from managers.POETManager import PoetManager
 from network_factory import NetworkFactory
@@ -55,11 +56,12 @@ if __name__ == "__main__":
     registry = Registrar(file_args=args)
     wrappers = add_wrappers(args.wrappers)
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
-    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
+    network_factory = NetworkFactory(registry.get_nn_build_info)
 
-    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string,
-                                      file_args=registry.get_generator_config)
+    # not stable for non-zelda environments
+    #generator = EvolutionaryGenerator(args.initial_level_string,
+    #                                  file_args=registry.get_generator_config)
+    generator = StaticGenerator(args.initial_level_string)
 
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
@@ -81,6 +83,7 @@ if __name__ == "__main__":
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               registrar=registry)
 
+        #import pdb; pdb.set_trace()
     try:
         manager.run()
         print("finished algorithm")
