@@ -27,6 +27,8 @@ class SingleAgentSolver(BaseSolver):
                                            logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs'),
                                                                              f'POET_{log_id}.')
                                            )
+
+        # add functionality to get policy networks for multiple agents
         self.agent = network_factory.make()(weights)
         self.env = gym_factory.make()(trainer_config['env_config'])
         if bool(weights):
