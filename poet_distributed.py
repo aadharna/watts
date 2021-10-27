@@ -73,7 +73,6 @@ if __name__ == "__main__":
                               transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               registrar=registry)
 
-        #import pdb; pdb.set_trace()
     try:
         manager.run()
         print("finished algorithm")
