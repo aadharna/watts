@@ -19,13 +19,24 @@ from transfer.rank_strategy import GetBestSolver
 from utils.gym_wrappers import add_wrappers
 from utils.register import Registrar
 from utils.loader import load_from_yaml
+from validators.level_validator import AlwaysValidator, RandomVariableValidator
 from validators.graph_validator import GraphValidator
+from evolution.replacement_strategy import _release
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, help='exp name')
 parser.add_argument("--args_file", type=str, default='args.yaml', help='path to args file')
 _args = parser.parse_args()
+
+import pickle
+
+def save_obj(obj, folder, name):
+    path = os.path.join(folder, name) + '.pkl'
+    if os.path.exists(path):
+        os.remove(path)
+    with open(path, 'wb+') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
@@ -64,7 +75,7 @@ if __name__ == "__main__":
                                                                                    gym_factory=gym_factory,
                                                                                    log_id=f"{_args.exp_name}_{0}"),
                                                    generator=generator),
-                              evolution_strategy=BirthThenKillStrategy(level_validator=GraphValidator(),
+                              evolution_strategy=BirthThenKillStrategy(level_validator=RandomVariableValidator(),
                                                                        replacement_strategy=ReplaceOldest(args.max_envs),
                                                                        selection_strategy=SelectRandomly(args.max_children),
                                                                        mutation_rate=args.mutation_rate),
@@ -80,6 +91,12 @@ if __name__ == "__main__":
         print(error)
         print('_'*40)
     finally:
+        _release(manager._evolution_strategy._replacement_strategy.archive_history, manager.active_population)
+        manager._evolution_strategy._replacement_strategy.archive_history['run_stats'] = manager.stats
+        save_obj(manager._evolution_strategy._replacement_strategy.archive_history, 
+                 os.path.join('..', 'enigma_logs', _args.exp_name),
+                 'total_serialized_alg')
+        
         elapsed = time.time() - start
         print(elapsed // 60, " minutes")
         # print(f"{len(manager.active_population)} PAIR objects: \n {manager.active_population}")

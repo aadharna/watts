@@ -18,13 +18,14 @@ class SingleAgentSolver(BaseSolver):
         # todo switch to having factories in here?
         # self.agent = solver[0]
         self.key = 0
+        self.exp = log_id.split('_')[0]
         self.log_id = log_id
         self.trainer_config = trainer_config
         self.registered_gym_name = registered_gym_name
         self.network_factory = network_factory
         self.gym_factory = gym_factory
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name,
-                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs'),
+                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs', self.exp),
                                                                              f'POET_{log_id}.')
                                            )
         self.agent = network_factory.make()(weights)
