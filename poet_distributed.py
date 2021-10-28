@@ -3,6 +3,7 @@ import os
 import ray
 import sys
 import time
+import pickle
 
 from evolution.evolution_strategy import BirthThenKillStrategy
 from evolution.replacement_strategy import ReplaceOldest
@@ -28,8 +29,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, help='exp name')
 parser.add_argument("--args_file", type=str, default='args.yaml', help='path to args file')
 _args = parser.parse_args()
-
-import pickle
 
 def save_obj(obj, folder, name):
     path = os.path.join(folder, name) + '.pkl'
