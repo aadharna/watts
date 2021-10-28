@@ -38,7 +38,7 @@ class BirthThenKillStrategy(EvolutionStrategy):
 
         for parent in potential_parents:
             new_generator = parent.generator.mutate(self._mutation_rate)
-            if self._level_validator.validate_level(generator=new_generator, solver=parent.solver):
+            if self._level_validator.validate_level(generators=[new_generator], solvers=[parent.solver]):
                 children.append((parent.solver, new_generator, parent.id))
 
         children = birth_func(children)

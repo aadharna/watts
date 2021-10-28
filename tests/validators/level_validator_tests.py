@@ -18,7 +18,7 @@ class TestLevelValidators(unittest.TestCase):
         build_info['name'] = 'pcgrl_test'
         generator = PCGRLGenerator(**build_info)
         validator = GraphValidator()
-        res = validator.validate_level(generator, MockSolver())
+        res = validator.validate_level([generator], [MockSolver()])
         print(res)
 
     def test_graph_validator_on_static(self):
@@ -26,7 +26,7 @@ class TestLevelValidators(unittest.TestCase):
         generator = StaticGenerator(level_string=level_string)
         validator = GraphValidator()
         solver = MockSolver()
-        assert (validator.validate_level(generator, solver))
+        assert (validator.validate_level([generator], [solver]))
 
     def test_random_agent_validator_on_static(self):
         build_info = example_network_factory_build_info
@@ -39,4 +39,4 @@ class TestLevelValidators(unittest.TestCase):
         # the mock class isn't a real ray.remote-ified class
         # therefore we cannot call ray.get on the output from `get_weights`
         # with self.assertRaises(ValueError):
-        #     res = validator.validate_level(generator, MockSolver())
+        #     res = validator.validate_level([generator], [MockSolver()])

@@ -5,6 +5,8 @@ from generators.base import BaseGenerator
 from solvers.base import BaseSolver
 from validators.level_validator import LevelValidator
 
+from typing import List
+
 
 class GraphValidator(LevelValidator):
     """Does a path exist from the starting position to a key and then from the key to a door? Yes/No?
@@ -12,17 +14,17 @@ class GraphValidator(LevelValidator):
     todo: generalize this.
 
     """
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """
 
-        :param generator: Generator class that we can extract a level string from
-        :param solver: n/a here; Solver class that can play a game
+        :param generators: Generator class that we can extract a level string from
+        :param solvers: n/a here; Solver class that can play a game
         :param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
-        self.level_string = str(generator)
+        self.level_string = str(generators[0])
         level = self.level_string.split('\n')
-        graph = grid_graph(dim=generator.shape)
+        graph = grid_graph(dim=generators[0].shape)
         # remote blocking objects (e.g. walls, monsters, pits, etc)
         agent_start_pos = (0, 0)
         goal_pos = (0, 0)
