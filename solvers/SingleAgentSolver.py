@@ -88,6 +88,11 @@ class SingleAgentSolver(BaseSolver):
     def get_agent(self):
         return self.agent
 
+    def value_function(self, level_string):
+        state = self.env.reset(level_string=level_string)
+        logits, h_state = self.agent.forward({'obs': torch.FloatTensor([state])}, [0], 1)
+        return self.agent.value_function().item()
+
     def get_weights(self) -> dict:
         weights = self.trainer.get_weights()
         tensor_weights = {k: torch.FloatTensor(v) for k, v in weights['default_policy'].items()}
