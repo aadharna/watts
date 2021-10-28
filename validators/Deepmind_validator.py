@@ -5,6 +5,8 @@ from solvers.base import BaseSolver
 from validators.agent_validator import RandomAgentValidator, ParentCutoffValidator
 from validators.level_validator import LevelValidator
 
+from typing import List
+
 
 class DeepMindValidator(LevelValidator):
     """Is the new level too easy as measured by the parent's zero-shot performance on it
@@ -26,16 +28,16 @@ class DeepMindValidator(LevelValidator):
         self.random_agent_validator = RandomAgentValidator(network_factory_monad, env_config, n_repeats)
         self.parent_validator = ParentCutoffValidator(env_config, low_cutoff, high_cutoff, n_repeats)
 
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """
 
-        :param generator: Generator class that we can extract a level string from
-        :param solver: Solver class that can play a game
+        :param generators: Generator class that we can extract a level string from
+        :param solvers: Solver class that can play a game
         :param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
-        won_randomly = self.random_agent_validator.validate_level(generator=generator, solver=solver)
-        not_too_easy = self.parent_validator.validate_level(generator=generator, solver=solver)
+        won_randomly = self.random_agent_validator.validate_level(generators=generators, solvers=solvers)
+        not_too_easy = self.parent_validator.validate_level(generators=generators, solvers=solvers)
         if not won_randomly and not_too_easy:
             return True
         else:

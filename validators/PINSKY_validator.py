@@ -1,7 +1,10 @@
 from generators.base import BaseGenerator
+from solvers.base import BaseSolver
 from validators.agent_validator import RandomAgentValidator
 from validators.graph_validator import GraphValidator
 from validators.level_validator import LevelValidator
+
+from typing import List
 
 
 class PINSKYValidator(LevelValidator):
@@ -21,16 +24,16 @@ class PINSKYValidator(LevelValidator):
         self.random_agent_validator = RandomAgentValidator(network_factory_monad, env_config, n_repeats)
         self.graph_validator = GraphValidator()
 
-    def validate_level(self, generator: BaseGenerator, solver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """
 
-        :param generator: Generator class that we can extract a level string from
-        :param solver: n/a here; Solver class that can play a game
+        :param generators: Generator class that we can extract a level string from
+        :param solvers: n/a here; Solver class that can play a game
         :param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
-        won_game_randomly = self.random_agent_validator.validate_level(generator, solver)
-        path_exists = self.graph_validator.validate_level(generator, solver)
+        won_game_randomly = self.random_agent_validator.validate_level(generators, solvers)
+        path_exists = self.graph_validator.validate_level(generators, solvers)
 
         if not won_game_randomly and path_exists:
             return True

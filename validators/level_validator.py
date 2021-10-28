@@ -3,9 +3,11 @@ import numpy as np
 from generators.base import BaseGenerator
 from solvers.base import BaseSolver
 
+from typing import List
+
 
 class LevelValidator:
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """Minimal Criteria for the newly created levels.
         In POET, this takes the form of agent ability on the newly created level
             Can the parent walker travel at least a minimum and not more than a maximum distance in the new map?
@@ -18,30 +20,30 @@ class LevelValidator:
 
         TODO: substantial validator (is this the right interface?)
 
-        :param solver:
-        :param generator: generator object that contains a level.
+        :param solvers:
+        :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         raise NotImplementedError()
 
 
 class AlwaysValidator(LevelValidator):
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """Passed generators are always valid.
 
-        :param solver:
-        :param generator: generator object that contains a level.
+        :param solvers:
+        :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         return True
 
 
 class RandomVariableValidator(LevelValidator):
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """Flips a coin on if we should use this generator or not.
 
-        :param solver:
-        :param generator: generator object that contains a level.
+        :param solvers:
+        :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         return np.random.rand() < 0.5

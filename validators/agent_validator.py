@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import ray
-from typing import Tuple
+from typing import Tuple, List
 
 from generators.base import BaseGenerator
 from solvers.base import BaseSolver
@@ -23,6 +23,10 @@ def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, conf
     score = result[key]['score']
     win = result[key]['win']
     return win, score
+
+
+def _get_solver_value_of_generator(generator: BaseGenerator, solver: BaseSolver) -> float:
+    return ray.get(solver.value_function.remote(level_string=str(generator)))
 
 
 def _opt_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, config: dict) -> dict:
@@ -62,28 +66,28 @@ class RandomAgentValidator(LevelValidator):
         self.config = env_config
         self.n_repeats = n_repeats
 
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """Load random weights into the solver and run an evaluate. Then restore the solver to its original state.
 
-        :param generator: Generator class that we can extract a level string from
-        :param solver: Solver class that can play a game
+        :param generators: Generator class that we can extract a level string from
+        :param solvers: Solver class that can play a game
         :param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         wins = []
         scores = []
         # extract the solver's weights
-        solver_weights = ray.get(solver.get_weights.remote())
+        solver_weights = ray.get(solvers[0].get_weights.remote())
         for _ in range(self.n_repeats):
             # get random agent
             random_agent = self.nf({})
             random_weights = random_agent.state_dict()
-            solver.set_weights.remote(random_weights)
-            win, score = _eval_solver_on_generator(generator, solver, self.config)
+            solvers[0].set_weights.remote(random_weights)
+            win, score = _eval_solver_on_generator(generators[0], solvers[0], self.config)
             wins.append(win)
             scores.append(score)
         # set the solvers weights back to what it was before the random agent
-        solver.set_weights.remote(solver_weights)
+        solvers[0].set_weights.remote(solver_weights)
         return any(wins)
 
 
@@ -105,18 +109,28 @@ class ParentCutoffValidator(LevelValidator):
         self.low_cutoff = low_cutoff
         self.n_repeats = n_repeats
 
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
         """Run the passed in solver on the passed in generator.
 
-        :param generator: Generator class that we can extract a level string from
-        :param solver: Solver class that can play a game
+        :param generators: Generator class that we can extract a level string from
+        :param solvers: Solver class that can play a game
         :param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
+        assert len(generators) == 1
         scores = []
         wins = []
         for n in range(self.n_repeats):
-            win, score = _eval_solver_on_generator(generator=generator, solver=solver, config=self.config)
+            win, score = _eval_solver_on_generator(generator=generators[0], solver=solvers[0], config=self.config)
             scores.append(score)
             wins.append(win)
         return self.low_cutoff <= np.mean(scores) <= self.high_cutoff
+
+
+class ParentValueValidator(LevelValidator):
+    """Do we expect this new level to get us positive return? Yes/No?
+    """
+
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+        value = _get_solver_value_of_generator(generators[0], solvers[0])
+        return 0 <= value
