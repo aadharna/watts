@@ -15,7 +15,7 @@ class POETManagerSerializer():
 
     def serialize(self):
         with open('snapshot.pkl', 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
     def deserialize() -> POETManager:
