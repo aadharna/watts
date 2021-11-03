@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Dict
 
 import numpy as np
 
@@ -7,7 +7,7 @@ from ..generators.base import BaseGenerator
 
 
 class LevelValidator:
-    def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Minimal Criteria for the newly created levels.
         In POET, this takes the form of agent ability on the newly created level
             Can the parent walker travel at least a minimum and not more than a maximum distance in the new map?
@@ -28,25 +28,25 @@ class LevelValidator:
 
 
 class AlwaysValidator(LevelValidator):
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Passed generators are always valid.
 
         :param solvers:
         :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
-        return True
+        return True, {}
 
 
 class RandomVariableValidator(LevelValidator):
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Flips a coin on if we should use this generator or not.
 
         :param solvers:
         :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
-        return np.random.rand() < 0.5
+        return np.random.rand() < 0.5, {}
 
 
 """

@@ -73,14 +73,14 @@ if __name__ == "__main__":
 
     example_network_factory_build_info = {
         'action_space': MultiDiscrete([15, 15,  6,  2]),
-        'obs_space': Box(0.0, 255.0, (15, 15, 4), np.float64),
+        'obs_space': Box(0.0, 255.0, (15, 15, 6), np.float64),
         'model_config': {'length': 15, 'width': 15, 'placements': 50},
         'num_outputs': sum([15, 15,  6,  2]),
         'name': 'pcgrl'
     }
     adversary = PCGRLAdversarial(**example_network_factory_build_info)
     print(adversary)
-    blankMap = np.zeros((1, 4, 15, 15))
+    blankMap = np.zeros((1, 6, 15, 15))
     level = torch.FloatTensor(blankMap)
     h = adversary.get_initial_state()
     logits, h = adversary.forward_rnn(level, h, 1)

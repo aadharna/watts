@@ -6,6 +6,7 @@ from .base import BaseGenerator
 
 
 class StaticGenerator(BaseGenerator):
+    id = 0
 
     def __init__(self, level_string):
         """Static generator. This is initialized with a static level and that's all it will ever have.
@@ -22,6 +23,8 @@ class StaticGenerator(BaseGenerator):
 
         npa = np.array(tile, dtype=str).reshape((height, -1))  # make into numpy array 9x13
         self.lvl_shape = npa.shape
+        self.id = StaticGenerator.id
+        StaticGenerator.id += 1
 
     @property
     def shape(self):

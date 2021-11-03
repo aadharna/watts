@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Dict
 
 import networkx as nx
 from networkx import grid_graph
@@ -52,7 +52,7 @@ class GraphValidator(LevelValidator):
     Of course, you can define your own graph validator based off this that perhaps encodes
     more game-specific information if that'd be useful for you.
     """
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
         :param generators: Generator class that we can extract a level string from
@@ -77,6 +77,6 @@ class GraphValidator(LevelValidator):
         for agent in agent_start_positions:
             for interesting_position in interesting_positions:
                 if not nx.has_path(graph, source=agent, target=interesting_position):
-                    return False
+                    return False, {}
 
-        return True
+        return True, {}

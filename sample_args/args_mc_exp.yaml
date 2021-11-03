@@ -1,0 +1,59 @@
+# args for MCExp
+
+# game args
+engine: GDY
+game: endless_maze        # alternate solarfox or foragers with . Use commented out params.
+lvl_dir: example_levels           # DO NOT CHANGE
+init_lvl: 0                 # DO NOT CHANGE
+pictures: False
+record_freq: 50000
+
+# generator args, will change for each game
+mechanics: ['A', 'x', 't', 'w'] #['b', 'A', 'w']
+singletons: ['A', 'x'] # must be only one #['A'] #
+at_least_one: []    # must have at least one # ['b'] #
+immortal: ['A', '.', 'x']   # cannot be removed #['A', '+'] #
+floor: ['.']           # base tile. cannot be moved #['+'] #
+probs: [0.25, 0.5, 0.25] # [remove, spawn, move] probabilities
+
+generatorType: evolutionary
+valType: DeepmindAppendix
+val_config:
+  high: 200
+  low: 1
+  n_repeats: 4
+  n_tasks_difference_greater_than_margin: 2
+  n_tasks_parent_greater_than_high: 2
+  margin: 5
+
+model_config:
+  length: 15
+  width: 15
+  placement: 50
+
+##network args
+# this should probably be a list
+network_name: "AIIDE_PINSKY_MODEL"  # Other agents: Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+framework: "torch"
+
+# algo optimization args
+game_len: 500
+opt_algo: "OpenAIES"
+
+# algo generation args
+evolution_timer: 3
+n_children: 3
+mutation_rate: 0.8
+
+# algo general args
+reproduction_limit: 1000
+snapshot_timer: 20
+use_snapshot: True
+
+
+# gym Env Wrappers
+wrappers: [] #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
+
+
+# trainer helper args
+custom_trainer_config_override: True

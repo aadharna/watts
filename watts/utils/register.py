@@ -1,17 +1,19 @@
-import os
 import copy
 import argparse
 
-import gym
-from gym.spaces import MultiDiscrete, Discrete
-import griddly
 from griddly import gd
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
-from ray.rllib.agents.registry import get_trainer_class
-from ray.rllib.agents import ppo, impala, es, maml, sac, ddpg, dqn
+
+from gym.spaces import MultiDiscrete, Discrete, Box
+import numpy as np
+import os
+from ray.rllib.agents import ppo, impala, maml, sac, ddpg, dqn
+from ..agents import es
 from ray.rllib.utils import add_mixins
 
 from ..utils.trainer_reset import ResetConfigOverride
+from ..utils.trainer_reset import ResetConfigOverride
+from ..utils.gym_wrappers import HierarchicalBuilderEnv
 
 
 def get_default_trainer_config_and_constructor(opt_algo):
@@ -63,12 +65,14 @@ class Registrar:
                                  'yaml_file': os.path.join(self.base_path, self.gdy_file),
                                  'level': self.file_args.init_lvl,
                                  'max_steps': self.file_args.game_len,
-                                 'global_observer_type': self.observer,
+                                 'global_observer_type': gd.ObserverType.BLOCK_2D,
                                  'player_observer_type': self.observer,
                                  'random_level_on_reset': False,
                                  'record_video_config': {
                                        'frequency': self.file_args.record_freq,
-                                       'directory': os.path.join('.', 'videos')
+                                       'directory': os.path.join('videos',
+                                                                 f'{self.file_args.exp_name}_{self.name}_{self.file_args.generatorType}_{self.file_args.network_name}'),
+                                       'include_global': True,
                                     }
                                  }
 
@@ -95,8 +99,14 @@ class Registrar:
             raise ValueError(f"Unsupported action type in game: {file_args.game}. "
                              f"Only Discrete and MultiDiscrete are supported")
 
-        env.game.release()
-        del env
+
+        self.nn_build_config = {
+            'action_space': self.act_space,
+            'obs_space': self.obs_space,
+            'model_config': self.file_args.model_config,
+            'num_outputs': self.n_actions,
+            'name': self.file_args.network_name
+        }
 
         # todo ??
         # We might want to make this into something better.
@@ -104,22 +114,32 @@ class Registrar:
         #  function since different generators might require different initialization arguments
         #   Also, this is being put into an argparse.Namespace because that makes the
         #    code in the generator readable, but that should be switched to a dict for consistency.
-        self.generator_config = argparse.Namespace(**{
-            'mechanics': self.file_args.mechanics,
-            'singletons': self.file_args.singletons,
-            'at_least_one': self.file_args.at_least_one,
-            'immortal': self.file_args.immortal,
-            'floor': self.file_args.floor,
-            'probs': self.file_args.probs,
-        })
+        genType = self.file_args.generatorType
+        if genType == 'evolutionary':
+            self.generator_config = argparse.Namespace(**{
+                'mechanics': self.file_args.mechanics,
+                'singletons': self.file_args.singletons,
+                'at_least_one': self.file_args.at_least_one,
+                'immortal': self.file_args.immortal,
+                'floor': self.file_args.floor,
+                'probs': self.file_args.probs,
+            })
+        elif genType == 'pcgrl':
 
-        self.nn_build_config = {
-                'action_space': self.act_space,
-                'obs_space': self.obs_space,
-                'model_config': {},
-                'num_outputs': self.n_actions,
-                'name': self.file_args.network_name
-        }
+            e2 = HierarchicalBuilderEnv(env, self.rllib_env_config)
+            self.generator_config = {
+                'action_space': e2.builder_env.action_space,
+                'obs_space': Box(0.0, 255.0, e2.builder_env.action_space.nvec[:3], np.float64),
+                'model_config': self.file_args.model_config,
+                'num_outputs': sum(e2.builder_env.action_space.nvec),
+                'name': 'builder'
+            }
+            e2.builder_env.game.release()
+            del e2
+
+        env.game.release()
+        del env
+
 
         # Trainer Config for selected algorithm
         self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
@@ -129,15 +149,15 @@ class Registrar:
         self.trainer_config['env_config'] = self.rllib_env_config
         self.trainer_config['env'] = self.name
         self.trainer_config["model"] = {
-                'custom_model': self.file_args.network_name,
-                'custom_model_config': {}
-            }
+            'custom_model': self.file_args.network_name,
+            'custom_model_config': {}
+        }
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
         self.trainer_config["num_envs_per_worker"] = 2
-        self.trainer_config['simple_optimizer'] = True
+        # self.trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
-        # self.trainer_config['num_gpus'] = 0.1
+        # self.trainer_config['num_gpus'] = 0.05
 
     @property
     def get_nn_build_info(self):
