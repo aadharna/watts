@@ -76,6 +76,23 @@ class SetLevelWithCallback(gym.Wrapper):
         return f"<ResetCallback{str(self.env)}>"
 
 
+class MARLTest(MultiAgentEnv):
+    def __init__(self, env, env_config):
+        super().__init__()
+        self.players = ['p1', 'p2', 'p3']
+        self.steps = 0
+
+    def reset(self):
+        self.steps += 1
+    
+    def step(self, actions: dict):
+        done = {"__all__": False}
+        obs = {player: [0]*10 for player in self.players}
+        reward = {player: 0 for player in self.players}
+        info = {player: 0 for player in self.players}
+        return obs, reward, done, info
+
+
 class HierarchicalBuilderEnv(MultiAgentEnv):
     def __init__(self, env, env_config):
         super().__init__()
@@ -272,6 +289,8 @@ def add_wrappers(str_list: list) -> list:
 
 
 if __name__ == "__main__":
+    import sys
+    sys.path.append('..')
     import gym
     import os
     from griddly.util.rllib.environment.core import RLlibEnv
@@ -282,7 +301,6 @@ if __name__ == "__main__":
     from ray.tune.registry import register_env
     from ray.rllib.agents.ppo import PPOTrainer
     from ray.rllib.models import ModelCatalog
-    import sys
 
     from models.AIIDE_network import AIIDEActor
     from models.PCGRL_network import PCGRLAdversarial
@@ -350,7 +368,7 @@ if __name__ == "__main__":
 
     stop = {"timesteps_total": 500000}
 
-    results = tune.run(PPOTrainer, config=config2, stop=stop,
-                       local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
+    #results = tune.run(PPOTrainer, config=config2, stop=stop,
+    #                   local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
 
     ray.shutdown()
