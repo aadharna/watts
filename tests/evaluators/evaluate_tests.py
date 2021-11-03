@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 import copy
 from evaluators.rollout import rollout
 import network_factory
@@ -18,8 +20,8 @@ class TestEvaluate(unittest.TestCase):
         env = gf.make()(rllib_env_config)
 
         build_info = copy.copy(test_structs.example_network_factory_build_info)
-        build_info['name'] = network_factory.aiide
-        nf = network_factory.NetworkFactory(network_factory.aiide, build_info)
+        build_info['network_name'] = network_factory.aiide
+        nf = network_factory.NetworkFactory(build_info)
         actor = nf.make()(test_structs.example_aiide_state_dict)
 
         info, states, actions, rewards, win, logps, entropies = rollout(actor, env, 'cpu')
