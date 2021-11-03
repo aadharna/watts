@@ -8,6 +8,8 @@ class GameSchema:
         self.agent_chars = self._get_agent_chars_from_gdy()
         self.wall_char = self._get_wall_char_from_gdy()
         self.interesting_chars = self._get_other_chars_from_gdy()
+        self.n_human_levels = len(self._unpacked_game['Environment']['Levels'])
+        self.index_to_str, self.str_to_index = self._make_int_char_map()
 
         assert(self.agent_chars is not None)
         assert(len(self.interesting_chars) != 0)
@@ -42,3 +44,22 @@ class GameSchema:
             if this_char != agent_char and this_char != self.wall_char:
                 other_chars.add(this_char)
         return other_chars
+
+    def _make_int_char_map(self):
+        index_to_str = {}
+        str_to_index = {}
+        for i, ob_dict in enumerate(self._unpacked_game['Objects']):
+            index_to_str[i] = ob_dict['MapCharacter']
+            str_to_index[ob_dict['MapCharacter']] = i
+
+        index_to_str[i+1] = '.'
+        str_to_index['.'] = i+1
+        return index_to_str, str_to_index
+
+if __name__ == '__main__':
+    import os
+
+    schema = GameSchema(os.path.join('..', 'example_levels', 'limited_zelda.yaml'))
+    print(schema.str_to_index)
+    print(schema.index_to_str)
+    print(schema.n_human_levels)

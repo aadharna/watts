@@ -6,7 +6,7 @@ game: limited_zelda        # alternate solarfox or foragers with . Use commented
 lvl_dir: example_levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
-record_freq: 5000
+record_freq: 10
 
 # generator args, will change for each game
 initial_level_string: |
@@ -25,7 +25,6 @@ singletons: ['A', 'g'] # must be only one #['A'] #
 at_least_one: ['+']    # must have at least one # ['b'] #
 immortal: ['A', '.']   # cannot be removed #['A', '+'] #
 floor: ['.']           # base tile. cannot be moved #['+'] #
-minimal: ['w']
 probs: [0.25, 0.5, 0.25] # [remove, spawn, move] probabilities
 shape0: 9
 
@@ -34,6 +33,7 @@ generatorType: evolutionary
 ##network args
 # this should probably be a list
 network_name: "AIIDE_PINSKY_MODEL"  # Other agents: Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+model_config: {}
 framework: "torch"
 
 # algo optimization args
@@ -41,7 +41,7 @@ game_len: 500
 opt_algo: "PPO"
 
 # algo generation args
-evolution_timer: 25
+evolution_timer: 20
 mutation_rate: 0.8
 max_children: 3
 max_envs: 10

@@ -150,10 +150,9 @@ class PoetManager(Manager):
                 active_populations[pair_id].eval_scores.append(eval_score)
 
             if i % self.args.transfer_timer == 0:
-                nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
-                lvls = [(p.generator, j) for j, p in enumerate(self.active_population)]
-                id_map = [p.id for p in self.active_population]
-                new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
+                nets = [(p.solver, p.id) for j, p in enumerate(self.active_population)]
+                lvls = [(p.generator, p.id) for j, p in enumerate(self.active_population)]
+                new_weights = self._transfer_strategy.transfer(nets, lvls)
 
                 for j, (best_w, best_id) in new_weights.items():
                     active_populations[j].update_solver_weights(best_w)

@@ -113,6 +113,10 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
         self.protagonist_agent = 'protagonist'
         self.phase_counter = 0
 
+    @property
+    def game(self):
+        return self.builder_env.game
+
     def reset(self):
         self.cur_obs = self.builder_env.reset()
         _ = self.env.reset()
