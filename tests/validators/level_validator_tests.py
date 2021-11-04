@@ -15,7 +15,7 @@ class MockGameSchema:
     def __init__(self):
         self.agent_chars = {'A'}
         self.wall_char = 'w'
-        self.interesting_chars = ['+', 'e', 'g']
+        self.interesting_chars = {'+', 'e', 'g'}
 
 
 class TestLevelValidators(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestLevelValidators(unittest.TestCase):
         build_info['name'] = 'pcgrl_test'
         generator = PCGRLGenerator(**build_info)
         validator = GraphValidator(MockGameSchema())
-        res = validator.validate_level([generator], MockSolver())
+        res = validator.validate_level([generator], [MockSolver()])
         print(res)
 
     def test_graph_validator_on_static(self):
