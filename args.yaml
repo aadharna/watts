@@ -9,6 +9,17 @@ pictures: False
 record_freq: 5000
 
 # generator args, will change for each game
+initial_level_string: |
+    wwwwwwwwwwwww
+    w....+e.....w
+    w...........w
+    w..A........w
+    w...........w
+    w...........w
+    w.....w.....w
+    w.g.........w
+    wwwwwwwwwwwww
+
 mechanics: ['+', 'A', 'g', 'e', 'w'] #['b', 'A', 'w']
 singletons: ['A', 'g'] # must be only one #['A'] #
 at_least_one: ['+']    # must have at least one # ['b'] #
