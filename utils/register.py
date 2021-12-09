@@ -42,7 +42,7 @@ def policy_mapping_function(policies):
 class Registrar:
     id = 0
 
-    def __init__(self, file_args):
+    def __init__(self, file_args, base_path=os.getcwd()):
         """The Registrar handles storing and dispensing information needed in factory make functions.
             e.g. action_space info, observer info, env name, etc.
 
@@ -63,7 +63,7 @@ class Registrar:
             self.observer = gd.ObserverType.VECTOR
 
         self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
-        self.base_path = os.getcwd()
+        self.base_path = base_path
 
         self.rllib_env_config = {'environment_name': self.name,
                                  'yaml_file': os.path.join(self.base_path, self.gdy_file),
