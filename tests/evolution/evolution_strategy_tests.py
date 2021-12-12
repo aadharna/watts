@@ -1,12 +1,13 @@
 import numpy as np
-from typing import List, Tuple
 import unittest
+from typing import List, Tuple
 
-from validators.level_validator import AlwaysValidator
-from evolution.evolution_strategy import BirthThenKillStrategy, TraditionalES
-from evolution.replacement_strategy import ReplaceOldest, KeepTopK
-from evolution.selection_strategy import SelectRandomly
-from pair.agent_environment_pair import Pairing
+from watts.validators.level_validator import AlwaysValidator
+from watts.evolution.evolution_strategy import BirthThenKillStrategy, TraditionalES
+from watts.evolution.replacement_strategy import ReplaceOldest, KeepTopK
+from watts.evolution.selection_strategy import SelectRandomly
+from watts.pair.agent_environment_pair import Pairing
+
 from tests.test_classes import MockGenerator, MockPair, MockSolver
 
 

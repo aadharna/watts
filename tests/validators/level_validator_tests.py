@@ -2,13 +2,16 @@ import os
 import ray
 import unittest
 
-import network_factory
-from generators.PCGRLGenerator import PCGRLGenerator
-from generators.static_generator import StaticGenerator
-from tests.test_structs import example_pcgrl_network_factory_build_info, example_network_factory_build_info
+from watts import network_factory
+from watts.generators.PCGRLGenerator import PCGRLGenerator
+from watts.generators.static_generator import StaticGenerator
+from watts.validators.agent_validator import RandomAgentValidator
+from watts.validators.graph_validator import GraphValidator
+
+from tests.test_structs import \
+        example_pcgrl_network_factory_build_info, \
+        example_network_factory_build_info
 from tests.test_classes import MockSolver
-from validators.agent_validator import RandomAgentValidator
-from validators.graph_validator import GraphValidator
 
 
 class MockGameSchema:
