@@ -5,25 +5,25 @@ import sys
 import time
 import pickle
 
-from evolution.evolution_strategy import BirthThenKillStrategy
-from evolution.replacement_strategy import ReplaceOldest
-from evolution.selection_strategy import SelectRandomly
-from game.GameSchema import GameSchema
-from generators.AIIDE_generator import EvolutionaryGenerator
-from gym_factory import GridGameFactory
-from managers.POETManager import PoetManager
-from network_factory import NetworkFactory
-from pair.agent_environment_pair import Pairing
-from serializer.POETManagerSerializer import POETManagerSerializer
-from solvers.SingleAgentSolver import SingleAgentSolver
-from transfer.score_strategy import ZeroShotCartesian
-from transfer.rank_strategy import GetBestSolver
-from utils.gym_wrappers import add_wrappers
-from utils.register import Registrar
-from utils.loader import load_from_yaml
-from validators.level_validator import AlwaysValidator, RandomVariableValidator
-from validators.graph_validator import GraphValidator
-from evolution.replacement_strategy import _release
+from watts.evolution.evolution_strategy import BirthThenKillStrategy
+from watts.evolution.replacement_strategy import ReplaceOldest
+from watts.evolution.selection_strategy import SelectRandomly
+from watts.game.GameSchema import GameSchema
+from watts.generators.AIIDE_generator import EvolutionaryGenerator
+from watts.gym_factory import GridGameFactory
+from watts.managers.POETManager import PoetManager
+from watts.network_factory import NetworkFactory
+from watts.pair.agent_environment_pair import Pairing
+from watts.serializer.POETManagerSerializer import POETManagerSerializer
+from watts.solvers.SingleAgentSolver import SingleAgentSolver
+from watts.transfer.score_strategy import ZeroShotCartesian
+from watts.transfer.rank_strategy import GetBestSolver
+from watts.utils.gym_wrappers import add_wrappers
+from watts.utils.register import Registrar
+from watts.utils.loader import load_from_yaml
+from watts.validators.level_validator import AlwaysValidator, RandomVariableValidator
+from watts.validators.graph_validator import GraphValidator
+from watts.evolution.replacement_strategy import _release
 
 
 parser = argparse.ArgumentParser()

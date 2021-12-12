@@ -1,7 +1,8 @@
 import unittest
 
-from evolution.selection_strategy import SelectRandomly
-from pair.agent_environment_pair import Pairing
+from watts.evolution.selection_strategy import SelectRandomly
+from watts.pair.agent_environment_pair import Pairing
+
 from tests.test_classes import MockGenerator, MockPair, MockSolver
 
 

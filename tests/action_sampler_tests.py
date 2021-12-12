@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch import rand
 from gym.spaces import Discrete, MultiDiscrete, Box
-from models.categorical_action_sampler import ActionSampler
+from watts.models.categorical_action_sampler import ActionSampler
 
 
 class TestActionSampler(unittest.TestCase):

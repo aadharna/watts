@@ -37,7 +37,7 @@ max_envs: 10
 comp_agent: mcts
 
 # algo general args
-num_poet_loops: 100
+num_poet_loops: 2
 transfer_timer: 10
 snapshot_timer: 20
 use_snapshot: False

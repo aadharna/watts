@@ -1,8 +1,8 @@
 import gym
 from griddly.util.rllib.environment.core import RLlibEnv
-from generators.base import BaseGenerator
-from solvers.base import BaseSolver
-from pair.agent_environment_pair import Pairing
+from watts.generators.base import BaseGenerator
+from watts.solvers.base import BaseSolver
+from watts.pair.agent_environment_pair import Pairing
 
 
 class SimpleGymWrapper(gym.Wrapper, RLlibEnv):

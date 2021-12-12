@@ -1,6 +1,8 @@
-from evolution.replacement_strategy import ReplaceOldest, KeepTopK
-from tests.test_classes import MockGenerator, MockPair, MockSolver
 import unittest
+
+from watts.evolution.replacement_strategy import ReplaceOldest, KeepTopK
+
+from tests.test_classes import MockGenerator, MockPair, MockSolver
 
 
 class TestReplacementStrategy(unittest.TestCase):

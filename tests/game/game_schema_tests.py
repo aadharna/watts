@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from game.GameSchema import GameSchema
+from watts.game.GameSchema import GameSchema
 
 
 class TestGameSchema(unittest.TestCase):
