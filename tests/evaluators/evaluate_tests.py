@@ -13,7 +13,7 @@ class TestEvaluate(unittest.TestCase):
 
     def test_evaluate(self):
         gf = gym_factory.GridGameFactory("foo", [])
-        yaml_file = os.path.join('..', '..', 'example_levels', 'limited_zelda.yaml')
+        yaml_file = os.path.join('example_levels', 'limited_zelda.yaml')
         rllib_env_config = {
             'yaml_file': yaml_file,
             'level_string': 'wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'
