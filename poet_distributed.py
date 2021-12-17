@@ -9,7 +9,7 @@ from watts.evolution.evolution_strategy import BirthThenKillStrategy
 from watts.evolution.replacement_strategy import ReplaceOldest
 from watts.evolution.selection_strategy import SelectRandomly
 from watts.game.GameSchema import GameSchema
-from watts.generators.AIIDE_generator import EvolutionaryGenerator
+from watts.generators import EvolutionaryGenerator, StaticGenerator
 from watts.gym_factory import GridGameFactory
 from watts.managers.POETManager import PoetManager
 from watts.network_factory import NetworkFactory
@@ -27,8 +27,8 @@ from watts.evolution.replacement_strategy import _release
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--exp_name", type=str, help='exp name')
-parser.add_argument("--args_file", type=str, default='args.yaml', help='path to args file')
+parser.add_argument("--exp_name", type=str, default='test', help='exp name')
+parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'args.yaml'), help='path to args file')
 _args = parser.parse_args()
 
 def save_obj(obj, folder, name):
@@ -59,9 +59,10 @@ if __name__ == "__main__":
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
-    level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
-    generator = EvolutionaryGenerator(level_string,
-                                      file_args=registry.get_generator_config)
+
+    generator = StaticGenerator(args.initial_level_string)
+    #generator = EvolutionaryGenerator(args.initial_level_string,
+    #                                  file_args=registry.get_generator_config)
 
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
