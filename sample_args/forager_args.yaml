@@ -1,0 +1,72 @@
+# args for using POET with the forager environment
+
+# game args
+engine: GDY
+game: foragers
+lvl_dir: example_levels
+init_lvl: 0
+pictures: False
+record_freq: 5000
+
+# generator args
+initial_level_string: |
+      W   W   W   W   W   W   W   W   W
+      W   f1  .   .  .    .   .   f2  W
+      W   .   .   .   .   .   .   .   W
+      W   .   .   r   b   r   .   .   W
+      W   .   .   r   g   r   .   .   W
+      W   .   .   r   g   r   .   .   W
+      W   .   .   r   b   r   .   .   W
+      W   .   .   .   .   .   .   .   W
+      W   f4  .   .   .   .   .   f3  W
+      W   W   W   W   W   W   W   W   W
+
+mechanics: ['W', 'f1', 'f2', 'f3', 'f4', 'r', 'b', 'g']
+singletons: ['f1', 'f2', 'f3', 'f4'] # must be only one of each
+at_least_one: ['f1', 'f2', 'f3', 'f4'] # must have at least one of each
+immortal: [] # cannot be removed
+floor: ['.'] # base tile. cannot be moved
+minimal: [] #? not referenced in the code
+probs: [] #[remove, spawn, move] probabilities?
+shape0: 0 #? not referenced in the code
+
+generatorType: static
+
+# network args
+policies:
+    - agent: forager
+      network_name: AIIDE_PINSKY_MODEL
+
+framework: "torch"
+
+# algo optimization args
+game_len: 500
+opt_algo: "PPO"
+
+# algo generation args
+evolution_timer: 25
+mutation_rate: 0.8
+max_children: 3
+max_envs: 10
+comp_agent: mcts
+
+# algo general args
+num_poet_loops: 100
+transfer_timer: 10
+snapshot_timer: 20
+use_snapshot: False
+
+
+# gym Env Wrappers
+wrappers:
+    - Aligned
+    - MultiAgent
+    #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
+
+
+# trainer helper args
+custom_trainer_config_override: True
+
+
+
+

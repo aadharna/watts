@@ -17,13 +17,8 @@ Installation:
 
 	* conda create -n NAME python=3.7.10
 	* conda activate NAME  
-	* pip install ray[default]==1.6.0
-	* pip install ray[rllib]  
-	* conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c conda-forge  
-		* Note, you should grab the correct install from here: https://pytorch.org/get-started/locally/
-	* pip install griddly
-		* Make sure that vulkan is installed since Griddly depends on Vulkan for its rendering.
-    * pip install networkx
+    * Install pytorch according to your system and environment from here: https://pytorch.org/get-started/locally/
+    * At the root of this project, run: `pip install -e .`
 
 If you see stuff like:
 ```
