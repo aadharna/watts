@@ -4,7 +4,7 @@ import unittest
 
 from watts import network_factory
 from watts.generators.PCGRLGenerator import PCGRLGenerator
-from watts.generators.static_generator import StaticGenerator
+from watts.generators.StaticGenerator import StaticGenerator
 from watts.validators.agent_validator import RandomAgentValidator
 from watts.validators.graph_validator import GraphValidator
 
