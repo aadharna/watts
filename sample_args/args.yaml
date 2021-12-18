@@ -10,15 +10,15 @@ record_freq: 5000
 
 # generator args, will change for each game
 initial_level_string: |
-    wwwwwwwwwwwww
-    w....+e.....w
-    w...........w
-    w..A........w
-    w...........w
-    w...........w
-    w.....w.....w
-    w.g.........w
-    wwwwwwwwwwwww
+    w w w w w w w w w w w w w
+    w . . . . + e . . . . . w
+    w . . . . . . . . . . . w
+    w . . A . . . . . . . . w
+    w . . . . . . . . . . . w
+    w . . . . . . . . . . . w
+    w . . . . . w . . . . . w
+    w . g . . . . . . . . . w
+    w w w w w w w w w w w w w
 
 mechanics: ['+', 'A', 'g', 'e', 'w'] #['b', 'A', 'w']
 singletons: ['A', 'g'] # must be only one #['A'] #
