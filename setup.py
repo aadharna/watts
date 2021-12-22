@@ -11,7 +11,7 @@ setup(
             'ray[default]==1.6.0',
             'ray[rllib]',
             'griddly',
-            'networkx'
+            'networkx',
             'torch'
         ]
 )
