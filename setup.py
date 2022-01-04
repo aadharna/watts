@@ -8,11 +8,9 @@ setup(
     packages=['watts'],
     python_requires='>=3.7.10',
     install_requires=[
-            'ray[default]==1.6.0',
-            'ray[rllib]',
+            'ray[all]==1.6.0',
             'griddly',
             'networkx',
-            'torch'
         ]
 )
 
