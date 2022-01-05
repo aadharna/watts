@@ -27,7 +27,7 @@ class SingleAgentSolver(BaseSolver):
         self.network_factory = network_factory
         self.gym_factory = gym_factory
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name,
-                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs', self.exp),
+                                           logger_creator=custom_log_creator(os.path.join('.', 'logs', self.exp),
                                                                              f'POET_{log_id}.')
                                            )
         self.agent = network_factory.make()(weights)

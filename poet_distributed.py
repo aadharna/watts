@@ -60,9 +60,9 @@ if __name__ == "__main__":
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
 
-    generator = StaticGenerator(args.initial_level_string)
-    #generator = EvolutionaryGenerator(args.initial_level_string,
-    #                                  file_args=registry.get_generator_config)
+    # generator = StaticGenerator(args.initial_level_string)
+    generator = EvolutionaryGenerator(args.initial_level_string,
+                                     file_args=registry.get_generator_config)
 
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         _release(manager._evolution_strategy._replacement_strategy.archive_history, manager.active_population)
         manager._evolution_strategy._replacement_strategy.archive_history['run_stats'] = manager.stats
         save_obj(manager._evolution_strategy._replacement_strategy.archive_history, 
-                 os.path.join('..', 'enigma_logs', _args.exp_name),
+                 os.path.join('.', 'logs', _args.exp_name),
                  'total_serialized_alg')
         
         elapsed = time.time() - start

@@ -1,9 +1,9 @@
-# enigma
+# watts
 PINSKY v2
 
 This is a rewrite and extension of the UntouchableThunder repo.
 
-**Furthermore, we aim for Enigma to generically tackle the 
+**Furthermore, we aim for Watts to generically tackle the
 problem of simultaneous learning with generators and solvers.**
 
 In PINSKY (v1.0), I manually created futures and collected answers after each distributed call.
@@ -15,10 +15,8 @@ by a user, and to cleanly scale to arbitrary compute.
 
 Installation:  
 
-	* conda create -n NAME python=3.7.10
-	* conda activate NAME  
-    * Install pytorch according to your system and environment from here: https://pytorch.org/get-started/locally/
-    * At the root of this project, run: `pip install -e .`
+	* make
+	* make run
 
 If you see stuff like:
 ```

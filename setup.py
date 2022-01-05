@@ -7,7 +7,7 @@ setup(
     author='Aaron Dharna <aadharna@gmail.com>, Charlie Summers <cgs2161@columbia.edu>, Rohin Dasari <rd2893@nyu.edu>',
     url='https://github.com/aadharna/watts',
     packages=['watts'],
-    python_requires='>=3.7.10',
+    python_requires='>=3.7.7',
     install_requires=[
             'ray[all]==1.6.0',
             'griddly',
