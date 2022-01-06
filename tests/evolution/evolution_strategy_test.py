@@ -8,7 +8,7 @@ from watts.evolution.replacement_strategy import ReplaceOldest, KeepTopK
 from watts.evolution.selection_strategy import SelectRandomly
 from watts.pair.agent_environment_pair import Pairing
 
-from tests.test_classes import MockGenerator, MockPair, MockSolver
+from tests.utils.test_classes import MockGenerator, MockPair, MockSolver
 
 
 def test_single_selection_evolve():

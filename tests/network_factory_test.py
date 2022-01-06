@@ -7,7 +7,7 @@ from watts import network_factory
 from watts.models.AIIDE_network import AIIDEActor
 from watts.models.PCGRL_network import PCGRLAdversarial
 
-from tests import test_structs
+from tests.utils import test_structs
 
 
 def run_network_factory_test(name: str, constructor, state_dict):

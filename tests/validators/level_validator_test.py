@@ -8,10 +8,10 @@ from watts.generators.StaticGenerator import StaticGenerator
 from watts.validators.agent_validator import RandomAgentValidator
 from watts.validators.graph_validator import GraphValidator
 
-from tests.test_structs import \
+from tests.utils.test_structs import \
         example_pcgrl_network_factory_build_info, \
         example_network_factory_build_info
-from tests.test_classes import MockSolver
+from tests.utils.test_classes import MockSolver
 
 
 class MockGameSchema:

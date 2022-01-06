@@ -7,7 +7,7 @@ from watts import gym_factory
 from watts import network_factory
 from watts.evaluators.rollout import rollout
 
-import tests.test_structs as test_structs
+import tests.utils.test_structs as test_structs
 
 
 def test_evaluate():

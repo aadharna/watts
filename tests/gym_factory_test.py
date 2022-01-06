@@ -1,7 +1,7 @@
 import os
 import pytest
 from watts import gym_factory
-from tests.test_classes import SimpleGymWrapper
+from tests.utils.test_classes import SimpleGymWrapper
 
 
 def test_simple():

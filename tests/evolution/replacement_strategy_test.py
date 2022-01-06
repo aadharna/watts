@@ -1,7 +1,7 @@
 import pytest
 from watts.evolution.replacement_strategy import ReplaceOldest, KeepTopK
 
-from tests.test_classes import MockGenerator, MockPair, MockSolver
+from tests.utils.test_classes import MockGenerator, MockPair, MockSolver
 
 
 def test_replace_oldest_cut_none():

@@ -24,4 +24,4 @@ jobs:
           pip install torch
           pip install .
       - name: Execute tests
-        run: python -m unittest tests/*.py tests/**/*.py
+        run: python -m pytest tests
