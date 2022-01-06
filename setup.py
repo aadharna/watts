@@ -12,6 +12,7 @@ setup(
             'ray[all]==1.6.0',
             'griddly',
             'networkx',
+            'pytest'
         ]
 )
 
