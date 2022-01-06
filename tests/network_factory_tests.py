@@ -1,5 +1,5 @@
 import copy
-import unittest
+import pytest
 
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
 from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgent
@@ -24,23 +24,21 @@ def run_network_factory_test(name: str, constructor, state_dict):
     assert network is not None
 
 
-class TestNetworkFactory(unittest.TestCase):
+def test_aiide():
+    run_network_factory_test(network_factory.aiide, AIIDEActor, test_structs.example_aiide_state_dict)
 
-    def test_aiide(self):
-        run_network_factory_test(network_factory.aiide, AIIDEActor, test_structs.example_aiide_state_dict)
+def test_conv():
+    run_network_factory_test(network_factory.conv, SimpleConvAgent, test_structs.example_conv_state_dict)
 
-    def test_conv(self):
-        run_network_factory_test(network_factory.conv, SimpleConvAgent, test_structs.example_conv_state_dict)
+def test_gap():
+    run_network_factory_test(network_factory.gap, GAPAgent, test_structs.example_gap_state_dict)
 
-    def test_gap(self):
-        run_network_factory_test(network_factory.gap, GAPAgent, test_structs.example_gap_state_dict)
+def test_pcgrl():
+    run_network_factory_test(network_factory.pcgrl, PCGRLAdversarial, test_structs.example_pcgrl_state_dict)
 
-    def test_pcgrl(self):
-        run_network_factory_test(network_factory.pcgrl, PCGRLAdversarial, test_structs.example_pcgrl_state_dict)
+def test_no_state():
+    run_network_factory_test(network_factory.aiide, AIIDEActor, {})
 
-    def test_no_state(self):
-        run_network_factory_test(network_factory.aiide, AIIDEActor, {})
-
-    def test_invalid(self):
-        with self.assertRaises(ValueError):
-            network_factory.NetworkFactory("foo", {})
+def test_invalid():
+    with pytest.raises(ValueError):
+        network_factory.NetworkFactory("foo", {})

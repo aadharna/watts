@@ -1,5 +1,5 @@
 import os
-import unittest
+import pytest
 from griddly.util.rllib.environment.core import RLlibEnv
 from watts.utils.gym_wrappers import \
         HierarchicalBuilderEnv, \
@@ -17,26 +17,24 @@ def run_wrapper_test(game, wrapper):
     return env
 
 
-class TestWrappers(unittest.TestCase):
+def test_hierarchical_wrapper():
+    env = run_wrapper_test('limited_zelda', HierarchicalBuilderEnv)
+    assert env.builder_env
+    assert env.env
 
-    def test_hierarchical_wrapper(self):
-        env = run_wrapper_test('limited_zelda', HierarchicalBuilderEnv)
-        assert env.builder_env
-        assert env.env
+def test_regret_wrapper():
+    env = run_wrapper_test('maze', Regret)
+    assert env.builder_env
+    assert env.env
 
-    def test_regret_wrapper(self):
-        env = run_wrapper_test('maze', Regret)
-        assert env.builder_env
-        assert env.env
+def test_aligned_wrapper():
+    env = run_wrapper_test('foragers', AlignedReward)
+    assert env.win is None
+    assert env.steps == -1
 
-    def test_aligned_wrapper(self):
-        env = run_wrapper_test('foragers', AlignedReward)
-        assert env.win is None
-        assert env.steps == -1
-
-    def test_level_setting_callback_wrapper(self):
-        env = run_wrapper_test('zelda', SetLevelWithCallback)
-        level, data = env.create_level_fn()
-        assert env.generation_data is None
-        assert level is None
-        assert data is None
+def test_level_setting_callback_wrapper():
+    env = run_wrapper_test('zelda', SetLevelWithCallback)
+    level, data = env.create_level_fn()
+    assert env.generation_data is None
+    assert level is None
+    assert data is None
