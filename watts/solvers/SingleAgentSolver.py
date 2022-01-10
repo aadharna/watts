@@ -11,8 +11,7 @@ from ..evaluators.rollout import rollout
 
 @ray.remote
 class SingleAgentSolver(BaseSolver):
-    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={},
-                 log_id=0):
+    def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={}, log_id=0):
         BaseSolver.__init__(self)
         # todo We might want to name these agents to access via keys
         #  rather than a convention of [network].

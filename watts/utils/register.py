@@ -59,52 +59,26 @@ class Registrar:
         self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
         self.base_path = os.getcwd()
 
-        self.rllib_env_config = {'environment_name': self.name,
-                                 'yaml_file': os.path.join(self.base_path, self.gdy_file),
-                                 'level': self.file_args.init_lvl,
-                                 'max_steps': self.file_args.game_len,
-                                 'global_observer_type': self.observer,
-                                 'player_observer_type': self.observer,
-                                 'random_level_on_reset': False,
-                                 'record_video_config': {
-                                       'frequency': self.file_args.record_freq,
-                                       'directory': os.path.join('.', 'videos')
-                                    }
-                                 }
+        self.rllib_env_config = self.build_rllib_config()
 
-        env = RLlibEnv(self.rllib_env_config)
-        if 'MultiAgent' in self.file_args.wrappers:
-            env = RLlibMultiAgentWrapper(env, self.rllib_env_config)
-        state = env.reset()
-        self.act_space = env.action_space
-        self.obs_space = env.observation_space
-        
-        if isinstance(state, dict):
-            agent_keys = list(state.keys())
-        
-        self.n_actions = 0
+        interaction_spaces = self.get_action_observation_space_from_env()
+        self.act_space = interaction_spaces['action_space']
+        self.obs_space = interaction_spaces['observation_space']
+        self.n_actions = interaction_spaces['n_actions']
 
-        # In Griddly, the zero-th action of each Discrete action in a no-op.
-        # This means that there are two no-ops in Zelda. Therefore, we just manually count the
-        # operations for each action
-        if type(self.act_space) == MultiDiscrete:
-            self.n_actions = sum(self.act_space.nvec)
-        elif type(self.act_space) == Discrete:
-            self.n_actions = self.act_space.n
-        else:
-            raise ValueError(f"Unsupported action type in game: {file_args.game}. "
-                             f"Only Discrete and MultiDiscrete are supported")
+        self.generator_config = self.build_generator_config()
+        self.nn_build_config = self.build_nn_config()
 
-        env.game.release()
-        del env
+        self.trainer_config, self.trainer_constr = self.build_trainer_config()
 
+    def build_generator_config(self):
         # todo ??
         # We might want to make this into something better.
         #  Also, this should probably have it's own special prepare
         #  function since different generators might require different initialization arguments
         #   Also, this is being put into an argparse.Namespace because that makes the
         #    code in the generator readable, but that should be switched to a dict for consistency.
-        self.generator_config = argparse.Namespace(**{
+        generator_config = argparse.Namespace(**{
             'mechanics': self.file_args.mechanics,
             'singletons': self.file_args.singletons,
             'at_least_one': self.file_args.at_least_one,
@@ -112,32 +86,130 @@ class Registrar:
             'floor': self.file_args.floor,
             'probs': self.file_args.probs,
         })
+        return generator_config
 
-        self.nn_build_config = {
-                'action_space': self.act_space,
-                'obs_space': self.obs_space,
-                'model_config': {},
-                'num_outputs': self.n_actions,
-                'name': self.file_args.network_name
-        }
-
-        # Trainer Config for selected algorithm
-        self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
-        if self.file_args.custom_trainer_config_override:
-            self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
-
-        self.trainer_config['env_config'] = self.rllib_env_config
-        self.trainer_config['env'] = self.name
-        self.trainer_config["model"] = {
-                'custom_model': self.file_args.network_name,
-                'custom_model_config': {}
+    def build_nn_config(self):
+        """
+        Build neural network config
+        """
+        if 'policies' in self.file_args:
+            nn_config = []
+            for policy in self.file_args.policies:
+                nn_config.append({
+                        'action_space': self.act_space,
+                        'obs_space': self.obs_space,
+                        'model_config': {},
+                        'num_outputs': self.n_actions,
+                        'name': policy['network_name']
+                    })
+        else:
+            nn_config = {
+                    'action_space': self.act_space,
+                    'obs_space': self.obs_space,
+                    'model_config': {},
+                    'num_outputs': self.n_actions,
+                    'name': self.file_args.network_name
             }
-        self.trainer_config["framework"] = self.file_args.framework
-        self.trainer_config["num_workers"] = 1
-        self.trainer_config["num_envs_per_worker"] = 2
-        self.trainer_config['simple_optimizer'] = True
+        return nn_config
+
+    def build_trainer_config(self):
+        """
+        Build config and get constructor for trainer algorithm
+        """
+        # get default config and constructor
+        trainer_config, trainer_constr = \
+            get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+        if self.file_args.custom_trainer_config_override:
+            trainer_constr = add_mixins(trainer_constr, [ResetConfigOverride])
+
+        # set attributes
+        trainer_config['env_config'] = self.rllib_env_config
+        trainer_config['env'] = self.name
+        trainer_config["framework"] = self.file_args.framework
+        trainer_config["num_workers"] = 1
+        trainer_config["num_envs_per_worker"] = 2
+        trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.1
+
+        # if multiple policies are provided,
+        # override multiagent component of config
+        # Look into policy_mapping_fn
+        # how can build a function for all environments
+        if 'policies' in self.file_args:
+            policies = {}
+            for policy in self.file_args.policies:
+                agent = policy['agent']
+                network = policy['network_name']
+                model_config = {
+                        'custom_model': network,
+                            'custom_model_config': {}
+                        }
+                policies[agent] = (None, self.act_space, self.obs_space, model_config)  
+            trainer_config['multiagent'] = {}
+            trainer_config['multiagent']['policies'] = policies
+
+        else:
+            trainer_config["model"] = {
+                    'custom_model': self.file_args.network_name,
+                    'custom_model_config': {}
+                }
+        return trainer_config, trainer_constr
+
+    def build_rllib_config(self):
+        """
+        Build RL Lib Environment Config
+        """
+        rllib_env_config = {
+                            'environment_name': self.name,
+                            'yaml_file': os.path.join(self.base_path, self.gdy_file),
+                            'level': self.file_args.init_lvl,
+                            'max_steps': self.file_args.game_len,
+                            'global_observer_type': self.observer,
+                            'player_observer_type': self.observer,
+                            'random_level_on_reset': False,
+                            'record_video_config': {
+                                   'frequency': self.file_args.record_freq,
+                                   'directory': os.path.join('.', 'videos')
+                                }
+                            }
+        return rllib_env_config
+
+    def get_action_observation_space_from_env(self):
+        """
+        Build a sample environment and extract the observation and action space
+        """
+        env = RLlibEnv(self.rllib_env_config)
+        if 'MultiAgent' in self.file_args.wrappers:
+            env = RLlibMultiAgentWrapper(env, self.rllib_env_config)
+        state = env.reset()
+        act_space = env.action_space
+        obs_space = env.observation_space
+        
+        if isinstance(state, dict):
+            agent_keys = list(state.keys())
+        
+        n_actions = 0
+
+        # In Griddly, the zero-th action of each Discrete action in a no-op.
+        # This means that there are two no-ops in Zelda. Therefore, we just manually count the
+        # operations for each action
+        if isinstance(act_space, MultiDiscrete):
+            n_actions = sum(act_space.nvec)
+        elif isinstance(act_space, Discrete):
+            n_actions = act_space.n
+        else:
+            raise ValueError(f"Unsupported action type in game: {file_args.game}. "
+                             f"Only Discrete and MultiDiscrete are supported")
+
+        env.game.release()
+        del env
+        return {
+                'action_space': act_space,
+                'observation_space': obs_space,
+                'n_actions': n_actions
+                } 
+
 
     @property
     def get_nn_build_info(self):

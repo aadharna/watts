@@ -33,7 +33,10 @@ shape0: 0 #? not referenced in the code
 generatorType: static
 
 # network args
-network_name: "AIIDE_PINSKY_MODEL"
+policies:
+    - agent: harvester
+      network_name: AIIDE_PINSKY_MODEL
+
 framework: "torch"
 
 # algo optimization args

@@ -19,7 +19,7 @@ from watts.solvers.SingleAgentSolver import SingleAgentSolver
 from watts.transfer.score_strategy import ZeroShotCartesian
 from watts.transfer.rank_strategy import GetBestSolver
 from watts.utils.gym_wrappers import add_wrappers
-from watts.utils.register import Registrar
+from watts.utils import Registrar
 from watts.utils.loader import load_from_yaml
 from watts.validators.level_validator import AlwaysValidator, RandomVariableValidator
 from watts.validators.graph_validator import GraphValidator
