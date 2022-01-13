@@ -351,6 +351,6 @@ if __name__ == "__main__":
     stop = {"timesteps_total": 500000}
 
     results = tune.run(PPOTrainer, config=config2, stop=stop,
-                       local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
+                       local_dir=os.path.join('.', 'logs'), checkpoint_at_end=True)
 
     ray.shutdown()
