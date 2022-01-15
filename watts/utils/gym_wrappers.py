@@ -161,8 +161,9 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
             if builder_done:
                 self.phase_counter += 1
                 self.lvl = self.builder_env.render(observer='global')
-                _obs = self.env.reset(level_string=self.lvl)
-                obs[self.antagonist_agent_id] = _obs
+                obs_dict = self.env.reset(level_string=self.lvl, global_observations=True)
+                self.global_view = obs_dict['global']
+                obs[self.antagonist_agent_id] = obs_dict['player']
                 reward[self.antagonist_agent_id] = 0
                 done['builder'] = True
 
@@ -221,9 +222,10 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
 
 
 class Regret(HierarchicalBuilderEnv):
-    def __init__(self, env, env_config):
+    def __init__(self, env, env_config, passthrough_reward=False):
         HierarchicalBuilderEnv.__init__(self, env, env_config)
         self.regret = 0
+        self.passthrough_reward = passthrough_reward
 
     def step(self, action_dict):
         ns, rew, d, info = super().step(action_dict)
@@ -241,8 +243,8 @@ class Regret(HierarchicalBuilderEnv):
                     rew[agent] = self.regret
                 else:
                     rew[agent] = -self.regret
-        # else zero out the reward
-        else:
+        # zero out the reward that's not regret
+        elif not self.passthrough_reward:
             for k, v in rew.items():
                 rew[k] = 0
         return ns, rew, d, info
@@ -273,88 +275,3 @@ def add_wrappers(str_list: list) -> list:
             raise ValueError("Requested wrapper does not exist. Please make it.")
 
     return wraps
-
-
-if __name__ == "__main__":
-    import gym
-    import os
-    from griddly.util.rllib.environment.core import RLlibEnv
-    from utils.register import Registrar
-    from utils.loader import load_from_yaml
-    import ray
-    from ray.tune import tune
-    from ray.tune.registry import register_env
-    from ray.rllib.agents.ppo import PPOTrainer
-    from ray.rllib.models import ModelCatalog
-    import sys
-
-    from models.AIIDE_network import AIIDEActor
-    from models.PCGRL_network import PCGRLAdversarial
-
-    os.chdir('..')
-
-    sep = os.pathsep
-    os.environ['PYTHONPATH'] = sep.join(sys.path)
-
-    ray.init(num_gpus=1, ignore_reinit_error=True)  # , log_to_driver=False, local_mode=True)
-
-    registry = Registrar(file_args=load_from_yaml('args.yaml'))
-
-    config = registry.get_config_to_build_rllib_env
-    config['board_shape'] = (15, 15)
-    config['builder_max_steps'] = 50
-    config['max_steps'] = 250
-
-
-    def make_env(config):
-        env = RLlibEnv(config)
-        env = AlignedReward(env, config)
-        h_env = Regret(env, config)
-        return h_env
-
-
-    def policy_mapping_fn(agent_id):
-        if agent_id.startswith('antagonist'):
-            return 'antagonist'
-        elif agent_id.startswith('protagonist'):
-            return 'protagonist'
-        else:
-            return 'builder'
-
-
-    ModelCatalog.register_custom_model('AIIDE', AIIDEActor)
-    ModelCatalog.register_custom_model('PCGRL', PCGRLAdversarial)
-    register_env('h_maze', make_env)
-
-    h_env = make_env(config)
-    _ = h_env.reset()
-    config2 = {
-        'env': 'h_maze',
-        'num_workers': 2,
-        "num_envs_per_worker": 2,
-        'env_config': config,
-        # "callbacks": PairedTrainingCallback,
-        'multiagent': {
-            'policies': {
-                'builder': (None, h_env.builder_env.observation_space,
-                            h_env.builder_env.action_space, {'model': {'custom_model': 'PCGRL',
-                                                                       'custom_model_config': {'cell_size': 2704}}}),
-                'antagonist': (None, h_env.env.observation_space,
-                               h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
-                                                                  'custom_model_config': {}}}),
-                'protagonist': (None, h_env.env.observation_space,
-                                h_env.env.action_space, {'model': {'custom_model': 'AIIDE',
-                                                                   'custom_model_config': {}}})
-            },
-            'policy_mapping_fn': policy_mapping_fn
-        },
-        "framework": 'torch',
-        "num_gpus": 1
-    }
-
-    stop = {"timesteps_total": 500000}
-
-    results = tune.run(PPOTrainer, config=config2, stop=stop,
-                       local_dir=os.path.join('..', 'enigma_logs'), checkpoint_at_end=True)
-
-    ray.shutdown()
