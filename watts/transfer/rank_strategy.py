@@ -34,21 +34,12 @@ class GetBestSolver(RankStrategy):
         solvers, solver_idxs = zip(*solver_list)
         generators, generator_idxs = zip(*generator_list)
         solver_generator_combo_id = list(product(solver_idxs, generator_idxs))
-        results = self.scorer.score(solvers=solvers,
-                                    generators=generators,
-                                    id_map=solver_generator_combo_id)
-
-        tournaments = {i: [] for i in solver_idxs}
-
-        for i, generator_id in enumerate(generator_idxs):
-            for j, r in enumerate(results):
-                if generator_id == r['generator_id']:
-                    score = r[0]['score']
-                    solver = r['solver_id']
-                    tournaments[solver].append((generator_id, solver, score))
+        tournament_results = self.scorer.score(solvers=solvers,
+                                               generators=generators,
+                                               id_map=solver_generator_combo_id)
 
         tt = []
-        for k, v in tournaments.items():
+        for k, v in tournament_results.items():
             tt.append(v)
 
         tt = np.array(tt)
@@ -81,4 +72,76 @@ class GetBestSolver(RankStrategy):
                         best_solver_id
                     )
 
+        return new_weights
+
+
+class GetBestZeroOrOneShotSolver(RankStrategy):
+    """This is the transfer strategy that POET uses in:
+    https://arxiv.org/abs/1901.01753 see page 28
+
+    """
+    def __init__(self, scorer, default_trainer_config):
+        self.internal_transfer_strategy = GetBestSolver(scorer=scorer)
+        self.trainer_config = default_trainer_config
+        self.direct_transfers = {}
+        self.proposal_transfers = {}
+        self.t = 0
+
+    def transfer(self, solver_list: list, generator_list: list) -> Dict[int, Any]:
+        self.t += 1
+
+        solvers, solver_idxs = zip(*solver_list)
+        generators, generator_idxs = zip(*generator_list)
+        solver_generator_combo_id = list(product(solver_idxs, generator_idxs))
+
+        # in POET's language these are (potential) direct transfers
+        best_zero_shot_weights = self.internal_transfer_strategy.transfer(solver_list, generator_list)
+        zero_shot_data = self.internal_transfer_strategy.tournaments[self.internal_transfer_strategy.t]
+
+        # take one opt step for each Pair
+        refs = []
+        for i, (s, g) in enumerate(zip(solvers, generators)):
+            # This does an in-place update of the weights
+            refs.append(s.optimize.remote(trainer_config=self.trainer_config,
+                                          level_string_monad=g.generate_fn_wrapper(),
+                                          pair_id=solver_idxs[i]))
+        _ = ray.get(refs)
+
+        # in POET's language, these are (potential) proposal transfers
+        best_one_shot_weights = self.internal_transfer_strategy.transfer(solver_list, generator_list)
+        one_shot_data = self.internal_transfer_strategy.tournaments[self.internal_transfer_strategy.t]
+
+        new_weights = {}
+        proposal_transfers = 0
+        direct_transfers = 0
+        # split apart the tensors
+        zero_generator_id_matrix = zero_shot_data[:, :, 0]
+        zero_solver_id_matrix = zero_shot_data[:, :, 1]
+        zero_best_indicies = np.argmax(zero_shot_data[:, :, 2], axis=0)
+        one_generator_id_matrix = one_shot_data[:, :, 0]
+        one_solver_id_matrix = one_shot_data[:, :, 1]
+        one_best_indicies = np.argmax(one_shot_data[:, :, 2], axis=0)
+        for i in range(zero_generator_id_matrix.shape[0]):
+            g_id = generator_idxs[i]
+            w_0, s_id_0 = best_zero_shot_weights[g_id]
+            w_1, s_id_1 = best_one_shot_weights[g_id]
+            # POET does transfer for one env at a time, here we do the entire set once.
+            # POET transfer for env k is argmax([theta_1, ..., theta_m, theta_1', ..., theta_m'])
+            #    we have done:
+            #         argmax(argmax([theta_1, ..., theta_m]), argmax([theta_1', ..., theta_m']))
+            #    and the implemented version is equivalent to POET's version
+            #    since max([1, 2, 3, 4, 5, 6, 7, 8]) = max(max([1, 2, 3, 4]), max([5, 6, 7, 8]))
+            #
+            if zero_shot_data[:, :, 2][i, zero_best_indicies[i]] > one_shot_data[:, :, 2][i, one_best_indicies[i]]:
+                new_weights[g_id] = (w_0, s_id_0)
+                direct_transfers += 1
+            else:
+                new_weights[g_id] = (w_1, s_id_1)
+                proposal_transfers += 1
+
+        self.direct_transfers[self.t] = direct_transfers
+        self.proposal_transfers[self.t] = proposal_transfers
+
+        # new weights are about to be assigned, so
+        # I don't think it's worth reseting the weights to the zero_state
         return new_weights
