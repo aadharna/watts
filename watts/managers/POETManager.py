@@ -71,7 +71,7 @@ class PoetManager(Manager):
 
     def build_children(self, children: List[Tuple]) -> List[Pairing]:
         built_children = []
-        for parent_solver, child_generator, parent_id in children:
+        for parent_solver, child_generator, parent_id, _ in children:
             parent_weights = ray.get(parent_solver.get_weights.remote())
             new_child = Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
                                                                 trainer_config=self.registrar.trainer_config,
