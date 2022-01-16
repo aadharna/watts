@@ -1,5 +1,7 @@
+from collections import OrderedDict
 
-def _release(archive, finished_list):
+
+def _release(archive: dict, finished_list: list):
     """helper function to clean up pair objects that are no longer being used going forward
 
     :param archive: container to save meta-data in for the objects being destroyed
@@ -14,7 +16,7 @@ def _release(archive, finished_list):
 class ReplacementStrategy:
     def __init__(self, max_pairings: int = 10):
         self.max_pairings = max_pairings
-        self.archive_history = {}
+        self.archive_history = OrderedDict()
 
     def update(self, archive) -> list:
         raise NotImplementedError()
