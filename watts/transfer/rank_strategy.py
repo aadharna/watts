@@ -42,8 +42,8 @@ class GetBestSolver(RankStrategy):
         for k, v in tournament_results.items():
             tt.append(v)
 
-        tt = np.array(tt).squeeze() # we squeeze because that'll clean up the [n,1,n] case into [n,n] but
-                                    #   the [n,n,n] case will stay [n,n,n].
+        tt = np.array(tt).squeeze() # we squeeze because that'll clean up the [n,1,3] case into [n,3] but
+                                    #   the [n,n,3] case will stay [n,n,3].
         self.tournaments[self.t] = tt
         # here we're using the generalized slicing of ... isntead of manually indicating the number of
         #  dimensions to go through and are selecting the various slices but keeping length x width
