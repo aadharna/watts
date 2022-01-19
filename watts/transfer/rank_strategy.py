@@ -42,13 +42,16 @@ class GetBestSolver(RankStrategy):
         for k, v in tournament_results.items():
             tt.append(v)
 
-        tt = np.array(tt)
+        tt = np.array(tt).squeeze() # we squeeze because that'll clean up the [n,1,n] case into [n,n] but
+                                    #   the [n,n,n] case will stay [n,n,n].
         self.tournaments[self.t] = tt
-        generator_id_matrix = tt[:, :, 0]
-        solver_id_matrix = tt[:, :, 1]
+        # here we're using the generalized slicing of ... isntead of manually indicating the number of
+        #  dimensions to go through and are selecting the various slices but keeping length x width
+        generator_id_matrix = tt[..., 0]
+        solver_id_matrix = tt[..., 1]
         # slice the tensor into a matrix (remove the index chasing matrix)
         # argmax the matrix across the agents for each task.
-        best_indicies = np.argmax(tt[:, :, 2], axis=0)
+        best_indicies = np.argmax(tt[..., 2], axis=0)
 
 
         """
@@ -63,11 +66,18 @@ class GetBestSolver(RankStrategy):
         Ans: array([1, 0, 4, 0, 4], dtype=int64)
         """
         new_weights = {}
-        for i in range(generator_id_matrix.shape[0]):
-            best_solver_id = solver_id_matrix.T[i, best_indicies[i]]
-            for j, _id in enumerate(solver_idxs):
-                if _id == best_solver_id:
-                    new_weights[generator_idxs[i]] = (
+        for i, g_id in enumerate(generator_idxs):
+            if solver_id_matrix.ndim == 2:
+                best_solver_id = solver_id_matrix.T[i, best_indicies[i]]
+            elif solver_id_matrix.ndim == 1:
+                best_solver_id = solver_id_matrix[best_indicies]
+            elif solver_id_matrix.ndim == 0:
+                best_solver_id = solver_id_matrix
+            else:
+                raise ValueError('result tensor is other than expected size; supported shapes are [n,n,3], [n,3], [3]')
+            for j, s_id in enumerate(solver_idxs):
+                if s_id == best_solver_id:
+                    new_weights[g_id] = (
                         ray.get(solvers[j].get_weights.remote()),
                         best_solver_id
                     )
@@ -115,14 +125,13 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         proposal_transfers = 0
         direct_transfers = 0
         # split apart the tensors
-        zero_generator_id_matrix = zero_shot_data[:, :, 0]
-        zero_solver_id_matrix = zero_shot_data[:, :, 1]
-        zero_best_indicies = np.argmax(zero_shot_data[:, :, 2], axis=0)
-        one_generator_id_matrix = one_shot_data[:, :, 0]
-        one_solver_id_matrix = one_shot_data[:, :, 1]
-        one_best_indicies = np.argmax(one_shot_data[:, :, 2], axis=0)
-        for i in range(zero_generator_id_matrix.shape[0]):
-            g_id = generator_idxs[i]
+        zero_generator_id_matrix = zero_shot_data[..., 0]
+        zero_solver_id_matrix = zero_shot_data[..., 1]
+        zero_best_indicies = np.argmax(zero_shot_data[..., 2], axis=0)
+        one_generator_id_matrix = one_shot_data[..., 0]
+        one_solver_id_matrix = one_shot_data[..., 1]
+        one_best_indicies = np.argmax(one_shot_data[..., 2], axis=0)
+        for i, g_id in enumerate(generator_idxs):
             w_0, s_id_0 = best_zero_shot_weights[g_id]
             w_1, s_id_1 = best_one_shot_weights[g_id]
             # POET does transfer for one env at a time, here we do the entire set once.
@@ -132,12 +141,27 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
             #    and the implemented version is equivalent to POET's version
             #    since max([1, 2, 3, 4, 5, 6, 7, 8]) = max(max([1, 2, 3, 4]), max([5, 6, 7, 8]))
             #
-            if zero_shot_data[:, :, 2][i, zero_best_indicies[i]] > one_shot_data[:, :, 2][i, one_best_indicies[i]]:
-                new_weights[g_id] = (w_0, s_id_0)
-                direct_transfers += 1
-            else:
-                new_weights[g_id] = (w_1, s_id_1)
-                proposal_transfers += 1
+            if zero_shot_data.ndim == 3:
+                if zero_shot_data[..., 2][i, zero_best_indicies[i]] > one_shot_data[..., 2][i, one_best_indicies[i]]:
+                    new_weights[g_id] = (w_0, s_id_0)
+                    direct_transfers += 1
+                else:
+                    new_weights[g_id] = (w_1, s_id_1)
+                    proposal_transfers += 1
+            elif zero_shot_data.ndim == 2:
+                if zero_shot_data[..., 2][zero_best_indicies] > one_shot_data[..., 2][one_best_indicies]:
+                    new_weights[g_id] = (w_0, s_id_0)
+                    direct_transfers += 1
+                else:
+                    new_weights[g_id] = (w_1, s_id_1)
+                    proposal_transfers += 1
+            elif zero_shot_data.ndim == 1:
+                if zero_shot_data[..., 2] > one_shot_data[..., 2]:
+                    new_weights[g_id] = (w_0, s_id_0)
+                    direct_transfers += 1
+                else:
+                    new_weights[g_id] = (w_1, s_id_1)
+                    proposal_transfers += 1
 
         self.direct_transfers[self.t] = direct_transfers
         self.proposal_transfers[self.t] = proposal_transfers
