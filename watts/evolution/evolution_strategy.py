@@ -126,7 +126,8 @@ class POETStrategy(EvolutionStrategy):
         for i, child in enumerate(children):
             # find best weights for child via a transfer learning step
             #  when compared against the current population
-            new_weights = self._transfer_strategy.transfer(solver_list=nets, generator_list=[(child.generator, child.id)])
+            new_weights = self._transfer_strategy.transfer(solver_list=nets,
+                                                           generator_list=[(child.generator, child.id)])
             for g_id, (best_w, s_id) in new_weights.items():
                 child.update_solver_weights(best_w)
             # check if the proposed pair is worth learning on
@@ -156,6 +157,6 @@ class POETStrategy(EvolutionStrategy):
                 novelty_score = 0 # self._is_novel(self.archive, new_generator)
                 child_list.append((parent.solver, new_generator, parent.id, novelty_score))
 
-        # sort child list according to novelty for high to low
+        # sort child list according to novelty from high to low
         child_list = sorted(child_list, key=lambda x: x[3], reverse=True)
         return child_list
