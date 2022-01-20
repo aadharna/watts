@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from itertools import product
 
 import numpy as np
@@ -6,12 +6,12 @@ import ray
 
 
 class RankStrategy:
-    def transfer(self, solver_list: list, generator_list: list) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
         raise NotImplementedError
 
 
 class Noop(RankStrategy):
-    def transfer(self, solver_list: list, generator_list: list) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
         return {}
 
 
@@ -21,7 +21,7 @@ class GetBestSolver(RankStrategy):
         self.tournaments = {}
         self.t = 0
 
-    def transfer(self, solver_list: list, generator_list: list) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
         """Run the transfer tournament; take in a solver list and a generator list.
 
         :param solver_list:
@@ -97,7 +97,7 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         self.proposal_transfers = {}
         self.t = 0
 
-    def transfer(self, solver_list: list, generator_list: list) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
         self.t += 1
 
         solvers, solver_idxs = zip(*solver_list)
@@ -141,27 +141,23 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
             #    and the implemented version is equivalent to POET's version
             #    since max([1, 2, 3, 4, 5, 6, 7, 8]) = max(max([1, 2, 3, 4]), max([5, 6, 7, 8]))
             #
+            keep_zero_shot = True
             if zero_shot_data.ndim == 3:
-                if zero_shot_data[..., 2][i, zero_best_indicies[i]] > one_shot_data[..., 2][i, one_best_indicies[i]]:
-                    new_weights[g_id] = (w_0, s_id_0)
-                    direct_transfers += 1
-                else:
-                    new_weights[g_id] = (w_1, s_id_1)
-                    proposal_transfers += 1
+                if not zero_shot_data[..., 2][i, zero_best_indicies[i]] > one_shot_data[..., 2][i, one_best_indicies[i]]:
+                    keep_zero_shot = False
             elif zero_shot_data.ndim == 2:
-                if zero_shot_data[..., 2][zero_best_indicies] > one_shot_data[..., 2][one_best_indicies]:
-                    new_weights[g_id] = (w_0, s_id_0)
-                    direct_transfers += 1
-                else:
-                    new_weights[g_id] = (w_1, s_id_1)
-                    proposal_transfers += 1
+                if not zero_shot_data[..., 2][zero_best_indicies] > one_shot_data[..., 2][one_best_indicies]:
+                    keep_zero_shot = False
             elif zero_shot_data.ndim == 1:
-                if zero_shot_data[..., 2] > one_shot_data[..., 2]:
-                    new_weights[g_id] = (w_0, s_id_0)
-                    direct_transfers += 1
-                else:
-                    new_weights[g_id] = (w_1, s_id_1)
-                    proposal_transfers += 1
+                if not zero_shot_data[..., 2] > one_shot_data[..., 2]:
+                    keep_zero_shot = False
+
+            if keep_zero_shot:
+                new_weights[g_id] = (w_0, s_id_0)
+                direct_transfers += 1
+            else:
+                new_weights[g_id] = (w_1, s_id_1)
+                proposal_transfers += 1
 
         self.direct_transfers[self.t] = direct_transfers
         self.proposal_transfers[self.t] = proposal_transfers
