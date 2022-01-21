@@ -4,6 +4,7 @@ from ..validators.level_validator import LevelValidator
 from .selection_strategy import SelectionStrategy
 from .replacement_strategy import ReplaceOldest, ReplacementStrategy, _release
 from ..transfer.rank_strategy import RankStrategy
+from ..validators.rank_novelty_validator import RankNoveltyValidator
 
 
 class EvolutionStrategy:
@@ -104,6 +105,7 @@ class POETStrategy(EvolutionStrategy):
             replacement_strategy: ReplacementStrategy,
             selection_strategy: SelectionStrategy,
             transfer_strategy: RankStrategy,
+            novelty_strategy: LevelValidator,
             mutation_rate: float = 0.8,
     ):
         self._level_validator = level_validator
@@ -111,8 +113,10 @@ class POETStrategy(EvolutionStrategy):
         self._selection_strategy = selection_strategy
         self._mutation_rate = mutation_rate
         self._transfer_strategy = transfer_strategy
+        self._novelty_validator = novelty_strategy
 
     def evolve(self, active_population: list, birth_func) -> list:
+
         # this will already limit us to max potential children
         potential_parents = self._selection_strategy.select(active_population)
         # mutate the parents to get potential children
@@ -142,11 +146,23 @@ class POETStrategy(EvolutionStrategy):
         for i, child in enumerate(children):
             if i not in to_remove:
                 alive_children.append(child)
+        print(f"{len(alive_children)} children")
         active_population.extend(alive_children)
         return self._replacement_strategy.update(active_population)
 
     def _get_child_list(self, parent_list):
         child_list = []
+
+        # update pata_ecs for the population
+        # https://github.com/uber-research/poet/blob/8669a17e6958f80cd547b2de61c51d4518c833d9/poet_distributed/poet_algo.py#L295
+        #
+        #      for optim in self.optimizers.values():
+        #          optim.update_pata_ec(self.archived_optimizers, self.optimizers, self.args.mc_lower, self.args.mc_upper)
+
+        #      for optim in self.archived_optimizers.values():
+        #          optim.update_pata_ec(self.archived_optimizers, self.optimizers, self.args.mc_lower, self.args.mc_upper)
+        #
+        #
 
         for parent in parent_list:
             new_generator = parent.generator.mutate(self._mutation_rate)
@@ -154,8 +170,9 @@ class POETStrategy(EvolutionStrategy):
             if is_valid:
                 # What is the right way to do this? Use a Validator? New class? One-off fn?
                 # I think having a novelty MC/validator is the correct path here.
-                novelty_score = 0 # self._is_novel(self.archive, new_generator)
-                child_list.append((parent.solver, new_generator, parent.id, novelty_score))
+                is_novel, novelty_data = self._novelty_validator.validate_level(solvers=parent_list,
+                                                                                generators=[new_generator])
+                child_list.append((parent.solver, new_generator, parent.id, novelty_data.get('top_k_mean', 0)))
 
         # sort child list according to novelty from high to low
         child_list = sorted(child_list, key=lambda x: x[3], reverse=True)

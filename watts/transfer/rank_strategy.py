@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from itertools import product
 
 import numpy as np
@@ -6,12 +6,12 @@ import ray
 
 
 class RankStrategy:
-    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
         raise NotImplementedError
 
 
 class Noop(RankStrategy):
-    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
         return {}
 
 
@@ -21,7 +21,7 @@ class GetBestSolver(RankStrategy):
         self.tournaments = {}
         self.t = 0
 
-    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
         """Run the transfer tournament; take in a solver list and a generator list.
 
         :param solver_list:
@@ -97,7 +97,7 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         self.proposal_transfers = {}
         self.t = 0
 
-    def transfer(self, solver_list: List[Any, int], generator_list: List[Any, int]) -> Dict[int, Any]:
+    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
         self.t += 1
 
         solvers, solver_idxs = zip(*solver_list)
