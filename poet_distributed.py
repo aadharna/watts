@@ -4,6 +4,7 @@ import ray
 import sys
 import time
 import pickle
+from collections import OrderedDict
 
 from watts.evolution.evolution_strategy import BirthThenKillStrategy, POETStrategy
 from watts.evolution.replacement_strategy import ReplaceOldest
@@ -24,6 +25,7 @@ from watts.utils.loader import load_from_yaml, save_obj
 from watts.validators.agent_validator import ParentCutoffValidator
 from watts.validators.level_validator import AlwaysValidator, RandomVariableValidator
 from watts.validators.graph_validator import GraphValidator
+from watts.validators.rank_novelty_validator import RankNoveltyValidator
 from watts.evolution.replacement_strategy import _release
 
 
@@ -59,6 +61,8 @@ if __name__ == "__main__":
     generator = EvolutionaryGenerator(args.initial_level_string,
                                       file_args=registry.get_generator_config)
 
+    archive_dict = OrderedDict()
+
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
     else:
@@ -73,15 +77,19 @@ if __name__ == "__main__":
                                                                                    log_id=f"{_args.exp_name}_{0}"),
                                                    generator=generator),
                               evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(registry.get_config_to_build_rllib_env,
-                                                                                                    low_cutoff=-5,
-                                                                                                    high_cutoff=50,
+                                                                                                    low_cutoff=0,
+                                                                                                    high_cutoff=250,
                                                                                                     n_repeats=1),
-                                                              replacement_strategy=ReplaceOldest(args.max_envs),
+                                                              replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
+                                                                                                 archive=archive_dict),
                                                               selection_strategy=SelectRandomly(args.max_children),
                                                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
+                                                              novelty_strategy=RankNoveltyValidator(density_threshold=1,
+                                                                                                    historical_archive=archive_dict,
+                                                                                                    env_config=registry.get_config_to_build_rllib_env,
+                                                                                                    k=3),
                                                               mutation_rate=args.mutation_rate),
-                              # transfer_strategy=GetBestSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env)),
                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
                               registrar=registry)
@@ -95,11 +103,11 @@ if __name__ == "__main__":
         print(error)
         print('_'*40)
     finally:
-        _release(manager._evolution_strategy._replacement_strategy.archive_history, manager.active_population)
-        manager._evolution_strategy._replacement_strategy.archive_history['run_stats'] = manager.stats
-        # manager._evolution_strategy._replacement_strategy.archive_history['tournament_stats'] = manager._transfer_strategy.tournaments
-        manager._evolution_strategy._replacement_strategy.archive_history['tournament_stats'] = manager._transfer_strategy.internal_transfer_strategy.tournaments
-        save_obj(manager._evolution_strategy._replacement_strategy.archive_history,
+        manager.pbar.close()
+        _release(archive_dict, manager.active_population)
+        archive_dict['run_stats'] = manager.stats
+        archive_dict['tournament_stats'] = manager._transfer_strategy.internal_transfer_strategy.tournaments
+        save_obj(archive_dict,
                  os.path.join('..', 'enigma_logs', _args.exp_name),
                  'total_serialized_alg')
         
