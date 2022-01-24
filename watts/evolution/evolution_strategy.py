@@ -117,15 +117,27 @@ class POETStrategy(EvolutionStrategy):
 
     def evolve(self, active_population: list, birth_func) -> list:
 
+        nets = [(p.solver, p.id) for j, p in enumerate(active_population)]
+        solvers, solver_idxs = zip(*nets)
+        generators = [p.generator for p in active_population]
+
+        # Hacky...
+        # update the embeddings in the novelty validator
+        for g in generators:
+            self._novelty_validator.calculate_pata_ec(generator=g, solvers=solvers)
+
+        for archived_pair_id, archived_pair in self._novelty_validator.historical_archive.items():
+            self._novelty_validator.calculate_pata_ec(generator=archived_pair['generator'], solvers=solvers)
+
+
         # this will already limit us to max potential children
         potential_parents = self._selection_strategy.select(active_population)
         # mutate the parents to get potential children
-        proto_children = self._get_child_list(potential_parents)
+        proto_children = self._get_child_list(potential_parents, active_population=active_population)
         # create the remote objects. It's annoying to create these objects in full here
         #  since we're going to cull some of them away in the next few lines, but oh well.
         children = birth_func(proto_children)
         # create container for transfer learning step; we'll reuse this for each potential child
-        nets = [(p.solver, p.id) for j, p in enumerate(active_population)]
         to_remove = []
         for i, child in enumerate(children):
             # find best weights for child via a transfer learning step
@@ -146,32 +158,20 @@ class POETStrategy(EvolutionStrategy):
         for i, child in enumerate(children):
             if i not in to_remove:
                 alive_children.append(child)
-        print(f"{len(alive_children)} children")
         active_population.extend(alive_children)
         return self._replacement_strategy.update(active_population)
 
-    def _get_child_list(self, parent_list):
+    def _get_child_list(self, parent_list, active_population):
         child_list = []
-
-        # update pata_ecs for the population
-        # https://github.com/uber-research/poet/blob/8669a17e6958f80cd547b2de61c51d4518c833d9/poet_distributed/poet_algo.py#L295
-        #
-        #      for optim in self.optimizers.values():
-        #          optim.update_pata_ec(self.archived_optimizers, self.optimizers, self.args.mc_lower, self.args.mc_upper)
-
-        #      for optim in self.archived_optimizers.values():
-        #          optim.update_pata_ec(self.archived_optimizers, self.optimizers, self.args.mc_lower, self.args.mc_upper)
-        #
-        #
-
+        active_solvers = [p.solver for p in active_population]
+        active_generators = [p.generator for p in active_population]
         for parent in parent_list:
-            new_generator = parent.generator.mutate(self._mutation_rate)
+            new_generator = parent.generator.mutate(mutation_rate=self._mutation_rate)
             is_valid, data = self._level_validator.validate_level(generators=[new_generator], solvers=[parent.solver])
             if is_valid:
-                # What is the right way to do this? Use a Validator? New class? One-off fn?
-                # I think having a novelty MC/validator is the correct path here.
-                is_novel, novelty_data = self._novelty_validator.validate_level(solvers=parent_list,
-                                                                                generators=[new_generator])
+                is_novel, novelty_data = self._novelty_validator.validate_level(solvers=active_solvers,
+                                                                                generators=active_generators,
+                                                                                proposed_generator=new_generator)
                 child_list.append((parent.solver, new_generator, parent.id, novelty_data.get('top_k_mean', 0)))
 
         # sort child list according to novelty from high to low
