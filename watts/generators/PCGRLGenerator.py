@@ -7,7 +7,7 @@ import torch
 
 from .base import BaseGenerator
 from ..models.PCGRL_network import PCGRLAdversarial
-from ..models.categorical_action_sampler import ActionSampler
+from ..models.action_sampler import ActionSampler
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
 

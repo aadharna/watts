@@ -11,7 +11,8 @@ from watts.evolution.replacement_strategy import ReplaceOldest
 from watts.evolution.selection_strategy import SelectRandomly
 from watts.game.GameSchema import GameSchema
 from watts.generators import EvolutionaryGenerator, StaticGenerator
-from watts.gym_factory import GridGameFactory
+from watts.generators.WalkerConfigGenerator import WalkerConfigGenerator
+from watts.gym_factory import GridGameFactory, WalkerFactory
 from watts.managers.POETManager import PoetManager
 from watts.network_factory import NetworkFactory
 from watts.pair.agent_environment_pair import Pairing
@@ -48,20 +49,29 @@ if __name__ == "__main__":
     start = time.time()
 
     args = load_from_yaml(fpath=_args.args_file)
-    args.exp_name = _args.exp_name
+    args.exp_name = 'poet'
 
     registry = Registrar(file_args=args)
     game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
     wrappers = add_wrappers(args.wrappers)
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
+    # gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
 
     # generator = StaticGenerator(args.initial_level_string)
     generator = EvolutionaryGenerator(args.initial_level_string,
                                       file_args=registry.get_generator_config)
+    #generator = WalkerConfigGenerator(**registry.get_generator_config)
 
     archive_dict = OrderedDict()
+
+    s = SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
+                                 trainer_config=registry.get_trainer_config,
+                                 registered_gym_name=registry.env_name,
+                                 network_factory=network_factory,
+                                 gym_factory=gym_factory,
+                                 log_id=f"{_args.exp_name}_{0}")
 
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
@@ -69,26 +79,21 @@ if __name__ == "__main__":
         manager = PoetManager(exp_name=_args.exp_name,
                               gym_factory=gym_factory,
                               network_factory=network_factory,
-                              initial_pair=Pairing(solver=SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
-                                                                                   trainer_config=registry.get_trainer_config,
-                                                                                   registered_gym_name=registry.env_name,
-                                                                                   network_factory=network_factory,
-                                                                                   gym_factory=gym_factory,
-                                                                                   log_id=f"{_args.exp_name}_{0}"),
+                              initial_pair=Pairing(solver=s,
                                                    generator=generator),
-                              evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(registry.get_config_to_build_rllib_env,
-                                                                                                    low_cutoff=0,
-                                                                                                    high_cutoff=250,
-                                                                                                    n_repeats=1),
+                              evolution_strategy=POETStrategy(level_validator=GraphValidator(game_schema=game_schema),
                                                               replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
                                                                                                  archive=archive_dict),
                                                               selection_strategy=SelectRandomly(args.max_children),
                                                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
+                                                              # novelty_strategy=AlwaysValidator(),
                                                               novelty_strategy=RankNoveltyValidator(density_threshold=1,
                                                                                                     historical_archive=archive_dict,
                                                                                                     env_config=registry.get_config_to_build_rllib_env,
-                                                                                                    k=3),
+                                                                                                    k=3,
+                                                                                                    agent_make_fn=network_factory.make(),
+                                                                                                    env_make_fn=gym_factory.make()),
                                                               mutation_rate=args.mutation_rate),
                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
@@ -103,7 +108,6 @@ if __name__ == "__main__":
         print(error)
         print('_'*40)
     finally:
-        manager.pbar.close()
         _release(archive_dict, manager.active_population)
         archive_dict['run_stats'] = manager.stats
         archive_dict['tournament_stats'] = manager._transfer_strategy.internal_transfer_strategy.tournaments

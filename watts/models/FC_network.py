@@ -27,7 +27,7 @@ class TwoLayerFC(TorchModelV2, nn.Module):
         )
 
         self.policy_head = nn.Sequential(
-            layer_init(nn.Linear(self.hidden_dim, self.num_outputs)),
+            layer_init(nn.Linear(self.hidden_dim, self._num_actions)),
             nn.Tanh()
         )
 
@@ -52,8 +52,9 @@ class TwoLayerFC(TorchModelV2, nn.Module):
 
 if __name__ == "__main__":
     build_info = {
-        'obs_space': gym.spaces.Box(-np.inf, np.inf, (24,)),
-        'action_space': gym.spaces.Box(-1, 1, (4,)),
+        'obs_space': gym.spaces.Box([-np.inf for _ in range(24)],
+                                    [np.inf for _ in range(24)], (24,)),
+        'action_space': gym.spaces.Box([-1, -1, -1, -1], [1, 1, 1, 1], (4,)),
         'num_outputs': 4,
         'model_config': {'custom_model_config': {'hidden_size': 40}},
         'name': 'poet_fc'

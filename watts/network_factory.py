@@ -4,11 +4,13 @@ from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgen
 
 from .models.AIIDE_network import AIIDEActor
 from .models.PCGRL_network import PCGRLAdversarial
+from .models.FC_network import TwoLayerFC
 
 aiide = "AIIDE_PINSKY_MODEL"
 conv = "SimpleConvAgent"
 gap = "GAPAgent"
 pcgrl = "Adversarial_PCGRL"
+fc = 'TwoLayerFC'
 
 
 def get_network_constructor(network_name: str):
@@ -20,6 +22,8 @@ def get_network_constructor(network_name: str):
         return SimpleConvAgent
     elif network_name == gap:
         return GAPAgent
+    elif network_name == fc:
+        return TwoLayerFC
     else:
         raise ValueError("Network unavailable. Add the network definition to the models folder and network_factory")
 

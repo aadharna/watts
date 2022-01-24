@@ -66,12 +66,15 @@ class SingleAgentSolver(BaseSolver):
             _ = self.env.reset(level_id=env_config['level_id'])
         else:
             raise ValueError('was not given a level to load into env')
-        info, states, values, actions, rewards, win, logps, entropies, dones = rollout(self.agent, self.env, 'cpu')
-        return_kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps,
-                         'entropy': entropies, 'values': values, 'dones': dones}
+        results = rollout(self.agent, self.env, 'cpu')
+        return_kwargs = results._asdict()
 
-        return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': return_kwargs},
-                'solver_id': solver_id, 'generator_id': generator_id}
+        return {
+            self.key: {"info": results.info, "score": sum(results.rewards), "win": results.win == 'Win',
+                       'kwargs': return_kwargs},
+            'solver_id': solver_id,
+            'generator_id': generator_id
+        }
 
     @ray.method(num_returns=1)
     def optimize(self, trainer_config, level_string_monad, **kwargs):
