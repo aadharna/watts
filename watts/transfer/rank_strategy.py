@@ -3,6 +3,9 @@ from itertools import product
 
 import numpy as np
 import ray
+from ray.rllib.agents.es.utils import compute_centered_ranks
+
+from watts.evaluators.rollout import remote_rollout
 
 
 class RankStrategy:
@@ -38,24 +41,19 @@ class GetBestSolver(RankStrategy):
                                                generators=generators,
                                                id_map=solver_generator_combo_id)
 
-        tt = []
-        for k, v in tournament_results.items():
-            tt.append(v)
 
-        tt = np.array(tt).squeeze() # we squeeze because that'll clean up the [n,1,3] case into [n,3] but
-                                    #   the [n,n,3] case will stay [n,n,3].
-        self.tournaments[self.t] = tt
-        # here we're using the generalized slicing of ... isntead of manually indicating the number of
+        self.tournaments[self.t] = tournament_results
+        # here we're using the generalized slicing of ... instead of manually indicating the number of
         #  dimensions to go through and are selecting the various slices but keeping length x width
-        generator_id_matrix = tt[..., 0]
-        solver_id_matrix = tt[..., 1]
+        generator_id_matrix = tournament_results[..., 0]
+        solver_id_matrix = tournament_results[..., 1]
         # slice the tensor into a matrix (remove the index chasing matrix)
         # argmax the matrix across the agents for each task.
-        best_indicies = np.argmax(tt[..., 2], axis=0)
+        best_indicies = np.argmax(tournament_results[..., 2], axis=0)
 
 
         """
-        Result Matrix (aka tt[:, :, 2]):
+        Result Matrix (aka tournament_results[:, :, 2]):
                     T0      T1      T2      T3      T4
         array([A0  [-0.902,  0.   , -0.212,  0.   ,  0.   ],
                A1  [ 0.264,  0.   , -0.846,  0.   ,  0.88 ],
@@ -68,11 +66,11 @@ class GetBestSolver(RankStrategy):
         new_weights = {}
         for i, g_id in enumerate(generator_idxs):
             if solver_id_matrix.ndim == 2:
-                best_solver_id = solver_id_matrix.T[i, best_indicies[i]]
+                best_solver_id = solver_id_matrix.T[i, best_indicies[i]].item()
             elif solver_id_matrix.ndim == 1:
-                best_solver_id = solver_id_matrix[best_indicies]
+                best_solver_id = solver_id_matrix[best_indicies].item()
             elif solver_id_matrix.ndim == 0:
-                best_solver_id = solver_id_matrix
+                best_solver_id = solver_id_matrix.item()
             else:
                 raise ValueError('result tensor is other than expected size; supported shapes are [n,n,3], [n,3], [3]')
             for j, s_id in enumerate(solver_idxs):
@@ -165,3 +163,18 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         # new weights are about to be assigned, so
         # I don't think it's worth reseting the weights to the zero_state
         return new_weights
+
+
+class PATAEC(RankStrategy):
+    def __init__(self, env_config, historical_archive, low_cutoff, high_cutoff, agent_make_fn, env_make_fn):
+        self.env_config = env_config
+        self.historical_archive = historical_archive
+        self.low_cutoff = low_cutoff
+        self.high_cutoff = high_cutoff
+        self.agent_make_fn = agent_make_fn
+        self.env_make_fn = env_make_fn
+        self.pata_ecs = {}
+
+    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
+
+        return {}
