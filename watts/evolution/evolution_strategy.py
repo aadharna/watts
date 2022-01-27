@@ -105,7 +105,14 @@ class POETStrategy(EvolutionStrategy):
             replacement_strategy: ReplacementStrategy,
             selection_strategy: SelectionStrategy,
             transfer_strategy: RankStrategy,
-            novelty_strategy: LevelValidator,
+            env_config: dict,
+            agent_make_fn: Callable,
+            env_make_fn: Callable,
+            historical_archive: dict,
+            density_threshold: float = 1.0,
+            k: int = 3,
+            low_cutoff: float = 0.,
+            high_cutoff: float = 150.,
             mutation_rate: float = 0.8,
     ):
         self._level_validator = level_validator
@@ -113,7 +120,14 @@ class POETStrategy(EvolutionStrategy):
         self._selection_strategy = selection_strategy
         self._mutation_rate = mutation_rate
         self._transfer_strategy = transfer_strategy
-        self._novelty_validator = novelty_strategy
+        self._novelty_validator = RankNoveltyValidator(density_threshold=density_threshold,
+                                                       env_config=env_config,
+                                                       historical_archive=historical_archive,
+                                                       agent_make_fn=agent_make_fn,
+                                                       env_make_fn=env_make_fn,
+                                                       k=k,
+                                                       low_cutoff=low_cutoff,
+                                                       high_cutoff=high_cutoff)
 
     def evolve(self, active_population: list, birth_func) -> list:
 
@@ -123,6 +137,7 @@ class POETStrategy(EvolutionStrategy):
 
         # Hacky...
         # update the embeddings in the novelty validator
+        # todo unhack this
         for g in generators:
             self._novelty_validator.calculate_pata_ec(generator=g, solvers=solvers)
 
