@@ -99,11 +99,11 @@ class EvolutionaryGenerator(BaseGenerator):
 
         return npa
 
-    def mutate(self, mutation_rate: float, **kwargs):  # -> EvolutionaryGenerator
+    def mutate(self, **kwargs):  # -> EvolutionaryGenerator
         """randomly edit parts of the level!
-        :param mutation_rate: e.g. 0.2
         :return: dict of location data for the entire level
         """
+        mutation_rate = kwargs.get('mutation_rate', 0.7)
         locations = deepcopy(self.locations)
 
         def find_place_for_sprite(sprite):
