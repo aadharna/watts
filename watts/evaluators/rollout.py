@@ -111,6 +111,7 @@ if __name__ == '__main__':
 
     args = load_from_yaml(fpath=os.path.join('sample_args', 'args.yaml'))
     args.exp_name = 'remotetest'
+    args.opt_algo = "OpenAIES"
 
     registry = Registrar(file_args=args)
     # game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
@@ -126,16 +127,15 @@ if __name__ == '__main__':
     nn = network_factory.make()({})
     remoteRolloutActors = [RemoteRolloutActor.remote(network_make_fn=network_factory.make(),
                                                    env_make_fn=gym_factory.make(),
-                                                   env_config=registry.get_config_to_build_rllib_env) for _ in range(5)]
+                                                   env_config=registry.get_config_to_build_rllib_env) for _ in range(2)]
     pool = ActorPool(actors=remoteRolloutActors)
     g2 = generator.mutate()
     env_config = registry.get_config_to_build_rllib_env
     env_config['level_string'], _ = g2.generate_fn_wrapper()()
-    results = pool.map(lambda a, v: a.run_rollout.remote(**v), [{'nn_weights':nn.state_dict(),
-                                                           'env_config': env_config},
-                                                                {'nn_weights': nn.state_dict(),
-                                                                 'env_config': env_config}
-                                                                ])
+    results = list(pool.map(lambda a, v: a.run_rollout.remote(**v), [{'nn_weights':nn.state_dict(),
+                                                                      'env_config': env_config},
+                                                                    {'nn_weights': nn.state_dict(),
+                                                                     'env_config': env_config}]))
 
     print(results[0].rewards)
 
