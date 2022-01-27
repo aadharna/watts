@@ -32,7 +32,7 @@ from watts.evolution.replacement_strategy import _release
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_name", type=str, default='foo', help='exp name')
-parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'args.yaml'), help='path to args file')
+parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'walker_args.yaml'), help='path to args file')
 _args = parser.parse_args()
 
 
@@ -52,17 +52,17 @@ if __name__ == "__main__":
     args.exp_name = 'poet'
 
     registry = Registrar(file_args=args)
-    game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
+    # game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
     wrappers = add_wrappers(args.wrappers)
-    gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
-    # gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
+    # gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
+    gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
 
 
     # generator = StaticGenerator(args.initial_level_string)
-    generator = EvolutionaryGenerator(args.initial_level_string,
-                                      file_args=registry.get_generator_config)
-    #generator = WalkerConfigGenerator(**registry.get_generator_config)
+    # generator = EvolutionaryGenerator(args.initial_level_string,
+    #                                   file_args=registry.get_generator_config)
+    generator = WalkerConfigGenerator(**registry.get_generator_config)
 
     archive_dict = OrderedDict()
 
@@ -81,19 +81,25 @@ if __name__ == "__main__":
                               network_factory=network_factory,
                               initial_pair=Pairing(solver=s,
                                                    generator=generator),
-                              evolution_strategy=POETStrategy(level_validator=GraphValidator(game_schema=game_schema),
+                              evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(env_config=registry.get_config_to_build_rllib_env,
+                                                                                                    low_cutoff=15,
+                                                                                                    high_cutoff=250),
                                                               replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
                                                                                                  archive=archive_dict),
                                                               selection_strategy=SelectRandomly(args.max_children),
                                                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
-                                                              # novelty_strategy=AlwaysValidator(),
-                                                              novelty_strategy=RankNoveltyValidator(density_threshold=1,
-                                                                                                    historical_archive=archive_dict,
-                                                                                                    env_config=registry.get_config_to_build_rllib_env,
-                                                                                                    k=3,
-                                                                                                    agent_make_fn=network_factory.make(),
-                                                                                                    env_make_fn=gym_factory.make()),
+                                                              # these are fed to the RankNoveltyValidator
+                                                              # for now this validator is explicitly coded into
+                                                              # the POETStrategy
+                                                              env_config=registry.get_config_to_build_rllib_env,
+                                                              agent_make_fn=network_factory.make(),
+                                                              env_make_fn=gym_factory.make(),
+                                                              historical_archive=archive_dict,
+                                                              density_threshold=1.,
+                                                              k=5,
+                                                              low_cutoff=50,
+                                                              high_cutoff=300.,
                                                               mutation_rate=args.mutation_rate),
                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
