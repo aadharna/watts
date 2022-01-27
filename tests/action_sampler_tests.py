@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 import torch
 from torch import rand
-from gym.spaces import Discrete, MultiDiscrete, Box
-from watts.models.categorical_action_sampler import ActionSampler
+from gym.spaces import Discrete, MultiDiscrete, Box, MultiBinary
+from watts.models.action_sampler import ActionSampler
 
 
 class TestActionSampler(unittest.TestCase):
@@ -53,7 +53,13 @@ class TestActionSampler(unittest.TestCase):
         actions, logp, entropy = sampler.sample(random_logits, max=True)
         assert(actions[0][0] == 0, actions[0][1] == 1)
 
-    def test_invalid_sampling(self):
-        action_space = Box(-2.0, 2.0, (1,), np.float32)
-        with self.assertRaises(ValueError):
-            sampler = ActionSampler(action_space=action_space)
+    def test_box_normal_sampling(self):
+        action_space = Box(np.array([-1, -1, -1, -1]), np.array([+1, +1, +1, +1]), shape=(4,), dtype=np.float64)
+        sampler = ActionSampler(action_space=action_space)
+        mu = action_space.sample()
+        sigma = action_space.sample()
+        logits = np.concatenate((mu, sigma))
+        logits = torch.FloatTensor([logits])
+        actions, logp, entropy = sampler.sample(logits)
+        print(actions)
+
