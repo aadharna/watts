@@ -72,34 +72,71 @@ def remote_rollout(nn_make_fn, env_make_fn, nn_weights, env_config):
     return rollout(agent, env, 'cpu')
 
 
+@ray.remote
+class RemoteRolloutActor:
+    def __init__(self, network_make_fn, env_make_fn, env_config):
+        self.nn_make_fn = network_make_fn
+        self.env_make_fn = env_make_fn
+        self.env_config = env_config
+        self.env = self.env_make_fn(env_config)
+        self.agent = self.nn_make_fn({})
+
+    def run_rollout(self, nn_weights, env_config):
+        self.agent.load_state_dict(nn_weights)
+        if 'level_string' in env_config:
+            _ = self.env.reset(level_string=env_config['level_string'])
+        elif 'level_id' in env_config and 'level_string' not in env_config:
+            _ = self.env.reset(level_id=env_config['level_id'])
+        result = rollout(self.agent, self.env, 'cpu')
+        return result
+
+
 if __name__ == '__main__':
     import os
     import ray
+    from ray.util import ActorPool
     from watts.utils.loader import load_from_yaml
     from watts.utils.register import Registrar
     from watts.utils.gym_wrappers import add_wrappers
-    from watts.gym_factory import WalkerFactory
+    from watts.gym_factory import WalkerFactory, GridGameFactory
     from watts.network_factory import NetworkFactory
+    from watts.generators.AIIDE_generator import EvolutionaryGenerator
+    from watts.generators.WalkerConfigGenerator import WalkerConfigGenerator
+    from watts.utils.box2d.biped_walker_custom import DEFAULT_ENV
     while 'poet_distributed.py' not in os.listdir('.'):
         os.chdir('..')
     print(os.listdir('.'))
 
     ray.init()
 
-    args = load_from_yaml(fpath=os.path.join('sample_args', 'walker_args.yaml'))
-    args.exp_name = 'poet'
+    args = load_from_yaml(fpath=os.path.join('sample_args', 'args.yaml'))
+    args.exp_name = 'remotetest'
 
     registry = Registrar(file_args=args)
     # game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
     wrappers = add_wrappers(args.wrappers)
-    # gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
-    gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
+    gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
+    # gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
+    generator = EvolutionaryGenerator(args.initial_level_string,
+                                      file_args=registry.get_generator_config)
+    # walker_generator = WalkerConfigGenerator(parent_env_config=DEFAULT_ENV)
 
     env = gym_factory.make()(registry.get_config_to_build_rllib_env)
     nn = network_factory.make()({})
-    result = rollout(nn, env, 'cpu')
-    print(result.rewards)
-    env.viewer.close()
+    remoteRolloutActors = [RemoteRolloutActor.remote(network_make_fn=network_factory.make(),
+                                                   env_make_fn=gym_factory.make(),
+                                                   env_config=registry.get_config_to_build_rllib_env) for _ in range(5)]
+    pool = ActorPool(actors=remoteRolloutActors)
+    g2 = generator.mutate()
+    env_config = registry.get_config_to_build_rllib_env
+    env_config['level_string'], _ = g2.generate_fn_wrapper()()
+    results = pool.map(lambda a, v: a.run_rollout.remote(**v), [{'nn_weights':nn.state_dict(),
+                                                           'env_config': env_config},
+                                                                {'nn_weights': nn.state_dict(),
+                                                                 'env_config': env_config}
+                                                                ])
+
+    print(results[0].rewards)
 
     ray.shutdown()
