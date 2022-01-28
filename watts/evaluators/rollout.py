@@ -1,5 +1,6 @@
 import ray
 import torch
+import numpy as np
 from collections import namedtuple
 
 from watts.models.action_sampler import ActionSampler
@@ -33,7 +34,7 @@ def rollout(actor, env, device) -> Rollout_results:
     win = False
 
     while not done:
-        state = torch.FloatTensor([state]).to(device)
+        state = torch.FloatTensor(np.expand_dims(state, axis=0)).to(device)
         logits, _ = actor({'obs': state}, None, None)
         value = actor.value_function()
         torch_action, logp, entropy = sampler.sample(logits)
@@ -74,9 +75,9 @@ def remote_rollout(nn_make_fn, env_make_fn, nn_weights, env_config):
 
 @ray.remote
 class RemoteRolloutActor:
-    def __init__(self, network_make_fn, env_make_fn, env_config):
-        self.nn_make_fn = network_make_fn
-        self.env_make_fn = env_make_fn
+    def __init__(self, network_factory, env_factory, env_config):
+        self.nn_make_fn = network_factory.make()
+        self.env_make_fn = env_factory.make()
         self.env_config = env_config
         self.env = self.env_make_fn(env_config)
         self.agent = self.nn_make_fn({})
