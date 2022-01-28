@@ -24,7 +24,7 @@ class RankNoveltyValidator(LevelValidator):
     This is for the archived solutions that don't have their own processes anymore which we can send work to
     """
     def __init__(self, density_threshold, env_config, historical_archive,
-                 agent_make_fn, env_make_fn,
+                 agent_factory, env_factory,
                  k=5, low_cutoff: float = -np.inf, high_cutoff: float = np.inf):
         self.density_threshold = density_threshold
         self.k = k
@@ -35,11 +35,9 @@ class RankNoveltyValidator(LevelValidator):
         # versions of the PAIR objects
         self.historical_archive = historical_archive
         self.pata_ecs = {}
-        self.agent_make_fn = agent_make_fn
-        self.env_make_fn = env_make_fn
 
-        self.rollout_actor_pointers = [RemoteRolloutActor.remote(network_make_fn=self.agent_make_fn,
-                                                                 env_make_fn=self.env_make_fn,
+        self.rollout_actor_pointers = [RemoteRolloutActor.remote(network_factory=agent_factory,
+                                                                 env_factory=env_factory,
                                                                  env_config=self.env_config) for _ in range(5)]
         self.actor_pool = ActorPool(actors=self.rollout_actor_pointers)
 
@@ -87,8 +85,10 @@ class RankNoveltyValidator(LevelValidator):
                 'env_config': self.env_config
             })
 
+        print(f"evaluating {len(pooled_work)} networks")
         # this list cast returns actual answers and not refs that still need to be collected
         result_list = list(self.actor_pool.map(lambda a, v: a.run_rollout.remote(**v), pooled_work))
+        print("done evaluating")
 
         for r in result_list:
             raw_scores.append(cap_score(sum(r.rewards), lower=self.low_cutoff, upper=self.high_cutoff))

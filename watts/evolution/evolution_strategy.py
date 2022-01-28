@@ -106,8 +106,8 @@ class POETStrategy(EvolutionStrategy):
             selection_strategy: SelectionStrategy,
             transfer_strategy: RankStrategy,
             env_config: dict,
-            agent_make_fn: Callable,
-            env_make_fn: Callable,
+            network_factory,
+            env_factory,
             historical_archive: dict,
             density_threshold: float = 1.0,
             k: int = 3,
@@ -123,11 +123,12 @@ class POETStrategy(EvolutionStrategy):
         self._novelty_validator = RankNoveltyValidator(density_threshold=density_threshold,
                                                        env_config=env_config,
                                                        historical_archive=historical_archive,
-                                                       agent_make_fn=agent_make_fn,
-                                                       env_make_fn=env_make_fn,
+                                                       agent_factory=network_factory,
+                                                       env_factory=env_factory,
                                                        k=k,
                                                        low_cutoff=low_cutoff,
                                                        high_cutoff=high_cutoff)
+        self.data = {}
 
     def evolve(self, active_population: list, birth_func) -> list:
 
