@@ -14,7 +14,8 @@ by a user, and to cleanly scale to arbitrary compute.
 ----  
 
 Installation:  
-
+    * conda create -n NAME python=3.8
+    * conda activate NAME
     * Install pytorch according to your system and environment from here: https://pytorch.org/get-started/locally/
     * At the root of this project, run: `pip install -e .`
     * conda install -c conda-forge ffmpeg # remove this with better docker foo
