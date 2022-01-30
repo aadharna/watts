@@ -30,6 +30,8 @@ class OverrideWalker(gym.Wrapper):
             i['velocity'] = self.env.hull.linearVelocity
             i['joints']   = self.env.joints
             i['step']     = self.step_counter
+        if self.step_counter >= 2000:
+            d = True
         self.step_counter += 1
         return ns, r, d, i
 

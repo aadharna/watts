@@ -178,7 +178,7 @@ class Registrar:
         }
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
-        self.trainer_config["num_envs_per_worker"] = 2
+        self.trainer_config["num_envs_per_worker"] = 4
         # self.trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.03
