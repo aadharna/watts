@@ -163,18 +163,3 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         # new weights are about to be assigned, so
         # I don't think it's worth reseting the weights to the zero_state
         return new_weights
-
-
-class PATAEC(RankStrategy):
-    def __init__(self, env_config, historical_archive, low_cutoff, high_cutoff, agent_make_fn, env_make_fn):
-        self.env_config = env_config
-        self.historical_archive = historical_archive
-        self.low_cutoff = low_cutoff
-        self.high_cutoff = high_cutoff
-        self.agent_make_fn = agent_make_fn
-        self.env_make_fn = env_make_fn
-        self.pata_ecs = {}
-
-    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
-
-        return {}
