@@ -17,14 +17,14 @@ game_len: 2000
 opt_algo: "PPO"
 
 # algo generation args
-evolution_timer: 50
+evolution_timer: 25
 mutation_rate: 0.8
 max_children: 10
 max_envs: 30
 
 # algo general args
 num_poet_loops: 1000
-transfer_timer: 25
+transfer_timer: 10
 snapshot_timer: 250
 use_snapshot: False
 

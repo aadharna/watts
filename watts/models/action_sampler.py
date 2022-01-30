@@ -59,7 +59,11 @@ class ActionSampler:
             logps = torch.zeros([batch_size, self.action_space.shape[0]])
             entropies = torch.zeros([1])
 
-            mu, sigma = logits.split(tuple(self._action_space_shape), dim=1)
+            try:
+                mu, sigma = logits.split(tuple(self._action_space_shape), dim=1)
+            except RuntimeError as e:
+                mu = logits
+                sigma = torch.zeros(logits.shape)
             sigma = sigma.exp().expand_as(mu)
             dist = Normal(mu, sigma)
             sampled = dist.sample()
