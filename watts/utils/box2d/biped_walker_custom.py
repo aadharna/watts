@@ -244,6 +244,7 @@ class BipedalWalkerCustom(gym.Env):
         self.terrain_x = []
         self.terrain_y = []
         pit_diff = 0
+        epsilon = 3e-3
         for i in range(TERRAIN_LENGTH):
             x = i * TERRAIN_STEP
             self.terrain_x.append(x)
@@ -279,7 +280,7 @@ class BipedalWalkerCustom(gym.Env):
                     (x, y),
                     (x + TERRAIN_STEP, y),
                     (x + TERRAIN_STEP, y - 4 * TERRAIN_STEP),
-                    (x, y - 4 * TERRAIN_STEP),
+                    (x, y - 4 * TERRAIN_STEP + epsilon),
                 ]
                 self.fd_polygon.shape.vertices = poly
                 t = self.world.CreateStaticBody(
@@ -320,7 +321,7 @@ class BipedalWalkerCustom(gym.Env):
                     (x + stump_width * TERRAIN_STEP, y + countery *
                      TERRAIN_STEP + stump_float * TERRAIN_STEP),
                     (x, y + countery *
-                     TERRAIN_STEP + stump_float * TERRAIN_STEP),
+                     TERRAIN_STEP + stump_float * TERRAIN_STEP + epsilon),
                 ]
                 self.fd_polygon.shape.vertices = poly
                 t = self.world.CreateStaticBody(
@@ -345,7 +346,7 @@ class BipedalWalkerCustom(gym.Env):
                         (x + ((1 + s) * stair_width) * TERRAIN_STEP, y +
                          (-stair_height + s * stair_height * stair_slope) * TERRAIN_STEP),
                         (x + (s * stair_width) * TERRAIN_STEP, y + (-stair_height +
-                                                                    s * stair_height * stair_slope) * TERRAIN_STEP),
+                                                                    s * stair_height * stair_slope) * TERRAIN_STEP + epsilon),
                     ]
                     self.fd_polygon.shape.vertices = poly
                     t = self.world.CreateStaticBody(
@@ -673,15 +674,15 @@ if __name__ == "__main__":
     time.sleep(3)
     env.render(close=True)
 
-    C2 = Env_config(name='e2',
-                    ground_roughness=0,
-                    pit_gap=[2, 1],
-                    stump_width=[166],
-                    stump_height=[],
-                    stump_float=[],
-                    stair_height=[],
-                    stair_width=[],
-                    stair_steps=[])
+    C2 = Env_config(name='r0.2.p0_0.8.b1_0_0.4.s1_0.4',
+                    ground_roughness=0.2,
+                    pit_gap=[0, 0.8],
+                    stump_width=[1, 2],
+                    stump_height=[0, 0.4],
+                    stump_float=[0, 1],
+                    stair_height=[0, 0.4],
+                    stair_width=[4, 5],
+                    stair_steps=[1, 2])
 
     s2 = env.reset(level_string=str(C2._asdict()))
     env.render(mode='human')
