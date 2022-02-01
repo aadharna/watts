@@ -69,7 +69,7 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
 if __name__ == "__main__":
     from gym.spaces import Box, Discrete, MultiDiscrete
-    from models.categorical_action_sampler import ActionSampler
+    # from models.categorical_action_sampler import ActionSampler
 
     example_network_factory_build_info = {
         'action_space': MultiDiscrete([15, 15,  6,  2]),
@@ -84,6 +84,6 @@ if __name__ == "__main__":
     level = torch.FloatTensor(blankMap)
     h = adversary.get_initial_state()
     logits, h = adversary.forward_rnn(level, h, 1)
-    sampler = ActionSampler(example_network_factory_build_info['action_space'])
-    action, logp, entropies = sampler.sample(logits=logits)
-    print(action)
+    # sampler = ActionSampler(example_network_factory_build_info['action_space'])
+    # action, logp, entropies = sampler.sample(logits=logits)
+    # print(action)
