@@ -66,7 +66,7 @@ class SingleAgentSolver(BaseSolver):
             _ = self.env.reset(level_id=env_config['level_id'])
         else:
             raise ValueError('was not given a level to load into env')
-        results = rollout(self.agent, self.env, 'cpu')
+        results = rollout(self.agent, self.env)
         return_kwargs = results._asdict()
 
         return {
@@ -93,7 +93,7 @@ class SingleAgentSolver(BaseSolver):
 
         del result['config'] # Remove large and unserializable config
 
-        return {self.key: {'weights': self.agent.state_dict(),
+        return {self.key: {'weights': self.get_weights(),
                            "result_dict": result,
                            'pair_id': kwargs.get('pair_id', 0)
                            }
@@ -104,7 +104,7 @@ class SingleAgentSolver(BaseSolver):
         return self.trainer.reset_config(config_with_new_level)
 
     def _update_local_agent(self, weights):
-        self.agent.load_state_dict(weights)
+        self.agent.model.load_state_dict(weights)
 
     def get_key(self):
         return self.key
@@ -114,8 +114,8 @@ class SingleAgentSolver(BaseSolver):
 
     def value_function(self, level_string):
         state = self.env.reset(level_string=level_string)
-        logits, h_state = self.agent.forward({'obs': torch.FloatTensor([state])}, [0], 1)
-        return self.agent.value_function().item()
+        _, _, info = self.agent.compute_single_action(state)
+        return info.get('vf_preds', 0)
 
     def get_weights(self) -> dict:
         weights = self.trainer.get_weights()

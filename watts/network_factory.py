@@ -1,3 +1,5 @@
+from typing import Callable
+
 from ray.rllib.models import ModelCatalog
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
 from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgent
@@ -29,7 +31,7 @@ def get_network_constructor(network_name: str):
 
 
 class NetworkFactory:
-    def __init__(self, network_name: str, nn_build_info: dict):
+    def __init__(self, network_name: str, nn_build_info: dict, policy_class: Callable):
         """Factory to create NNs and register it with ray's global NN register
 
         :param registrar: utils.registery.Registrar object. This holds various dicts needed for initialization.
@@ -38,18 +40,19 @@ class NetworkFactory:
         self.nn_build_info = nn_build_info
         self.network_name = network_name
         self.constructor = get_network_constructor(self.network_name)
+        self.policy_class = policy_class
 
         ModelCatalog.register_custom_model(self.network_name, self.constructor)
 
     def make(self):
-        """Make a pytorch NN.
+        """Make an RLlib Policy Class that wraps a Pytorch NN.
 
-        :param state_dict: Dictionary containing the state to initialize this N with. If empty, uses default state.
+        :param state_dict: Dictionary containing the state to initialize this NN with. If empty, uses default state.
         :return: a pytorch network
         """
         def _make(state_dict):
-            network = self.constructor(**self.nn_build_info)
+            policy = self.policy_class(**self.nn_build_info)
             if state_dict:
-                network.load_state_dict(state_dict)
-            return network
+                policy.model.load_state_dict(state_dict)
+            return policy
         return _make
