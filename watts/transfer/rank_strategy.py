@@ -3,9 +3,6 @@ from itertools import product
 
 import numpy as np
 import ray
-from ray.rllib.agents.es.utils import compute_centered_ranks
-
-from watts.evaluators.rollout import remote_rollout
 
 
 class RankStrategy:

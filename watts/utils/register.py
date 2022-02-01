@@ -18,19 +18,19 @@ from ..utils.gym_wrappers import HierarchicalBuilderEnv
 
 def get_default_trainer_config_and_constructor(opt_algo):
     if opt_algo == "OpenAIES":
-        return es.DEFAULT_CONFIG.copy(), es.ESTrainer
+        return es.DEFAULT_CONFIG.copy(), es.ESTrainer, es.get_policy_class
     elif opt_algo == "PPO":
-        return ppo.DEFAULT_CONFIG.copy(), ppo.PPOTrainer
+        return ppo.DEFAULT_CONFIG.copy(), ppo.PPOTrainer, ppo.ppo.get_policy_class
     elif opt_algo == 'MAML':
-        return maml.DEFAULT_CONFIG.copy(), maml.MAMLTrainer
+        return maml.DEFAULT_CONFIG.copy(), maml.MAMLTrainer, maml.maml.get_policy_class
     elif opt_algo == 'DDPG':
-        return ddpg.DEFAULT_CONFIG.copy(), ddpg.DDPGTrainer
+        return ddpg.DEFAULT_CONFIG.copy(), ddpg.DDPGTrainer, ddpg.ddpg.get_policy_class
     elif opt_algo == 'DQN':
-        return dqn.DEFAULT_CONFIG.copy(), dqn.DQNTrainer
+        return dqn.DEFAULT_CONFIG.copy(), dqn.DQNTrainer, dqn.dqn.get_policy_class
     elif opt_algo == 'SAC':
-        return sac.DEFAULT_CONFIG.copy(), sac.SACTrainer
+        return sac.DEFAULT_CONFIG.copy(), sac.SACTrainer, sac.sac.get_policy_class
     elif opt_algo == 'IMPALA':
-        return impala.DEFAULT_CONFIG.copy(), impala.ImpalaTrainer
+        return impala.DEFAULT_CONFIG.copy(), impala.ImpalaTrainer, impala.impala.get_policy_class
     else:
         raise ValueError('Pick another opt_algo')
 
@@ -156,17 +156,8 @@ class Registrar:
                 raise ValueError(f"Unsupported action type in game: {file_args.game}. "
                                  f"Only Discrete and MultiDiscrete are supported with {self.file_args.engine}")
 
-        self.nn_build_config = {
-            'action_space': self.act_space,
-            'obs_space': self.obs_space,
-            'model_config': self.file_args.model_config,
-            'num_outputs': self.n_actions,
-            'name': self.file_args.network_name
-        }
-
-
         # Trainer Config for selected algorithm
-        self.trainer_config, self.trainer_constr = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+        self.trainer_config, self.trainer_constr, self.get_policy_fn = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
         if self.file_args.custom_trainer_config_override:
             self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
 
@@ -174,7 +165,8 @@ class Registrar:
         self.trainer_config['env'] = self.name
         self.trainer_config["model"] = {
             'custom_model': self.file_args.network_name,
-            'custom_model_config': {}
+            'custom_model_config': {},
+            'max_seq_len': 20  # gotten from the ppo default config
         }
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
@@ -182,6 +174,19 @@ class Registrar:
         # self.trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.03
+        if self.file_args.opt_algo == "OpenAIES":
+            self.trainer_config["episodes_per_batch"] = 100
+            self.trainer_config["train_batch_size"] = 4000
+            self.trainer_config['num_workers'] = 4
+
+        self.nn_build_config = {
+            'action_space': self.act_space,
+            'obs_space': self.obs_space,
+            'config': self.trainer_config
+        }
+
+        self.policy_class = self.get_policy_fn(self.trainer_config)
+
 
     @property
     def get_nn_build_info(self):

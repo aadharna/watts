@@ -31,6 +31,9 @@ class Pairing:
     def get_solver_weights(self):
         return self.solver.get_weights.remote()
 
+    def write_scaler_to_solver(self, name, value, loop):
+        self.solver.write.remote(name, value, loop)
+
     def get_eval_metric(self):
         # if eval_score list is populated, return the latest evaluation
         # Empty lists get evaluated as False. If that happens, return 0
