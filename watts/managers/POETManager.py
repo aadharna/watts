@@ -148,6 +148,7 @@ class PoetManager(Manager):
                 pair_id = eval_return['generator_id']
                 active_populations[pair_id].solved.append(solved_status)
                 active_populations[pair_id].eval_scores.append(eval_score)
+                active_populations[pair_id].write_scaler_to_solver('paired_return', eval_score, self.i)
 
             if i % self.args.transfer_timer == 0:
                 nets = [(p.solver, p.id) for j, p in enumerate(self.active_population)]

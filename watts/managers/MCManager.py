@@ -3,14 +3,14 @@ import ray
 from random import sample
 from typing import Dict, List, Tuple
 
-from generators.base import BaseGenerator
-from gym_factory import GridGameFactory
-from managers.base import Manager
-from network_factory import NetworkFactory
-from solvers.SingleAgentSolver import SingleAgentSolver
-from utils.register import Registrar
-from utils.loader import save_obj
-from validators.level_validator import LevelValidator
+from watts.generators.base import BaseGenerator
+from watts.gym_factory import GridGameFactory
+from watts.managers.base import Manager
+from watts.network_factory import NetworkFactory
+from watts.solvers.SingleAgentSolver import SingleAgentSolver
+from watts.utils.register import Registrar
+from watts.utils.loader import save_obj
+from watts.validators.level_validator import LevelValidator
 
 
 class UniformLevelBuffer:

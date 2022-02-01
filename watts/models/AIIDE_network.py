@@ -59,9 +59,9 @@ if __name__ == "__main__":
     import griddly
     from griddly import gd
 
-    from utils.loader import load_from_yaml
-    from utils.register import Registrar
-    from gym_factory import GridGameFactory
+    from watts.utils.loader import load_from_yaml
+    from watts.utils.register import Registrar
+    from watts.gym_factory import GridGameFactory
 
     os.chdir('..')
     arg_path = os.path.join('args.yaml')

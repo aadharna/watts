@@ -56,7 +56,8 @@ if __name__ == "__main__":
     wrappers = add_wrappers(args.wrappers)
     # gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
     gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
-    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info)
+    network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info,
+                                     policy_class=registry.policy_class)
 
 
     # generator = StaticGenerator(args.initial_level_string)
@@ -82,9 +83,9 @@ if __name__ == "__main__":
                               initial_pair=Pairing(solver=s,
                                                    generator=generator),
                               evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(env_config=registry.get_config_to_build_rllib_env,
-                                                                                                    low_cutoff=-25,
-                                                                                                    high_cutoff=250,
-                                                                                                    n_repeats=3),
+                                                                                                    low_cutoff=10,
+                                                                                                    high_cutoff=300,
+                                                                                                    n_repeats=1),
                                                               replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
                                                                                                  archive=archive_dict),
                                                               selection_strategy=SelectRandomly(args.max_children),

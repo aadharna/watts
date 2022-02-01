@@ -85,10 +85,8 @@ class RankNoveltyValidator(LevelValidator):
                 'env_config': self.env_config
             })
 
-        print(f"evaluating {len(pooled_work)} networks")
         # this list cast returns actual answers and not refs that still need to be collected
         result_list = list(self.actor_pool.map(lambda a, v: a.run_rollout.remote(**v), pooled_work))
-        print("done evaluating")
 
         for r in result_list:
             raw_scores.append(cap_score(sum(r.rewards), lower=self.low_cutoff, upper=self.high_cutoff))
