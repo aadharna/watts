@@ -32,7 +32,8 @@ def rollout(actor, env) -> Rollout_results:
         logp = network_info.get('action_logp', 0)
         value = network_info.get('vf_preds', 0)
         try:
-            entropy = actor.dist_class(network_info['action_dist_inputs']).entropy().mean().item()
+            # need to add a batch dim the distribution inputs.
+            entropy = actor.dist_class(np.expand_dims(network_info['action_dist_inputs'], 0), actor.model).entropy().mean().item()
         except KeyError as e:
             entropy = 0
         next_state, reward, done, info = env.step(action)
@@ -98,11 +99,11 @@ if __name__ == '__main__':
         os.chdir('..')
     print(os.listdir('.'))
 
-    ray.init()
+    ray.init(local_mode=True)
 
     args = load_from_yaml(fpath=os.path.join('sample_args', 'args.yaml'))
     args.exp_name = 'remotetest'
-    # args.opt_algo = "OpenAIES"
+    args.opt_algo = "PPO"
 
     registry = Registrar(file_args=args)
     # game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
