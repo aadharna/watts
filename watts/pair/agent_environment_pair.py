@@ -40,7 +40,7 @@ class Pairing:
         return self.eval_scores[-1] if self.eval_scores else 0
 
     def get_picklable_state(self):
-        return {
+        state_dict = {
             'solver': ray.get(self.solver.get_picklable_state.remote()),
             'generator': self.generator,
             'level_string': str(self.generator),
@@ -49,3 +49,7 @@ class Pairing:
             'eval_scores': self.eval_scores,
             'pair_id': self.id
         }
+        # the rllib Policy class is not picklable.
+        del state_dict['solver']['network_factory'].policy_class
+
+        return state_dict

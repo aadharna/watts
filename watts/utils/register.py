@@ -1,22 +1,23 @@
+import os
+import time
 import copy
 import argparse
+import numpy as np
 
 import gym.spaces
+from gym.spaces import MultiDiscrete, Discrete, Box
 from griddly import gd
 from griddly.util.rllib.environment.core import RLlibEnv, RLlibMultiAgentWrapper
 
-from gym.spaces import MultiDiscrete, Discrete, Box
-import numpy as np
-import os
+from watts.agents import es
 from ray.rllib.agents import ppo, impala, maml, sac, ddpg, dqn
-from ..agents import es
 from ray.rllib.utils import add_mixins
 
-from ..utils.trainer_reset import ResetConfigOverride
-from ..utils.gym_wrappers import HierarchicalBuilderEnv
+from watts.utils.trainer_reset import ResetConfigOverride
+from watts.utils.gym_wrappers import HierarchicalBuilderEnv
 
 
-def get_default_trainer_config_and_constructor(opt_algo):
+def get_default_trainer_config_constructor_and_policy_fn(opt_algo):
     if opt_algo == "OpenAIES":
         return es.DEFAULT_CONFIG.copy(), es.ESTrainer, es.get_policy_class
     elif opt_algo == "PPO":
@@ -62,7 +63,7 @@ class Registrar:
 
             self.gdy_file = os.path.join(self.file_args.lvl_dir, f'{self.file_args.game}.yaml')
             self.base_path = os.getcwd()
-
+            uid = int(time.time())
             self.rllib_env_config = {'environment_name': self.name,
                                      'yaml_file': os.path.join(self.base_path, self.gdy_file),
                                      'level': self.file_args.init_lvl,
@@ -70,10 +71,11 @@ class Registrar:
                                      'global_observer_type': gd.ObserverType.BLOCK_2D,
                                      'player_observer_type': self.observer,
                                      'random_level_on_reset': False,
+                                     'uid': uid,
                                      'record_video_config': {
                                            'frequency': self.file_args.record_freq,
                                            'directory': os.path.join('videos',
-                                                                     f'{self.file_args.exp_name}_{self.name}_{self.file_args.generatorType}_{self.file_args.network_name}'),
+                                                                     f'{self.file_args.exp_name}_{self.name}_{uid}'),
                                            'include_global': True,
                                         }
                                      }
@@ -157,7 +159,7 @@ class Registrar:
                                  f"Only Discrete and MultiDiscrete are supported with {self.file_args.engine}")
 
         # Trainer Config for selected algorithm
-        self.trainer_config, self.trainer_constr, self.get_policy_fn = get_default_trainer_config_and_constructor(self.file_args.opt_algo)
+        self.trainer_config, self.trainer_constr, self.get_policy_fn = get_default_trainer_config_constructor_and_policy_fn(self.file_args.opt_algo)
         if self.file_args.custom_trainer_config_override:
             self.trainer_constr = add_mixins(self.trainer_constr, [ResetConfigOverride])
 
@@ -170,7 +172,7 @@ class Registrar:
         }
         self.trainer_config["framework"] = self.file_args.framework
         self.trainer_config["num_workers"] = 1
-        self.trainer_config["num_envs_per_worker"] = 4
+        self.trainer_config["num_envs_per_worker"] = 2
         # self.trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.03
