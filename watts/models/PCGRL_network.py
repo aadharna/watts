@@ -21,7 +21,7 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
         self.obs_space = obs_space
         self._num_objects = obs_space.shape[2]
-        self.cell_size = model_config.get('cell_size', 2704)
+        self.cell_size = model_config.get('custom_model_config', {}).get('cell_size', 2704)
 
         self.conv = nn.Conv2d(in_channels=self._num_objects, out_channels=16, kernel_size=3)
         self.flat = nn.Flatten()
