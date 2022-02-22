@@ -10,6 +10,7 @@ setup(
     python_requires='>=3.7.10',
     install_requires=[
             'ray[all]==1.6.0',
+            'gym==0.21'
             'griddly',
             'networkx',
             'box2d',
