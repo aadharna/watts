@@ -13,6 +13,7 @@ setup(
             'griddly',
             'networkx',
             'box2d',
+            'tensorboard',
         ]
 )
 
