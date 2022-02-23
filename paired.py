@@ -170,6 +170,8 @@ if __name__ == "__main__":
         'env': 'h_maze',
         'num_workers': 4,
         "num_envs_per_worker": 4,
+        "train_batch_size": 8192,
+        'sgd_minibatch_size': 512,
         'env_config': config,
         # 'callbacks': PairedLevelExtractorCallback,
         'multiagent': {
@@ -202,6 +204,7 @@ if __name__ == "__main__":
         results = tune.run(PPOTrainer, config=config2, stop=stop,
                            local_dir=os.path.join('.', 'watts_logs'), checkpoint_at_end=True,
                            checkpoint_freq=200,
+                           # restore='/home/aaron/Documents/watts/watts_logs/PPO_2022-02-22_10-00-42/PPO_h_maze_34657_00000_0_2022-02-22_10-00-42/checkpoint_003800/checkpoint-3800'
                            # callbacks=[SnapshotLoggerCallback()]
                            )
         # print(results.get_best_logdir(metric='episode_reward_mean', mode="max"))
