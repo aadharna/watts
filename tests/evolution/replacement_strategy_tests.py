@@ -8,12 +8,12 @@ from tests.test_classes import MockGenerator, MockPair, MockSolver
 class TestReplacementStrategy(unittest.TestCase):
 
     def test_replace_oldest_cut_none(self):
-        replacement_strategy = ReplaceOldest(max_pairings=4)
+        replacement_strategy = ReplaceOldest(max_pairings=4, archive={})
         archive = replacement_strategy.update([MockPair(MockSolver(), MockGenerator(0.01)) for i in range(3)])
         assert(len(archive) == 3)
 
     def test_replace_oldest_cut_two(self):
-        replacement_strategy = ReplaceOldest(max_pairings=4)
+        replacement_strategy = ReplaceOldest(max_pairings=4, archive={})
         archive = replacement_strategy.update([MockPair(MockSolver(), MockGenerator(0.01)) for i in range(6)])
         alive_ids = [p.id for p in archive]
         assert(len(archive) == 4)
@@ -23,7 +23,7 @@ class TestReplacementStrategy(unittest.TestCase):
         generator = MockGenerator(mutation_rate)
         solver = MockSolver()
 
-        selection_strategy = KeepTopK(max_pairings=1)
+        selection_strategy = KeepTopK(max_pairings=1, archive={})
 
         pairing = selection_strategy.update([MockPair(solver, generator)])[0]
 
@@ -32,7 +32,7 @@ class TestReplacementStrategy(unittest.TestCase):
 
     def test_keep_multi_top3(self):
         mutation_rate = 0.5
-        selection_strategy = KeepTopK(max_pairings=3)
+        selection_strategy = KeepTopK(max_pairings=3, archive={})
         pairings = [MockPair(MockSolver(), MockGenerator(mutation_rate)) for _ in range(5)]
         for p, score in zip(pairings, [2, 4, 3, 5, 1]):
             p.eval_scores.append(score)
@@ -45,7 +45,7 @@ class TestReplacementStrategy(unittest.TestCase):
 
     def test_keep_more_than_built(self):
         mutation_rate = 0.5
-        selection_strategy = KeepTopK(max_pairings=10)
+        selection_strategy = KeepTopK(max_pairings=10, archive={})
         pairings = [MockPair(MockSolver(), MockGenerator(mutation_rate)) for _ in range(5)]
         selected = selection_strategy.update(pairings)
         assert len(selected) == 5

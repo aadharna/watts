@@ -17,7 +17,7 @@ class TestEvolutionStrategy(unittest.TestCase):
         mutation_rate = 0.5
         evolve_strategy = BirthThenKillStrategy(
             level_validator=AlwaysValidator(),
-            replacement_strategy=ReplaceOldest(),
+            replacement_strategy=ReplaceOldest(archive={}),
             selection_strategy=SelectRandomly(max_children=1),
             mutation_rate=mutation_rate,
         )
@@ -41,7 +41,7 @@ class TestEvolutionStrategy(unittest.TestCase):
         mutation_rate = 0.5
         evolve_strategy = BirthThenKillStrategy(
             level_validator=AlwaysValidator(),
-            replacement_strategy=ReplaceOldest(),
+            replacement_strategy=ReplaceOldest(archive={}),
             selection_strategy=SelectRandomly(max_children=5, rand=rand),
             mutation_rate=mutation_rate,
         )
@@ -60,12 +60,14 @@ class TestEvolutionStrategy(unittest.TestCase):
         n = 10
         k = 3
         pop = [MockPair(MockSolver(), MockGenerator(0.5)) for _ in range(n)]
-        es = TraditionalES(level_validator=AlwaysValidator(), replacement_strategy=KeepTopK(max_pairings=k),
+        es = TraditionalES(level_validator=AlwaysValidator(),
+                           replacement_strategy=KeepTopK(max_pairings=k,
+                                                         archive={}),
                            selection_strategy=SelectRandomly(max_children=n-k), mutation_rate=0.5)
 
         def bf(children):
             built_children = []
-            for s, g, i in children:
+            for s, g, i, n in children:
                 built_children.append(MockPair(s, g))
             return built_children
 

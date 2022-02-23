@@ -164,7 +164,7 @@ class WalkerConfigGenerator(BaseGenerator):
         return _generate
 
     def __str__(self):
-        return str(self.env_config._asdict())
+        return str(dict(self.env_config._asdict()))
 
     @property
     def shape(self):
