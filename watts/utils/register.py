@@ -73,11 +73,11 @@ class Registrar:
                                      'random_level_on_reset': False,
                                      'uid': uid,
                                      'record_video_config': {
-                                           'frequency': self.file_args.record_freq,
-                                           'directory': os.path.join('videos',
-                                                                     f'{self.file_args.exp_name}_{self.name}_{uid}'),
-                                           'include_global': True,
-                                        }
+                                         'frequency': self.file_args.record_freq,
+                                         'directory': os.path.join('videos',
+                                                                   f'{self.file_args.exp_name}_{self.name}_{uid}'),
+                                         'include_global': True,
+                                     }
                                      }
 
             env = RLlibEnv(self.rllib_env_config)
@@ -176,6 +176,9 @@ class Registrar:
         # self.trainer_config['simple_optimizer'] = True
         # self.trainer_config['log_level'] = 'INFO'
         # self.trainer_config['num_gpus'] = 0.03
+        if self.file_args.opt_algo == 'PPO':
+            self.trainer_config["train_batch_size"] = 8192
+            self.trainer_config['sgd_minibatch_size'] = 512
         if self.file_args.opt_algo == "OpenAIES":
             self.trainer_config["episodes_per_batch"] = 100
             self.trainer_config["train_batch_size"] = 4000
