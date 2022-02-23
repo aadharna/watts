@@ -90,7 +90,7 @@ class HierarchicalBuilderEnv(MultiAgentEnv):
                               'yaml_string': generator_yaml,
                               'max_steps': env_config.get('builder_max_steps', 50),
                               'global_observer_type': gd.ObserverType.ASCII,
-                              'player_observer_type': gd.ObserverType.ASCII,
+                              'player_observer_type': gd.ObserverType.VECTOR,
                               'random_level_on_reset': False,
                               }
         self.builder_env = RLlibEnv(build_rllib_config)
@@ -397,9 +397,9 @@ if __name__ == "__main__":
     ims = []
     while not done:
         ns, r, d, i = env.step({'builder': env.action_space['builder'].sample()})
-        ims.append((i['builder']['image'] / 255).astype(float))
+        # ims.append((i['builder']['image'] / 255).astype(float))
         done = d['builder']
 
-    for im in ims:
-        plt.imshow(im)
-        plt.show()
+    # for im in ims:
+    #     plt.imshow(im)
+    #     plt.show()
