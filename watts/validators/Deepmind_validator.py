@@ -19,7 +19,7 @@ class DeepMindFullValidator(LevelValidator):
                  margin: float = 0.01,
                  n_tasks_difference_greater_than_margin: int = 2,
                  n_tasks_parent_greater_than_high: int = 4,
-                 n_repeats: int = 1):
+                 n_repeats: int = 5):
         """
 
         :param network_factory_monad: network factory build fn for the random agent validator
@@ -68,7 +68,10 @@ class DeepMindFullValidator(LevelValidator):
         #   where the agent achieves a return in all ten episode samples
         #   of at least 2 reward more than the return achieved by the
         #   control policy
-        difference = np.mean(parent_data['scores']) - np.mean(random_agent_data['scores'])
+        #
+        # we don't collapse the runs yet. We want to know on how many runs did we exceed
+        # the margin by? This should be vector subtraction.
+        difference = parent_data['scores'] - random_agent_data['scores']
         parent_is_better_than_random = np.mean(difference >= self.margin) > self.p_just_right
         # agent has low probability of scoring high on a given task
         #   As a final example, the combination of
