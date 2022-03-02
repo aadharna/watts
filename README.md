@@ -19,5 +19,6 @@ Installation:
     * conda create -n NAME python=3.8
     * conda activate NAME
     * Install pytorch according to your system and environment from here: https://pytorch.org/get-started/locally/
+    * If you want to render/record videos of griddly games, you need to install Vulkan. Instructions can be found here: https://github.com/Bam4d/Griddly
     * At the root of this project, run: `pip install -e .`
     * conda install -c conda-forge ffmpeg # remove this with better docker foo
