@@ -167,7 +167,7 @@ class POETStrategy(EvolutionStrategy):
             if not is_valid:
                 # release the resources that child i claimed and save pointer to this child so we can stop it from
                 # joining the active population
-                _release({}, [child])
+                _release(self.data, [child])
                 to_remove.append(i)
 
         alive_children = []

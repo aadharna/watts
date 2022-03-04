@@ -27,7 +27,7 @@ class SingleAgentSolver(BaseSolver):
         self.network_factory = network_factory
         self.gym_factory = gym_factory
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name,
-                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs', self.exp),
+                                           logger_creator=custom_log_creator(os.path.join('.', 'watts_logs', self.exp),
                                                                              f'SAS_{log_id}.')
                                            )
         self.tensorboard_writer = self.trainer._result_logger._loggers[2]
@@ -68,12 +68,14 @@ class SingleAgentSolver(BaseSolver):
             raise ValueError('was not given a level to load into env')
         results = rollout(self.agent, self.env)
         return_kwargs = results._asdict()
+        # foo = self.trainer.evaluate()
 
         return {
             self.key: {"info": results.info, "score": sum(results.rewards), "win": results.win == 'Win',
                        'kwargs': return_kwargs},
             'solver_id': solver_id,
-            'generator_id': generator_id
+            'generator_id': generator_id,
+            'foo': foo
         }
 
     @ray.method(num_returns=1)

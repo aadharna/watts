@@ -25,12 +25,12 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from utils.register import Registrar
-    from utils.loader import load_from_yaml
-    from gym_factory import GridGameFactory
-    from network_factory import NetworkFactory
-    from generators.AIIDE_generator import EvolutionaryGenerator
-    from solvers.SingleAgentSolver import SingleAgentSolver
+    from watts.utils.register import Registrar
+    from watts.utils.loader import load_from_yaml
+    from watts.gym_factory import GridGameFactory
+    from watts.network_factory import NetworkFactory
+    from watts.generators.AIIDE_generator import EvolutionaryGenerator
+    from watts.solvers.SingleAgentSolver import SingleAgentSolver
 
     os.chdir('..')
     sep = os.pathsep
