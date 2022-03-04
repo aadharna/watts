@@ -75,7 +75,6 @@ class SingleAgentSolver(BaseSolver):
                        'kwargs': return_kwargs},
             'solver_id': solver_id,
             'generator_id': generator_id,
-            'foo': foo
         }
 
     @ray.method(num_returns=1)
