@@ -1,9 +1,11 @@
 from typing import Dict, List, Tuple
 
+import os
 import ray
 
 from .base import Manager
 from ..utils.register import Registrar
+from ..utils.loader import save_obj
 from ..gym_factory import GridGameFactory
 from ..network_factory import NetworkFactory
 from ..transfer.rank_strategy import RankStrategy
@@ -23,6 +25,7 @@ class PoetManager(Manager):
             transfer_strategy: RankStrategy,
             network_factory: NetworkFactory,
             registrar: Registrar,
+            archive_dict: dict,
     ):
         """Extends the manager class to instantiate the POET algorithm
 
@@ -34,6 +37,7 @@ class PoetManager(Manager):
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self._evolution_strategy = evolution_strategy
         self._transfer_strategy = transfer_strategy
+        self.archive_dict = archive_dict
         self.active_population = [initial_pair]
         self.stats = {}
         self.stats['lineage'] = []
@@ -164,3 +168,7 @@ class PoetManager(Manager):
 
             if i % self.args.snapshot_timer == 0:
                 POETManagerSerializer(self).serialize()
+                # save raw data
+                save_obj(self.archive_dict,
+                         os.path.join('.', 'watts_logs', self.exp_name),
+                         f'total_serialized_alg_{self.i}')

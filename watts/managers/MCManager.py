@@ -188,7 +188,7 @@ class MCManager(Manager):
                 }
                 # manager.agent.release.remote()
                 save_obj(foo,
-                         os.path.join('../..', 'enigma_logs', self.exp_name),
+                         os.path.join('.', 'watts_logs', self.exp_name),
                          f'MC_total_serialized_alg.{self.i}')
                 pass
 

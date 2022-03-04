@@ -31,7 +31,7 @@ from watts.evolution.replacement_strategy import _release
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--exp_name", type=str, default='foo', help='exp name')
+parser.add_argument("--exp_name", type=str, default='endlessmaze.poet.ppo.mc1450', help='exp name')
 parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'args.yaml'), help='path to args file')
 _args = parser.parse_args()
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                                                    generator=generator),
                               evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(env_config=registry.get_config_to_build_rllib_env,
                                                                                                     low_cutoff=1,
-                                                                                                    high_cutoff=100,
+                                                                                                    high_cutoff=450,
                                                                                                     n_repeats=1),
                                                               replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
                                                                                                  archive=archive_dict),
@@ -105,7 +105,8 @@ if __name__ == "__main__":
                                                               mutation_rate=args.mutation_rate),
                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
-                              registrar=registry)
+                              registrar=registry,
+                              archive_dict=archive_dict)
 
     try:
         manager.run()
@@ -118,9 +119,10 @@ if __name__ == "__main__":
     finally:
         _release(archive_dict, manager.active_population)
         archive_dict['run_stats'] = manager.stats
+        # this is because the GetBestZeroOrOneShotSolver strategy wraps a GetBestSolver strategy
         archive_dict['tournament_stats'] = manager._transfer_strategy.internal_transfer_strategy.tournaments
         save_obj(archive_dict,
-                 os.path.join('..', 'enigma_logs', args.exp_name),
+                 os.path.join('.', 'watts_logs', args.exp_name),
                  'total_serialized_alg')
         
         elapsed = time.time() - start
