@@ -31,7 +31,7 @@ from watts.evolution.replacement_strategy import _release
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--exp_name", type=str, default='endlessmaze.poet.ppo.mc1450', help='exp name')
+parser.add_argument("--exp_name", type=str, default='foo.poet', help='exp name')
 parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'args.yaml'), help='path to args file')
 _args = parser.parse_args()
 
