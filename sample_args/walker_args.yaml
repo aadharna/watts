@@ -1,0 +1,37 @@
+# args for POET
+
+# game args
+engine: box2d
+game: walker
+
+generatorType: walker
+
+##network args
+# this should probably be a list
+network_name: "TwoLayerFC"  # Other agents: AIIDE_PINSKY_MODEL, TwoLayerFC, Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+model_config: {}
+framework: "torch"
+
+# algo optimization args
+game_len: 2000
+opt_algo: "OpenAIES"
+
+# algo generation args
+evolution_timer: 100
+mutation_rate: 0.8
+max_children: 8
+max_envs: 20
+
+# algo general args
+num_poet_loops: 10000
+transfer_timer: 25
+snapshot_timer: 25000
+use_snapshot: False
+
+
+# gym Env Wrappers
+wrappers: [] #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
+
+
+# trainer helper args
+custom_trainer_config_override: True

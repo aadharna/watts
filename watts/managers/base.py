@@ -28,7 +28,7 @@ class Manager(abc.ABC):
     def evaluate(self) -> list:
         raise NotImplementedError
 
-    def optimize(self):
+    def optimize(self) -> list:
         raise NotImplementedError
 
     def run(self):

@@ -12,7 +12,7 @@ from ..evaluators.rollout import rollout
 @ray.remote
 class SingleAgentSolver(BaseSolver):
     def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={},
-                 log_id=0):
+                 log_id='foo_bar'):
         BaseSolver.__init__(self)
         # todo We might want to name these agents to access via keys
         #  rather than a convention of [network].
@@ -27,32 +27,55 @@ class SingleAgentSolver(BaseSolver):
         self.network_factory = network_factory
         self.gym_factory = gym_factory
         self.trainer = trainer_constructor(config=trainer_config, env=registered_gym_name,
-                                           logger_creator=custom_log_creator(os.path.join('..', 'enigma_logs', self.exp),
-                                                                             f'POET_{log_id}.')
+                                           logger_creator=custom_log_creator(os.path.join('.', 'watts_logs', self.exp),
+                                                                             f'SAS_{log_id}.')
                                            )
+        self.tensorboard_writer = self.trainer._result_logger._loggers[2]
+
         self.agent = network_factory.make()(weights)
         self.env = gym_factory.make()(trainer_config['env_config'])
+        # record videos of the agents
+        self.env.on_episode_start(worker_idx=self.log_id, env_idx=0)
         if bool(weights):
             self.set_weights(weights)
+
+    @ray.method(num_returns=0)
+    def test(self, env_config, test_lvl_id, step):
+        result = self.evaluate(env_config, -1, -1)
+        self.write(f'reward.test{test_lvl_id}', result[self.key]['score'], step)
+        self.write(f'solved.test{test_lvl_id}', result[self.key]['win'], step)
+        return
+
+    @ray.method(num_returns=0)
+    def write(self, name, value, step):
+        self.tensorboard_writer.on_result({name: value, 'training_iteration': step})
 
     @ray.method(num_returns=1)
     def evaluate(self, env_config, solver_id, generator_id) -> dict:
         """Run one rollout of the given actor(s) in the given env
 
-        :param env_generator_fn: fn to generate RLlibEnv environment to run the simulation
         :param env_config: dict of generator details
         :param solver_id: id of solver being evaluated
         :param generator_id: id of generator the solver is being evaluated in
         :return: result information e.g. final score, win_status, etc.
         """
 
-        _ = self.env.reset(level_string=env_config['level_string'])
-        info, states, actions, rewards, win, logps, entropies = rollout(self.agent, self.env, 'cpu')
-        return_kwargs = {'states': states, 'actions': actions, 'rewards': rewards, 'logprobs': logps,
-                         'entropy': entropies}
+        if 'level_string' in env_config:
+            _ = self.env.reset(level_string=env_config['level_string'])
+        elif 'level_id' in env_config and 'level_string' not in env_config:
+            _ = self.env.reset(level_id=env_config['level_id'])
+        else:
+            raise ValueError('was not given a level to load into env')
+        results = rollout(self.agent, self.env)
+        return_kwargs = results._asdict()
+        # foo = self.trainer.evaluate()
 
-        return {self.key: {"info": info, "score": sum(rewards), "win": win == 'Win', 'kwargs': return_kwargs},
-                'solver_id': solver_id, 'generator_id': generator_id}
+        return {
+            self.key: {"info": results.info, "score": sum(results.rewards), "win": results.win == 'Win',
+                       'kwargs': return_kwargs},
+            'solver_id': solver_id,
+            'generator_id': generator_id,
+        }
 
     @ray.method(num_returns=1)
     def optimize(self, trainer_config, level_string_monad, **kwargs):
@@ -71,7 +94,7 @@ class SingleAgentSolver(BaseSolver):
 
         del result['config'] # Remove large and unserializable config
 
-        return {self.key: {'weights': self.agent.state_dict(),
+        return {self.key: {'weights': self.get_weights(),
                            "result_dict": result,
                            'pair_id': kwargs.get('pair_id', 0)
                            }
@@ -82,7 +105,7 @@ class SingleAgentSolver(BaseSolver):
         return self.trainer.reset_config(config_with_new_level)
 
     def _update_local_agent(self, weights):
-        self.agent.load_state_dict(weights)
+        self.agent.model.load_state_dict(weights)
 
     def get_key(self):
         return self.key
@@ -92,8 +115,8 @@ class SingleAgentSolver(BaseSolver):
 
     def value_function(self, level_string):
         state = self.env.reset(level_string=level_string)
-        logits, h_state = self.agent.forward({'obs': torch.FloatTensor([state])}, [0], 1)
-        return self.agent.value_function().item()
+        _, _, info = self.agent.compute_single_action(state)
+        return info.get('vf_preds', 0)
 
     def get_weights(self) -> dict:
         weights = self.trainer.get_weights()

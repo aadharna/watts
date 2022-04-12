@@ -20,8 +20,9 @@ Environment:
       OffsetX: 0
       OffsetY: 0
   Termination:
-    Lose:
+    Win:
       - eq: [_steps, 1000] # time runs out
+    Lose:
       - eq: [catcher:count, 0] # If the catcher gets killed
   Levels:
     - |

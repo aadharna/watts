@@ -2,38 +2,37 @@
 
 # game args
 engine: GDY
-game: limited_zelda        # alternate solarfox or foragers with . Use commented out params.
+game: endless_maze        # alternate solarfox or foragers with . Use commented out params.
 lvl_dir: example_levels           # DO NOT CHANGE
 init_lvl: 0                 # DO NOT CHANGE
 pictures: False
-record_freq: 5000
+record_freq: 50000
 
 # generator args, will change for each game
 initial_level_string: |
     w w w w w w w w w w w w w
-    w . . . . + e . . . . . w
     w . . . . . . . . . . . w
+    w . . . . . t . . . . . w
     w . . A . . . . . . . . w
     w . . . . . . . . . . . w
     w . . . . . . . . . . . w
     w . . . . . w . . . . . w
-    w . g . . . . . . . . . w
+    w . x . . . . . . . . . w
     w w w w w w w w w w w w w
 
-mechanics: ['+', 'A', 'g', 'e', 'w'] #['b', 'A', 'w']
-singletons: ['A', 'g'] # must be only one #['A'] #
-at_least_one: ['+']    # must have at least one # ['b'] #
-immortal: ['A', '.']   # cannot be removed #['A', '+'] #
+mechanics: ['A', 'x', 't', 'w'] #['b', 'A', 'w']
+singletons: ['A', 'x'] # must be only one #['A'] #
+at_least_one: []    # must have at least one # ['b'] #
+immortal: ['A', '.', 'x']   # cannot be removed #['A', '+'] #
 floor: ['.']           # base tile. cannot be moved #['+'] #
-minimal: ['w']
 probs: [0.25, 0.5, 0.25] # [remove, spawn, move] probabilities
-shape0: 9
 
 generatorType: evolutionary
 
 ##network args
 # this should probably be a list
-network_name: "AIIDE_PINSKY_MODEL"  # Other agents: Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+network_name: "AIIDE_PINSKY_MODEL"  # Other agents: AIIDE_PINSKY_MODEL, TwoLayerFC, Adversarial_PCGRL, SimpleConvAgent, or GAPAgent
+model_config: {}
 framework: "torch"
 
 # algo optimization args
@@ -44,18 +43,17 @@ opt_algo: "PPO"
 evolution_timer: 25
 mutation_rate: 0.8
 max_children: 3
-max_envs: 10
-comp_agent: mcts
+max_envs: 30
 
 # algo general args
-num_poet_loops: 2
+num_poet_loops: 1000
 transfer_timer: 10
-snapshot_timer: 20
+snapshot_timer: 1000
 use_snapshot: False
 
 
 # gym Env Wrappers
-wrappers: ["Aligned"] #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
+wrappers: [] #ResetCallback, MultiAgent, HierarchicalBuilder (in the works)
 
 
 # trainer helper args

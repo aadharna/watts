@@ -1,15 +1,17 @@
 import copy
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import ray
 import numpy as np
+import torch
 
 from ..solvers.base import BaseSolver
 from ..generators.base import BaseGenerator
 from ..validators.level_validator import LevelValidator
+from ..utils.returns import compute_gae
 
 
-def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, config: dict) -> Tuple[bool, float]:
+def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, config: dict) -> Tuple[bool, float, dict]:
     """
 
     :param generator: Generator class object that whose string representation is the level in question
@@ -23,7 +25,7 @@ def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, conf
     key = ray.get(solver.get_key.remote())
     score = result[key]['score']
     win = result[key]['win']
-    return win, score
+    return win, score, result[key]['kwargs']
 
 
 def _get_solver_value_of_generator(generator: BaseGenerator, solver: BaseSolver) -> float:
@@ -56,7 +58,7 @@ def _opt_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, confi
 class RandomAgentValidator(LevelValidator):
     """Can a random agent win this level with multiple tries? Yes/No?
     """
-    def __init__(self, network_factory_monad, env_config, n_repeats=1):
+    def __init__(self, network_factory_monad, env_config, low_cutoff, high_cutoff, n_repeats=1):
         """
 
         :param network_factory_monad: function to build NNs with
@@ -65,9 +67,11 @@ class RandomAgentValidator(LevelValidator):
         """
         self.nf = network_factory_monad
         self.config = env_config
+        self.low_cutoff = low_cutoff
+        self.high_cutoff = high_cutoff
         self.n_repeats = n_repeats
 
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Load random weights into the solver and run an evaluate. Then restore the solver to its original state.
 
         :param generators: Generator class that we can extract a level string from
@@ -84,12 +88,13 @@ class RandomAgentValidator(LevelValidator):
             random_agent = self.nf({})
             random_weights = random_agent.state_dict()
             solvers[0].set_weights.remote(random_weights)
-            win, score = _eval_solver_on_generator(generators[0], solvers[0], self.config)
+            win, score, _ = _eval_solver_on_generator(generators[0], solvers[0], self.config)
             wins.append(win)
             scores.append(score)
         # set the solvers weights back to what it was before the random agent
         solvers[0].set_weights.remote(solver_weights)
-        return any(wins)
+        return self.low_cutoff <= np.mean(scores) <= self.high_cutoff, {'wins': np.array(wins),
+                                                                        'scores': np.array(scores)}
 
 
 class ParentCutoffValidator(LevelValidator):
@@ -110,7 +115,7 @@ class ParentCutoffValidator(LevelValidator):
         self.low_cutoff = low_cutoff
         self.n_repeats = n_repeats
 
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Run the passed in solver on the passed in generator.
 
         :param generators: Generator class that we can extract a level string from
@@ -122,16 +127,68 @@ class ParentCutoffValidator(LevelValidator):
         scores = []
         wins = []
         for n in range(self.n_repeats):
-            win, score = _eval_solver_on_generator(generator=generators[0], solver=solvers[0], config=self.config)
+            win, score, _ = _eval_solver_on_generator(generator=generators[0], solver=solvers[0], config=self.config)
             scores.append(score)
             wins.append(win)
-        return self.low_cutoff <= np.mean(scores) <= self.high_cutoff
+        return self.low_cutoff <= np.mean(scores) <= self.high_cutoff, {'wins': np.array(wins),
+                                                                        'scores': np.array(scores)}
 
 
 class ParentValueValidator(LevelValidator):
     """Do we expect this new level to get us positive return? Yes/No?
     """
 
-    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> bool:
+    def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         value = _get_solver_value_of_generator(generators[0], solvers[0])
-        return 0 <= value
+        return 0 <= value, {'value': value}
+
+
+class PositiveGAEValidator(LevelValidator):
+    """On average, for this agent, does this level induce positive GAE returns? We use this to approximate
+    regret as based on: https://openreview.net/pdf?id=rRg0ghtqRw2
+    which is in turn based on: https://arxiv.org/abs/2010.03934
+
+    """
+    def __init__(self, env_config, n_repeats: int = 5, gamma: float = 0.99, tau: float = 0.95):
+        self.env_config = env_config
+        self.n_repeats = n_repeats
+        self.gamma = gamma
+        self.tau = tau
+
+    def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        gaes = []
+        for i in range(self.n_repeats):
+            _, _, return_kwargs = _eval_solver_on_generator(generators[0], solvers[0], self.env_config)
+            returns = compute_gae(next_value=0,
+                                  rewards=return_kwargs['rewards'],
+                                  masks=return_kwargs['dones'],
+                                  values=return_kwargs['values'],
+                                  gamma=self.gamma,
+                                  tau=self.tau)
+            returns = torch.cat(returns).double()
+            average_gae_loss = torch.mean(torch.where(returns > 0., returns, 0.)).item()
+            gaes.append(average_gae_loss)
+
+        return np.mean(gaes) >= 0, {'gae_loss': gaes}
+
+
+class PositiveRegretMultiAgentValidator(LevelValidator):
+    """On average, does this level induce positive regret between a pair of agents?
+    Let the first agent be the "positive" agent (i.e. a1_score - a2_score >= 0)
+    """
+    def __init__(self, env_config, n_repeats: int = 3):
+        self.n_repeats = n_repeats
+        self.env_config = env_config
+
+    def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        a1_score, a1_wins = [], []
+        a2_score, a2_wins = [], []
+        for n in range(self.n_repeats):
+            win1, score1, _ = _eval_solver_on_generator(generators[0], solvers[0], config=self.env_config)
+            win2, score2, _ = _eval_solver_on_generator(generators[0], solvers[1], config=self.env_config)
+            a1_score.append(score1)
+            a2_score.append(score2)
+        return np.mean(a1_score) - np.mean(a2_score) >= 0, {'a1_scores': np.array(a1_score),
+                                                            'a2_scores': np.array(a2_score),
+                                                            'a1_wins': np.array(a1_wins),
+                                                            'a2_wins': np.array(a2_wins)}

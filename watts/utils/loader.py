@@ -3,18 +3,19 @@ import yaml
 import pickle
 import argparse
 
-def load_from_yaml(fpath):
 
+def load_from_yaml(fpath):
     args = yaml.load(open(fpath), Loader=yaml.FullLoader)
     return argparse.Namespace(**args)
 
-def save_obj(obj, folder, name):
 
+def save_obj(obj, folder, name):
     path = os.path.join(folder, name) + '.pkl'
     if os.path.exists(path):
         os.remove(path)
     with open(path, 'wb+') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
 
 def load_obj(folder, name):
 

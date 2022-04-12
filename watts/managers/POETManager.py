@@ -1,9 +1,11 @@
 from typing import Dict, List, Tuple
 
+import os
 import ray
 
 from .base import Manager
 from ..utils.register import Registrar
+from ..utils.loader import save_obj
 from ..gym_factory import GridGameFactory
 from ..network_factory import NetworkFactory
 from ..transfer.rank_strategy import RankStrategy
@@ -23,6 +25,7 @@ class PoetManager(Manager):
             transfer_strategy: RankStrategy,
             network_factory: NetworkFactory,
             registrar: Registrar,
+            archive_dict: dict,
     ):
         """Extends the manager class to instantiate the POET algorithm
 
@@ -34,6 +37,7 @@ class PoetManager(Manager):
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self._evolution_strategy = evolution_strategy
         self._transfer_strategy = transfer_strategy
+        self.archive_dict = archive_dict
         self.active_population = [initial_pair]
         self.stats = {}
         self.stats['lineage'] = []
@@ -71,7 +75,7 @@ class PoetManager(Manager):
 
     def build_children(self, children: List[Tuple]) -> List[Pairing]:
         built_children = []
-        for parent_solver, child_generator, parent_id in children:
+        for parent_solver, child_generator, parent_id, _ in children:
             parent_weights = ray.get(parent_solver.get_weights.remote())
             new_child = Pairing(solver=SingleAgentSolver.remote(trainer_constructor=self.registrar.trainer_constr,
                                                                 trainer_config=self.registrar.trainer_config,
@@ -148,12 +152,12 @@ class PoetManager(Manager):
                 pair_id = eval_return['generator_id']
                 active_populations[pair_id].solved.append(solved_status)
                 active_populations[pair_id].eval_scores.append(eval_score)
+                active_populations[pair_id].write_scaler_to_solver('paired_return', eval_score, self.i)
 
             if i % self.args.transfer_timer == 0:
-                nets = [(p.solver, j) for j, p in enumerate(self.active_population)]
-                lvls = [(p.generator, j) for j, p in enumerate(self.active_population)]
-                id_map = [p.id for p in self.active_population]
-                new_weights = self._transfer_strategy.transfer(nets, lvls, id_map=id_map)
+                nets = [(p.solver, p.id) for j, p in enumerate(self.active_population)]
+                lvls = [(p.generator, p.id) for j, p in enumerate(self.active_population)]
+                new_weights = self._transfer_strategy.transfer(nets, lvls)
 
                 for j, (best_w, best_id) in new_weights.items():
                     active_populations[j].update_solver_weights(best_w)
@@ -164,3 +168,7 @@ class PoetManager(Manager):
 
             if i % self.args.snapshot_timer == 0:
                 POETManagerSerializer(self).serialize()
+                # save raw data
+                save_obj(self.archive_dict,
+                         os.path.join('.', 'watts_logs', self.exp_name),
+                         f'total_serialized_alg_{self.i}')

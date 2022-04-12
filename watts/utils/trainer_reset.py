@@ -1,4 +1,6 @@
 from ray.rllib.utils.annotations import override
+from ray.rllib.agents.es.es import Worker
+from ray.rllib.agents.ppo.ppo import PPOTrainer
 from ray.tune import Trainable
 
 
@@ -10,7 +12,11 @@ class ResetConfigOverride:
             _ = env.reset(level_string=new_config['env_config']['level_string'])
 
         # do something with new_config
-        self.workers.foreach_env(update)
+        if self._name == 'ES':
+            for w in self._workers:
+                w.update_level.remote(new_config['env_config']['level_string'])
+        else:
+            self.workers.foreach_env(update)
         return True  # <- signals successful reset
 
 
@@ -19,16 +25,12 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from utils.register import Registrar
-    from utils.loader import load_from_yaml
-    from gym_factory import GridGameFactory
-    from network_factory import NetworkFactory
-    from generators.AIIDE_generator import EvolutionaryGenerator
-    from solvers.SingleAgentSolver import SingleAgentSolver
-
-    from ray.rllib.agents.ppo import PPOTrainer
-    from ray.rllib.agents.es.es import Worker
-    from ray.rllib.utils import add_mixins
+    from watts.utils.register import Registrar
+    from watts.utils.loader import load_from_yaml
+    from watts.gym_factory import GridGameFactory
+    from watts.network_factory import NetworkFactory
+    from watts.generators.AIIDE_generator import EvolutionaryGenerator
+    from watts.solvers.SingleAgentSolver import SingleAgentSolver
 
     os.chdir('..')
     sep = os.pathsep
@@ -38,8 +40,10 @@ if __name__ == "__main__":
 
     args_file = os.path.join('args.yaml')
     args = load_from_yaml(args_file)
+    args.exp_name = 'foo_1'
 
     registry = Registrar(file_args=args)
+    registry.opt_algo = 'OpenAIES'
 
 
     # level_string = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''
@@ -53,7 +57,8 @@ if __name__ == "__main__":
                                    trainer_config=registry.trainer_config,
                                    registered_gym_name=registry.env_name,
                                    network_factory=nf,
-                                   gym_factory=gf)
+                                   gym_factory=gf,
+                                   log_id=args.exp_name)
 
     new_config = registry.get_trainer_config
     new_config['env_config']['level_string'] = '''wwwwwwwwwwwww\nw....+e.....w\nw...........w\nw..A........w\nw...........w\nw...........w\nw.....w.....w\nw.g.........w\nwwwwwwwwwwwww\n'''

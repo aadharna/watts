@@ -21,7 +21,7 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
         self.obs_space = obs_space
         self._num_objects = obs_space.shape[2]
-        self.cell_size = model_config.get('cell_size', 2704)
+        self.cell_size = model_config.get('custom_model_config', {}).get('cell_size', 2704)
 
         self.conv = nn.Conv2d(in_channels=self._num_objects, out_channels=16, kernel_size=3)
         self.flat = nn.Flatten()
@@ -69,21 +69,21 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
 if __name__ == "__main__":
     from gym.spaces import Box, Discrete, MultiDiscrete
-    from models.categorical_action_sampler import ActionSampler
+    # from models.categorical_action_sampler import ActionSampler
 
     example_network_factory_build_info = {
         'action_space': MultiDiscrete([15, 15,  6,  2]),
-        'obs_space': Box(0.0, 255.0, (15, 15, 4), np.float64),
+        'obs_space': Box(0.0, 255.0, (15, 15, 6), np.float64),
         'model_config': {'length': 15, 'width': 15, 'placements': 50},
         'num_outputs': sum([15, 15,  6,  2]),
         'name': 'pcgrl'
     }
     adversary = PCGRLAdversarial(**example_network_factory_build_info)
     print(adversary)
-    blankMap = np.zeros((1, 4, 15, 15))
+    blankMap = np.zeros((1, 6, 15, 15))
     level = torch.FloatTensor(blankMap)
     h = adversary.get_initial_state()
     logits, h = adversary.forward_rnn(level, h, 1)
-    sampler = ActionSampler(example_network_factory_build_info['action_space'])
-    action, logp, entropies = sampler.sample(logits=logits)
-    print(action)
+    # sampler = ActionSampler(example_network_factory_build_info['action_space'])
+    # action, logp, entropies = sampler.sample(logits=logits)
+    # print(action)

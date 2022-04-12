@@ -7,7 +7,7 @@ import torch
 
 from .base import BaseGenerator
 from ..models.PCGRL_network import PCGRLAdversarial
-from ..models.categorical_action_sampler import ActionSampler
+from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
 
 class Items(Enum):
@@ -38,6 +38,7 @@ class Items(Enum):
 
 
 class PCGRLGenerator(BaseGenerator):
+    id = 0
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         BaseGenerator.__init__(self)
@@ -47,11 +48,26 @@ class PCGRLGenerator(BaseGenerator):
         self.width = model_config.get('width', 15)
         self.lvl_shape = (self.length, self.width)
         self.placements = model_config.get('placements', 50)
+        self.max_sample = model_config.get('max_sampling', False)
         self.boundary_walls_height = list(product([0, self.length - 1], range(self.width)))
         self.boundary_walls_length = list(product(range(self.length), [0, self.width - 1]))
+        self.id = PCGRLGenerator.id
+        PCGRLGenerator.id += 1
 
     def mutate(self, **kwargs):
-        return self
+        param_vector = parameters_to_vector(self.network.parameters())
+        noise = kwargs.get('delta', torch.distributions.Normal(0, 1).sample((param_vector.shape[0], )))
+        if not isinstance(noise, torch.Tensor):
+            noise = torch.Tensor(noise)
+        param_vector.add_(noise)
+
+        new_generator = PCGRLGenerator(self.network.obs_space,
+                                       self.network.action_space,
+                                       self.network.num_outputs,
+                                       self.network.model_config,
+                                       self.network.name)
+        vector_to_parameters(param_vector, new_generator.network.parameters())
+        return new_generator
 
     def update(self, level, **kwargs):
         pass
@@ -79,7 +95,7 @@ class PCGRLGenerator(BaseGenerator):
     def generate(self):
         length = self.length
         width = self.width
-        sampler = ActionSampler(self.network.action_space)
+        # sampler = ActionSampler(self.network.action_space)
 
         blankMap = np.zeros((1, self._num_objects, length, width))
         level = torch.flatten(torch.FloatTensor(blankMap))
@@ -90,26 +106,28 @@ class PCGRLGenerator(BaseGenerator):
         masks = torch.zeros((self.placements, 1)) + 1
         logps = torch.zeros((self.placements, 1))
         h = self.network.get_initial_state()
-        tokenList = [Items.AVATAR, Items.DOOR, Items.KEY] + [Items.WALL for _ in range(self.placements - 3)]
-        for i, TOKEN in enumerate(tokenList):
-            logits, h = self.network.forward_rnn(level, h, 1)
-            torch_action, logp, entropy = sampler.sample(logits)
-            predicted = torch_action.cpu().numpy()
-            x = int(predicted[0][0])
-            y = int(predicted[0][1])
-            tile = int(predicted[0][2])
-            blankMap[0, tile, y, x] = 1
-            level = torch.FloatTensor(blankMap)
-            logps[i] = logp
-            actions[i] = torch.FloatTensor([tile, y, x])
-            states[i] = level.clone()
-            level = torch.flatten(level)
-            values[i] = self.network.value_function()
-
-        for i, j in self.boundary_walls_length:
-            blankMap[0, Items.WALL.value, i, j] = 1
-        for i, j in self.boundary_walls_height:
-            blankMap[0, Items.WALL.value, i, j] = 1
+        # do I put token based object adding back in? 
+        # for i, TOKEN in enumerate(range(self.placements)):
+        #     logits, h = self.network.forward_rnn(level, h, 1)
+        #     torch_action, logp, entropy = sampler.sample(logits, max=self.max_sample)
+        #     predicted = torch_action.cpu().numpy()
+        #     x = int(predicted[0][0])
+        #     y = int(predicted[0][1])
+        #     tile = int(predicted[0][2])
+        #     blankMap[0, tile, y, x] = 1
+        #     level = torch.FloatTensor(blankMap)
+        #     logps[i] = logp
+        #     actions[i] = torch.FloatTensor([tile, y, x])
+        #     states[i] = level.clone()
+        #     level = torch.flatten(level)
+        #     values[i] = self.network.value_function()
+        #
+        # for i, j in self.boundary_walls_length:
+        #     # blankMap[0, self.game_schema.str_to_index['w'], i, j] = 1
+        #     blankMap[0, Items.WALL.value, i, j] = 1
+        # for i, j in self.boundary_walls_height:
+        #     # blankMap[0, self.game_schema.str_to_index['w'], i, j] = 1
+        #     blankMap[0, Items.WALL.value, i, j] = 1
 
         return torch.FloatTensor(blankMap), {"actions": actions,
                                              "states": states,
@@ -130,25 +148,24 @@ class PCGRLGenerator(BaseGenerator):
             for j in range(map_shape[3]):
                 tile = torch.argmax(map[0, :, i, j]).item()
                 level += Items.to_str(tile)
+                # level += self.game_schema.index_to_str[tile]
                 if j != map_shape[3] - 1:
                     level += " "
             level += "\n"
         return level
 
 
-# if __name__ == "__main__":
-#     import gym
-#     from utils.returns import compute_gae
-#     from tests.test_structs import example_network_factory_build_info
-#     import torch.optim as optim
-#
-#     build_info = example_network_factory_build_info
-#     build_info['action_space'] = gym.spaces.Discrete(169)
-#     build_info['num_outputs'] = 169
-#     build_info['name'] = 'adversary'
-#     build_info['model_config'] = {'length': 15, 'width': 15, "placements": 75}
-#
-#     generator = PCGRLGenerator(**build_info)
+if __name__ == "__main__":
+    from tests.test_structs import example_pcgrl_network_factory_build_info
+
+    build_info = example_pcgrl_network_factory_build_info
+    build_info['name'] = 'adversary'
+    build_info['model_config'] = {'length': 15, 'width': 15, "placements": 75}
+    print(build_info)
+
+    generator = PCGRLGenerator(**build_info)
+
+#     new_gen = generator.mutate()
 #     optimizer = optim.Adam(generator.network.parameters(), lr=0.003)
 #     mazes = []
 #
