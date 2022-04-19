@@ -36,15 +36,16 @@ def init_ray_before_all_tests():
     ray.shutdown()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def init_solver():
     args = load_from_yaml(fpath='/home/rohindasari/research/watts_package/sample_args/args.yaml')
     args.lvl_dir = '../../example_levels'
+    args.exp_name = 'poet_test'
     registry = Registrar(file_args=args)
     wrappers = add_wrappers(args.wrappers)
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
 
-    network_factory = NetworkFactory('SimpleConvAgent', registry.get_nn_build_info)
+    network_factory = NetworkFactory('AIIDE_PINSKY_MODEL', registry.get_nn_build_info, policy_class=registry.policy_class)
     solver = SingleAgentSolver.remote(
                 trainer_constructor=registry.trainer_constr,
                 trainer_config=registry.get_trainer_config,
@@ -53,12 +54,41 @@ def init_solver():
                 gym_factory=gym_factory,
                 log_id=f"test_0"
             )
-    return {'solver': solver, 'registry': registry}
+    return {'solver': solver, 'registry': registry, 'args': args}
 
 
-def test_evaluate(init_solver):
+def test_update_lvl_in_trainer(init_solver):
+    """
+    test to make sure that level config can be updated through trainer object
+    """
+    solver = init_solver['solver']
+    args = init_solver['args']
+    lvl_config = {'env_config': {
+            'level_string': args.initial_level_string
+        }}
+    keyref = solver.update_lvl_in_trainer.remote(lvl_config)
+    assert ray.get(keyref) == True
+
+def test_get_key(init_solver):
+    """
+    test to ensure that the key returned by the solver is valid and initially set to 0
+    """
     solver = init_solver['solver']
     keyref = solver.get_key.remote()
-    print(ray.get(keyref))
+    assert ray.get(keyref) == 0
+
+def test_get_picklable_state(init_solver):
+    """
+    test to ensure that all components of the solvers state are valid and can be pickled
+    currently test is failing becase the rllib policy can't be pickled
+    """
+    import pickle
+    solver = init_solver['solver']
+    keyref = solver.get_picklable_state.remote()
+    state = ray.get(keyref)
+    # remove policy class attribute before pickling
+    del state['network_factory']
+    pickle.dumps(state)
+
 
 
