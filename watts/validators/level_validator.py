@@ -20,8 +20,8 @@ class LevelValidator:
 
         TODO: substantial validator (is this the right interface?)
 
-        :param solvers: solver object that contains an NN
-        :param generators: generator object that contains a level.
+        @param solvers: solver object that contains an NN
+        @param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         raise NotImplementedError()
@@ -31,8 +31,8 @@ class AlwaysValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Passed generators are always valid.
 
-        :param solvers:
-        :param generators: generator object that contains a level.
+        @param solvers:
+        @param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         return True, {}
@@ -42,8 +42,8 @@ class RandomVariableValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Flips a coin on if we should use this generator or not.
 
-        :param solvers:
-        :param generators: generator object that contains a level.
+        @param solvers:
+        @param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
         return np.random.rand() < 0.5, {}

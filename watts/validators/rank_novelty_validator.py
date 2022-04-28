@@ -124,8 +124,8 @@ def euclidean_distance(x, y):
     """euclidean distance calculation from:
     https://github.com/uber-research/poet/blob/8669a17e6958f80cd547b2de61c51d4518c833d9/poet_distributed/novelty.py#L30
 
-    :param x: nd-vector scores on d levels
-    :param y: nd-vector scores on d levels
+    @param x: nd-vector scores on d levels
+    @param y: nd-vector scores on d levels
     :return:
     """
     n, m = len(x), len(y)

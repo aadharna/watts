@@ -9,6 +9,10 @@ class GameSchema:
     connectivity of the domain
     """
     def __init__(self, gdy_file):
+        """
+
+        @param gdy_file: pointer to gdy game file
+        """
         self._unpacked_game = self._unpack_gdy(gdy_file)
 
         self.agent_chars = self._get_agent_chars_from_gdy()

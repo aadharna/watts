@@ -12,7 +12,7 @@ class StaticGenerator(BaseGenerator):
         """Static generator. This is initialized with a static level and that's all it will ever have.
         But this satisfies the definition of being a generator
 
-        :param level_string: level to initialize the generator
+        @param level_string: level to initialize the generator
         """
         BaseGenerator.__init__(self)
         self.level = level_string

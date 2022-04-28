@@ -53,9 +53,9 @@ class DeepMindFullValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         _, random_agent_data = self.random_agent_validator.validate_level(generators=generators, solvers=solvers)
@@ -103,9 +103,9 @@ class DeepMindAppendixValidator(LevelValidator):
                  n_repeats: int = 100):
         """
 
-        :param env_config: env_config info for both validators
-        :param low_cutoff: lower bound of what's too hard. default is -inf
-        :param n_repeats: number of times to run an evaluate
+        @param env_config: env_config info for both validators
+        @param low_cutoff: lower bound of what's too hard. default is -inf
+        @param n_repeats: number of times to run an evaluate
         """
         self.config = env_config
         self.low_cutoff = low_cutoff
@@ -114,9 +114,9 @@ class DeepMindAppendixValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         scores = []

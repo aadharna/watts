@@ -33,9 +33,9 @@ class PINSKYValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: n/a here; Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: n/a here; Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         _, random_data = self.random_agent_validator.validate_level(generators, solvers)

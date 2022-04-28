@@ -26,8 +26,8 @@ class GetBestSolver(RankStrategy):
                  generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
         """Run a zero-shot transfer tournament; takes in a solver list and a generator list.
 
-        :param solver_list: List of (solver, id) pairs.
-        :param generator_list: List of (generator, id) pairs
+        @param solver_list: List of (solver, id) pairs.
+        @param generator_list: List of (generator, id) pairs
         :return: dict of new weights indexed by a pair_id.
         """
         self.t += 1
@@ -99,8 +99,8 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         """This wraps the GetBestSolver defined above. This runs a ZeroShot and OneShot tournament and then
         argmax's over the columns of those matrices.
 
-        :param solver_list: List of (solver, id) pairs.
-        :param generator_list: List of (generator, id) pairs
+        @param solver_list: List of (solver, id) pairs.
+        @param generator_list: List of (generator, id) pairs
         :return: dict of new weights indexed by a pair_id.
         """
         self.t += 1
