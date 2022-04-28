@@ -17,7 +17,7 @@ class SelectRandomly(SelectionStrategy):
 
     def select(self, pair_list) -> list:
         """
-        : param pair_list: the list from which self.max_children items will be randomly selected
+        @param pair_list: the list from which self.max_children items will be randomly selected
         """
         # select self.max_children items randomly
         # select their IDs and then pull those elements out into a new list

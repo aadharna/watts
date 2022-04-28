@@ -151,7 +151,7 @@ class PCGRLGenerator(BaseGenerator):
     def to_string(self, map):
         """
 
-        :param map: numpy array of OHE map. The shape should be (1, num_objects, length, width)
+        @param map: numpy array of OHE map. The shape should be (1, num_objects, length, width)
         :return: level as string
         """
         level = ""

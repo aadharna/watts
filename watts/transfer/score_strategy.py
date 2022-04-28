@@ -15,9 +15,9 @@ class ZeroShotCartesian(ScoreStrategy):
     def score(self, solvers, generators, id_map) -> np.ndarray:
         """run the evaluate function on the cartesian product of solvers and generators
 
-        :param solvers: list of Solver objects
-        :param generators: list of callable string levels
-        :param id_map: list of tuples of (solver_id, generator_id) also created with product (id, id)
+        @param solvers: list of Solver objects
+        @param generators: list of callable string levels
+        @param id_map: list of tuples of (solver_id, generator_id) also created with product (id, id)
         :return: an n x m x 3 tensor. Where n = len(solvers), m = len(generators), 3 = len((gen_id, sol_id, score))
         """
 

@@ -4,9 +4,9 @@ from ray.rllib.models import ModelCatalog
 from griddly.util.rllib.torch.agents.conv_agent import SimpleConvAgent
 from griddly.util.rllib.torch.agents.global_average_pooling_agent import GAPAgent
 
-from .models.AIIDE_network import AIIDEActor
-from .models.PCGRL_network import PCGRLAdversarial
-from .models.FC_network import TwoLayerFC
+from watts.models.AIIDE_network import AIIDEActor
+from watts.models.PCGRL_network import PCGRLAdversarial
+from watts.models.FC_network import TwoLayerFC
 
 aiide = "AIIDE_PINSKY_MODEL"
 conv = "SimpleConvAgent"
@@ -16,6 +16,11 @@ fc = 'TwoLayerFC'
 
 
 def get_network_constructor(network_name: str):
+    """
+    Get network constructor by name
+    @param network_name: network type name
+    @return:
+    """
     if network_name == aiide:
         return AIIDEActor
     elif network_name == pcgrl:
@@ -32,10 +37,12 @@ def get_network_constructor(network_name: str):
 
 class NetworkFactory:
     def __init__(self, network_name: str, nn_build_info: dict, policy_class: Callable):
-        """Factory to create NNs and register it with ray's global NN register
+        """
+        Factory to create NNs and register it with ray's global NN register
 
-        :param registrar: utils.registery.Registrar object. This holds various dicts needed for initialization.
-
+        @param network_name: name of the network desired.
+        @param nn_build_info: necessary build info (ObsSpace, ActSpace, etc)
+        @param policy_class: Rllib policy class constructor/caller
         """
         self.nn_build_info = nn_build_info
         self.network_name = network_name

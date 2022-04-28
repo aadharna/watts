@@ -76,9 +76,9 @@ class RandomAgentValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """Load random weights into the solver and run an evaluate. Then restore the solver to its original state.
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         wins = []

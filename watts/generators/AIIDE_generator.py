@@ -14,8 +14,8 @@ class EvolutionaryGenerator(BaseGenerator):
     def __init__(self, level_string, file_args):
         """generator for maps that operates on tiles in a direct encoding
 
-        :param level_string: string of level w w w w w w w w w w\nw . . .
-        :param file_args: arguments loaded from file via load_from_yaml and in the registry
+        @param level_string: string of level w w w w w w w w w w\nw . . .
+        @param file_args: arguments loaded from file via load_from_yaml and in the registry
         """
         super().__init__()
 
@@ -54,7 +54,7 @@ class EvolutionaryGenerator(BaseGenerator):
     def update(self, level):
         """
         Update Generator from flat lvl string
-        :param level: flat lvl string with \n chars and spaces
+        @param level: flat lvl string with \n chars and spaces
         :return:
         """
         split_lvl = [row.split() for row in level.split('\n')[:-1]]  # remove empty '' at the end
@@ -68,7 +68,7 @@ class EvolutionaryGenerator(BaseGenerator):
     def _parse_tile_world(self, tile_world):
         """
         Parse a 2D numpy array to extract what game object is in what location
-        :param tile_world: numpy array of the game objects
+        @param tile_world: numpy array of the game objects
         :return: dictionary of game-object locations
         """
         locations = {}
@@ -95,7 +95,7 @@ class EvolutionaryGenerator(BaseGenerator):
     def tile_world(self, locations):
         """
         Create a numpy array of the 2D game world with string entries using the class location data
-        :param locations: class dict of location information for each object type
+        @param locations: class dict of location information for each object type
         return: a 2D numpy array
         """
         # numpy array

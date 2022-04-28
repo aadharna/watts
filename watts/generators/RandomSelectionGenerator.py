@@ -12,7 +12,7 @@ class RandomSelectionGenerator(BaseGenerator):
         The generator can sample one of these static levels on demand.
         This simple unchanging generator satisfies the definition of being a generator
 
-        :param level_string: level to initialize the generator
+        @param level_string: level to initialize the generator
         """
         BaseGenerator.__init__(self)
         self.levels = level_strings

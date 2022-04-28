@@ -55,9 +55,9 @@ class GraphValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: n/a here; Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: n/a here; Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         level = [row.split() for row in str(generators[0]).split('\n')[:-1]]

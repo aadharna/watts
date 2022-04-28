@@ -32,8 +32,8 @@ class BirthThenKillStrategy(EvolutionStrategy):
         BirthThenKill first mutates parents to generate children using the SelectionStrategy,
         then kills them off using the ReplacementStrategy.
 
-        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
-        :param birth_func: a function describing how new pairs are created
+        @param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        @param birth_func: a function describing how new pairs are created
         :return:
         """
         children = []
@@ -72,8 +72,8 @@ class TraditionalES(EvolutionStrategy):
         TraditionalES (without replacement) selects parents to be part of the next generation and does not replace them
         Then we "fill out" the rest of the population (n - k) individuals
 
-        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
-        :param birth_func: a function describing how new pairs are created
+        @param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        @param birth_func: a function describing how new pairs are created
         :return:
         """
         children = []
@@ -138,8 +138,8 @@ class POETStrategy(EvolutionStrategy):
         Once in `adjust_env_niches` -- this one says: "does the network we think is best for the new task perform adequately?"
         This is strange.
 
-        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
-        :param birth_func: a function describing how new pairs are created
+        @param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        @param birth_func: a function describing how new pairs are created
         :return:
         """
 
@@ -190,9 +190,9 @@ class POETStrategy(EvolutionStrategy):
 
     def _get_child_list(self, parent_list, active_population):
         """
-        :param parent_list: a list of the selected parent tasks/generators that will be used to create new mutated generators
-        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
-        :return: a list of new potential generators sorted by novelty
+        @param parent_list: a list of the selected parent tasks/generators that will be used to create new mutated generators
+        @param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        @return: a list of new potential generators sorted by novelty
         """
         child_list = []
         active_solvers = [p.solver for p in active_population]

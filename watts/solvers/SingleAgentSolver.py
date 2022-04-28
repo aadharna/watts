@@ -84,9 +84,9 @@ class SingleAgentSolver(BaseSolver):
         NOTE: THIS WILL BE CHANGING VERY SOON so that instead of using a custom rollout function,
           this method will call the `evaluate` function built into rllib.
 
-        :param env_config: dict of generator details
-        :param solver_id: id of solver being evaluated
-        :param generator_id: id of generator the solver is being evaluated in
+        @param env_config: dict of generator details
+        @param solver_id: id of solver being evaluated
+        @param generator_id: id of generator the solver is being evaluated in
         :return: result information e.g. final score, win_status, etc.
         """
 
@@ -115,8 +115,8 @@ class SingleAgentSolver(BaseSolver):
     def optimize(self, trainer_config, level_string_monad, **kwargs):
         """Run one step of optimization!! Update local agent
 
-        :param trainer_config: config dict for e.g. PPO.
-        :param level_string_monad:  callback to allow for dynamically created strings
+        @param trainer_config: config dict for e.g. PPO.
+        @param level_string_monad:  callback to allow for dynamically created strings
         :return: dict of {optimized weights, result_dict}
         """
 

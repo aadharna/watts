@@ -69,10 +69,10 @@ class MCManager(Manager):
         """
         Minimal Criteria runner. See deepmind OEL paper page 40-41
 
-        :param exp_name:
-        :param gym_factory: factory to make new gym.Envs
-        :param network_factory: factory to make new NNs
-        :param registrar: class that dispenses necessary information e.g. num_poet_loops
+        @param exp_name:
+        @param gym_factory: factory to make new gym.Envs
+        @param network_factory: factory to make new NNs
+        @param registrar: class that dispenses necessary information e.g. num_poet_loops
 
 
 
