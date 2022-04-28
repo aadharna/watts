@@ -2,10 +2,10 @@ from typing import List, Tuple, Dict
 
 import numpy as np
 
-from ..solvers.base import BaseSolver
-from ..generators.base import BaseGenerator
-from .level_validator import LevelValidator
-from .agent_validator import RandomAgentValidator, ParentCutoffValidator, _eval_solver_on_generator
+from watts.solvers.base import BaseSolver
+from watts.generators.base import BaseGenerator
+from watts.validators.level_validator import LevelValidator
+from watts.validators.agent_validator import RandomAgentValidator, ParentCutoffValidator, _eval_solver_on_generator
 
 
 class DeepMindFullValidator(LevelValidator):
@@ -22,11 +22,14 @@ class DeepMindFullValidator(LevelValidator):
                  n_repeats: int = 5):
         """
 
-        :param network_factory_monad: network factory build fn for the random agent validator
-        :param env_config: env_config info for both validators
-        :param low_cutoff: lower bound of what's too hard. default is -inf
-        :param high_cutoff: upper bound of what is too easy. default is inf
-        :param n_repeats: number of times to run an evaluate
+        @param network_factory_monad: network factory build fn for the random agent validator
+        @param env_config: env_config info for both validators
+        @param low_cutoff: lower bound of what's too hard. default is -inf
+        @param high_cutoff: upper bound of what is too easy. default is inf
+        @param margin: By how much should the learned agent do better than the baseline? float = 0.01,
+        @param n_tasks_difference_greater_than_margin: For how many games should the learned agent minus baseline do better than the margin? Must be less than n_repeats. int = 2,
+        @param n_tasks_parent_greater_than_high: For how many games should the learned agent perform better the high_cutoff before the task is considered solved? int = 4,
+        @param n_repeats: number of times to run an evaluate
         """
         self.n_repeats = n_repeats
         assert n_tasks_parent_greater_than_high <= n_repeats

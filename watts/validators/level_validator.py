@@ -2,8 +2,8 @@ from typing import List, Tuple, Dict
 
 import numpy as np
 
-from ..solvers.base import BaseSolver
-from ..generators.base import BaseGenerator
+from watts.solvers.base import BaseSolver
+from watts.generators.base import BaseGenerator
 
 
 class LevelValidator:
@@ -20,7 +20,7 @@ class LevelValidator:
 
         TODO: substantial validator (is this the right interface?)
 
-        :param solvers:
+        :param solvers: solver object that contains an NN
         :param generators: generator object that contains a level.
         :return: boolean determining if the newly created level is allowed to exist
         """
@@ -47,18 +47,3 @@ class RandomVariableValidator(LevelValidator):
         :return: boolean determining if the newly created level is allowed to exist
         """
         return np.random.rand() < 0.5, {}
-
-
-"""
-Example of a novelty validator useful for EC tests? (this can be removed until we support archives)
-
-class NoveltyValidator(LevelValidator):
-    def __init__(self, archive):
-        self.archive = archive
-
-    def validate_level(self, generator: BaseGenerator, solver: BaseSolver, **kwargs) -> bool:
-        is_novel = self.archive.is_new(generator)
-        if is_novel:
-            self.archive.add(generator)
-        return is_novel
-"""

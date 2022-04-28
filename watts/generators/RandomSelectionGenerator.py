@@ -2,14 +2,15 @@ from typing import Tuple
 
 import numpy as np
 
-from .base import BaseGenerator
+from watts.generators.base import BaseGenerator
 
 
 class RandomSelectionGenerator(BaseGenerator):
 
     def __init__(self, level_strings):
-        """Static generator. This is initialized with a static level and that's all it will ever have.
-        But this satisfies the definition of being a generator
+        """Random selection generator. This is initialized with a list of static levels and that's all it will ever have.
+        The generator can sample one of these static levels on demand.
+        This simple unchanging generator satisfies the definition of being a generator
 
         :param level_string: level to initialize the generator
         """

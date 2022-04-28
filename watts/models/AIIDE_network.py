@@ -12,6 +12,18 @@ class AIIDEActor(TorchModelV2, nn.Module):
     def __init__(self, obs_space: gym.spaces.Space,
                  action_space: gym.spaces.Space, num_outputs: int,
                  model_config: ModelConfigDict, name: str):
+        """
+        Port of the neural network used in Co-generation of game levels and game-playing agents.
+        Note, this assumes a DISCRETE action space.
+
+        This class is used to interact with rllib.
+
+        @param obs_space: gym.Space of what the agent will see
+        @param action_space: gym.space of what the agent can do to act in the world
+        @param num_outputs: How many actions the agent can take in a discrete action space.
+        @param model_config: any additional information necessary for the network to be built
+        @param name: A name for the network
+        """
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs,
                               model_config, name)
         nn.Module.__init__(self)
@@ -19,6 +31,7 @@ class AIIDEActor(TorchModelV2, nn.Module):
         self._num_objects = obs_space.shape[2]
         self._num_actions = num_outputs
 
+        # Define the base of the neural network structure!
         self.embedding = nn.Sequential(
             layer_init(nn.Conv2d(in_channels=self._num_objects, out_channels=8, kernel_size=1)),
             nn.ReLU(),
@@ -28,16 +41,23 @@ class AIIDEActor(TorchModelV2, nn.Module):
             layer_init(nn.Linear(512, 128)),  # was 512 previously
             nn.ReLU()
         )
-
+        # the action/policy head
         self.policy_head = nn.Sequential(
             layer_init(nn.Linear(128, num_outputs))
         )
-
+        # the value head
         self.value_head = nn.Sequential(
             layer_init(nn.Linear(128, 1))
         )
 
     def forward(self, input_dict, state, seq_lens):
+        """Implements the forward call of the NN.
+
+        @param input_dict: dict containing an 'obs' key that is what the agent can observe.
+        @param state: hidden state. list of None in this case.
+        @param seq_lens: How many observations are being acted on in this forward call
+        @return: Logits from the policy head and a modified hidden state if applicable.
+        """
         # print(input_dict['obs'].shape)
         x = input_dict['obs'].permute(0, 3, 1, 2)
         self._last_batch_size = x.shape[0]

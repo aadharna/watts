@@ -3,10 +3,10 @@ from typing import List, Tuple, Dict
 import networkx as nx
 from networkx import grid_graph
 
-from ..solvers.base import BaseSolver
-from ..game.GameSchema import GameSchema
-from ..generators.base import BaseGenerator
-from .level_validator import LevelValidator
+from watts.solvers.base import BaseSolver
+from watts.game.GameSchema import GameSchema
+from watts.generators.base import BaseGenerator
+from watts.validators.level_validator import LevelValidator
 
 
 class GraphValidator(LevelValidator):

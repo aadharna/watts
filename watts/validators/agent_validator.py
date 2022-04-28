@@ -12,12 +12,12 @@ from ..utils.returns import compute_gae
 
 
 def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, config: dict) -> Tuple[bool, float, dict]:
-    """
+    """Remotely evaluates the solver on a generator.
 
     :param generator: Generator class object that whose string representation is the level in question
     :param solver: (remote) Solver class object that we can issue an evaluate call on
     :param config: game config so that we can update the level in the remote class
-    :return: (win, score) boolean float tuple
+    :return: (win, score, info) boolean float tuple
     """
     config = copy.deepcopy(config)
     config['level_string'] = str(generator)
@@ -61,9 +61,11 @@ class RandomAgentValidator(LevelValidator):
     def __init__(self, network_factory_monad, env_config, low_cutoff, high_cutoff, n_repeats=1):
         """
 
-        :param network_factory_monad: function to build NNs with
-        :param env_config: config to load a level into
-        :param n_repeats: number of times to run the evaluate
+        @param network_factory_monad: function to build NNs with
+        @param env_config: config to load a level into
+        @param low_cutoff: lower bound of acceptable agent score
+        @param high_cutoff: upper bound of acceptable agent score
+        @param n_repeats: number of times to run the evaluate
         """
         self.nf = network_factory_monad
         self.config = env_config
@@ -139,6 +141,13 @@ class ParentValueValidator(LevelValidator):
     """
 
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        """
+
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
+        @return: True/False is this level a good level to use?
+        """
         value = _get_solver_value_of_generator(generators[0], solvers[0])
         return 0 <= value, {'value': value}
 
@@ -150,12 +159,26 @@ class PositiveGAEValidator(LevelValidator):
 
     """
     def __init__(self, env_config, n_repeats: int = 5, gamma: float = 0.99, tau: float = 0.95):
+        """
+
+        @param env_config: config for loading levels into environemnt
+        @param n_repeats: how many times should we evaluate the combo?
+        @param gamma: GAE-param. Defaults to 0.99
+        @param tau: GAE-param. Defaults to 0.95
+        """
         self.env_config = env_config
         self.n_repeats = n_repeats
         self.gamma = gamma
         self.tau = tau
 
     def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        """
+
+        @param generators: Generator class that we can extract a level string from
+        :param solvers: Solver class that can play a game
+        :param kwargs: future proofing
+        :return: True/False is this level a good level to use?
+        """
         gaes = []
         for i in range(self.n_repeats):
             _, _, return_kwargs = _eval_solver_on_generator(generators[0], solvers[0], self.env_config)
@@ -177,10 +200,22 @@ class PositiveRegretMultiAgentValidator(LevelValidator):
     Let the first agent be the "positive" agent (i.e. a1_score - a2_score >= 0)
     """
     def __init__(self, env_config, n_repeats: int = 3):
+        """
+
+        @param env_config: config for loading levels into environemnt
+        @param n_repeats: how many times should we evaluate the combo?
+        """
         self.n_repeats = n_repeats
         self.env_config = env_config
 
     def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        """
+
+        @param generators: Generator class that we can extract a level string from
+        :param solvers: Solver class that can play a game
+        :param kwargs: future proofing
+        :return: True/False is this level a good level to use?
+        """
         a1_score, a1_wins = [], []
         a2_score, a2_wins = [], []
         for n in range(self.n_repeats):

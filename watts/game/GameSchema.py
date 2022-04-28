@@ -2,6 +2,12 @@ import yaml
 
 
 class GameSchema:
+    """
+    class that loads a Griddly GDY file and extracts semantic information
+    This is used by the validators::graph_validator::GraphValidator class
+    to cast the griddly game as a graph and then run a search over the graph checking for
+    connectivity of the domain
+    """
     def __init__(self, gdy_file):
         self._unpacked_game = self._unpack_gdy(gdy_file)
 
@@ -55,6 +61,7 @@ class GameSchema:
         index_to_str[i+1] = '.'
         str_to_index['.'] = i+1
         return index_to_str, str_to_index
+
 
 if __name__ == '__main__':
     import os

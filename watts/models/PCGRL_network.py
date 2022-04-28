@@ -10,11 +10,23 @@ from ray.rllib.models.torch.recurrent_net import RecurrentNetwork, ModelV2
 
 
 class PCGRLAdversarial(RecurrentNetwork, nn.Module):
-    """generates a map tile by tile"""
+    """generates a map tile by tile using a recurrent neural network."""
 
     def __init__(self, obs_space: gym.spaces.Space,
                  action_space: gym.spaces.Space, num_outputs: int,
                  model_config: ModelConfigDict, name: str):
+        """Implements then neural network structure from:
+        Emergent Complexity and Zero-shot Transfer via Unsupervised Environment Design
+        https://arxiv.org/abs/2012.02096
+
+        Conv -> Recurrent -> FC -> placement locations for prespecified objects
+
+        @param obs_space: gym.Space of what the agent will see
+        @param action_space: gym.space of what the agent can do to act in the world
+        @param num_outputs: How many actions the agent can take in a discrete action space.
+        @param model_config: any additional information necessary for the network to be built
+        @param name: A name for the network
+        """
         RecurrentNetwork.__init__(self, obs_space, action_space, num_outputs,
                                   model_config, name)
         nn.Module.__init__(self)
@@ -32,6 +44,13 @@ class PCGRLAdversarial(RecurrentNetwork, nn.Module):
 
     @override(RecurrentNetwork)
     def forward_rnn(self, x, state, seq_lens):
+        """Implements the forward call of the RNN.
+
+        @param input_dict: dict containing an 'obs' key that is what the agent can observe.
+        @param state: hidden state from the recurrent cells output last time
+        @param seq_lens: How many observations are being acted on in this forward call
+        @return: Logits from the policy head and a modified hidden state if applicable.
+        """
         x = x.reshape(-1, self._num_objects, self.obs_space.shape[0], self.obs_space.shape[1])
         x = self.conv(x)
         x = self.flat(x)

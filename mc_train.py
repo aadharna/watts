@@ -22,13 +22,21 @@ from watts.validators.PINSKY_validator import PINSKYValidator
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--exp_name", type=str, help='exp name')
+parser.add_argument("--exp_name", type=str, default='foo.dma', help='exp name')
 parser.add_argument("--args_file", type=str, default=os.path.join('sample_args', 'args_mc_exp.yaml'),
                     help='path to args file')
 _args = parser.parse_args()
 
 
 if __name__ == "__main__":
+    """
+    This file implements the algorithm explored in the appendix of 
+    Open-Ended Learning Leads to Generally Capable Agents
+    See pages 40-41 the World-agent co-evolution section
+    
+    This file should be provided a name that is used to track this experiment 
+      as well as an arguments file.
+    """
 
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
@@ -39,7 +47,7 @@ if __name__ == "__main__":
              # local_mode=True)
 
     args = load_from_yaml(fpath=_args.args_file)
-    args.exp_name = _args.exp_name
+    args.exp_name = f'dma.{_args.exp_name}' if 'dma' not in _args.exp_name else _args.exp_name
 
     start = time.time()
 

@@ -12,6 +12,18 @@ def name_env_config(ground_roughness,
                     pit_gap,
                     stump_width, stump_height, stump_float,
                     stair_width, stair_height, stair_steps):
+    """
+    @param ground_roughness:
+    @param pit_gap:
+    @param stump_width:
+    @param stump_height:
+    @param stump_float:
+    @param stair_width:
+    @param stair_height:
+    @param stair_steps:
+    @return:
+
+    """
     env_name = 'r' + str(ground_roughness)
     if pit_gap:
         env_name += '.p' + str(pit_gap[0]) + '_' + str(pit_gap[1])
@@ -31,6 +43,11 @@ class WalkerConfigGenerator(BaseGenerator):
     id = 0
 
     def __init__(self, parent_env_config, categories=('stump', 'pit', 'roughness', 'stair')):
+        """
+
+        @param parent_env_config: watts.utils.box2d.biped_walker_custom.env_config e.g. DEFAULT_ENV_CONFIG
+        @param categories: what parts of the world should the Generator mutate?
+        """
         super().__init__()
         self.env_config = parent_env_config
         self.rs = np.random.RandomState(int(time.time()))
@@ -44,6 +61,16 @@ class WalkerConfigGenerator(BaseGenerator):
 
     def populate_array(self, arr, default_value,
                        interval=0, increment=0., enforce=False, max_value=[]):
+        """
+
+        @param arr: array to change
+        @param default_value: if array is empty use default value
+        @param interval: acceptable upper and lower bounds for mutationType
+        @param increment: size of step
+        @param enforce: is parameter array empty?
+        @param max_value: list of max values for each param
+        @return: array with mutated values
+        """
         assert isinstance(arr, list)
         if len(arr) == 0 or enforce:
             arr = list(default_value)
@@ -75,6 +102,11 @@ class WalkerConfigGenerator(BaseGenerator):
         return arr
 
     def mutate(self, **kwargs):
+        """Edit the class's env_config and create a new WalkerConfigGenerator.
+
+        @param kwargs: future proofing
+        @return: a new WalkerConfigGenerator with mutated env_config
+        """
         no_mutate = kwargs.get('no_mutate', False)
         parent = copy.deepcopy(self.env_config)
 
