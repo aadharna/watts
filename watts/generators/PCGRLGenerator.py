@@ -4,10 +4,10 @@ from itertools import product
 
 import numpy as np
 import torch
-
-from .base import BaseGenerator
-from ..models.PCGRL_network import PCGRLAdversarial
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
+
+from watts.generators.base import BaseGenerator
+from watts.models.PCGRL_network import PCGRLAdversarial
 
 
 class Items(Enum):
@@ -38,6 +38,14 @@ class Items(Enum):
 
 
 class PCGRLGenerator(BaseGenerator):
+    """
+    This generator no longer works with the breaking changes of making the
+    NetworkFactory output full rllib::policy classes rather than ray pytorch NNs.
+    This is on the docket to be fixed.
+
+    This implements a recurrent neural network that sequentially generates a griddly game level.
+    This is a bit too specific for my tastes to the zelda domain right now because of the Enum above.
+    """
     id = 0
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
@@ -56,16 +64,20 @@ class PCGRLGenerator(BaseGenerator):
 
     def mutate(self, **kwargs):
         param_vector = parameters_to_vector(self.network.parameters())
+        # sample gaussian noise
         noise = kwargs.get('delta', torch.distributions.Normal(0, 1).sample((param_vector.shape[0], )))
         if not isinstance(noise, torch.Tensor):
             noise = torch.Tensor(noise)
+        # add gaussian noise to the network params
         param_vector.add_(noise)
 
+        # build new network
         new_generator = PCGRLGenerator(self.network.obs_space,
                                        self.network.action_space,
                                        self.network.num_outputs,
                                        self.network.model_config,
                                        self.network.name)
+        # load in the noisy parameters
         vector_to_parameters(param_vector, new_generator.network.parameters())
         return new_generator
 

@@ -68,7 +68,7 @@ class Registrar:
                                      'yaml_file': os.path.join(self.base_path, self.gdy_file),
                                      'level': self.file_args.init_lvl,
                                      'max_steps': self.file_args.game_len,
-                                     'global_observer_type': gd.ObserverType.BLOCK_2D,
+                                     'global_observer_type': gd.ObserverType.VECTOR,
                                      'player_observer_type': self.observer,
                                      'random_level_on_reset': False,
                                      'uid': uid,

@@ -32,11 +32,21 @@ class GridGameFactory:
 
 class WalkerFactory:
     def __init__(self, env_name: str, env_wrappers: list):
+        """Factory to create new walker gym envs and register it with ray's global env register
+
+        :param env_name: string name of the game that we want to register with RLlib
+        :param env_wrappers: list of env.Wrappers to apply to the env
+        """
         self.env_wrappers = env_wrappers
         register_env(env_name, self.make())
 
     def make(self):
         def _make(env_config: dict = dict()) -> OverrideWalker:
+            """function used to register env creation with rllib.
+
+            :param env_config: information about how to build the env; compatible with Griddly and RLlibEnv
+            :return: (wrapped) Walker Env
+            """
             # The BipedalWalkerCustom env behaves like the standard BipedalWalker env
             #  however, you can pass in custom arguments that shape the terrain e.g. stump_height
             #  A future direction could also be changing the physics of the world;

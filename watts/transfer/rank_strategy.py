@@ -21,12 +21,13 @@ class GetBestSolver(RankStrategy):
         self.tournaments = {}
         self.t = 0
 
-    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
-        """Run the transfer tournament; take in a solver list and a generator list.
+    def transfer(self,
+                 solver_list: List[Tuple[Any, int]],
+                 generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
+        """Run a zero-shot transfer tournament; takes in a solver list and a generator list.
 
-        :param solver_list:
-        :param generator_list:
-        :param id_map:
+        :param solver_list: List of (solver, id) pairs.
+        :param generator_list: List of (generator, id) pairs
         :return: dict of new weights indexed by a pair_id.
         """
         self.t += 1
@@ -92,7 +93,16 @@ class GetBestZeroOrOneShotSolver(RankStrategy):
         self.proposal_transfers = {}
         self.t = 0
 
-    def transfer(self, solver_list: List[Tuple[Any, int]], generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
+    def transfer(self,
+                 solver_list: List[Tuple[Any, int]],
+                 generator_list: List[Tuple[Any, int]]) -> Dict[int, Any]:
+        """This wraps the GetBestSolver defined above. This runs a ZeroShot and OneShot tournament and then
+        argmax's over the columns of those matrices.
+
+        :param solver_list: List of (solver, id) pairs.
+        :param generator_list: List of (generator, id) pairs
+        :return: dict of new weights indexed by a pair_id.
+        """
         self.t += 1
 
         solvers, solver_idxs = zip(*solver_list)

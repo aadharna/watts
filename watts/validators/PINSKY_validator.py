@@ -1,12 +1,12 @@
 from typing import List, Tuple, Dict
 import numpy as np
 
-from ..game.GameSchema import GameSchema
-from ..generators.base import BaseGenerator
-from ..solvers.base import BaseSolver
-from ..validators.agent_validator import RandomAgentValidator
-from ..validators.graph_validator import GraphValidator
-from ..validators.level_validator import LevelValidator
+from watts.game.GameSchema import GameSchema
+from watts.generators.base import BaseGenerator
+from watts.solvers.base import BaseSolver
+from watts.validators.agent_validator import RandomAgentValidator
+from watts.validators.graph_validator import GraphValidator
+from watts.validators.level_validator import LevelValidator
 
 
 class PINSKYValidator(LevelValidator):
@@ -19,9 +19,12 @@ class PINSKYValidator(LevelValidator):
     def __init__(self, network_factory_monad, env_config, low_cutoff, high_cutoff, n_repeats, game_schema: GameSchema):
         """
 
-        :param network_factory_monad: network factory build fn for the random agent validator
-        :param env_config: env_config info for random agent validator
-        :param n_repeats: number of times to run an evaluate on random agent validator
+        @param network_factory_monad: network factory build fn for the random agent validator
+        @param env_config: env_config info for both validators
+        @param low_cutoff: lower bound of what's too hard. default is -inf
+        @param high_cutoff: upper bound of what is too easy. default is inf
+        @param n_repeats: number of times to run an evaluate
+        @param game_schema: What information do we need when checking connectivity of a game level?
         """
         self.random_agent_validator = RandomAgentValidator(network_factory_monad,
                                                            env_config, low_cutoff, high_cutoff, n_repeats)

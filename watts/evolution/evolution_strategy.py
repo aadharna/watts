@@ -131,6 +131,17 @@ class POETStrategy(EvolutionStrategy):
         self.data = {}
 
     def evolve(self, active_population: list, birth_func) -> list:
+        """The evolution strategy specifies how to combine Selection and Replacement.
+
+        Note, that the `pass_mc` function is called twice.
+        Once in `get_child_list` -- this one says: "does the parent NN perform adequately on the new task?"
+        Once in `adjust_env_niches` -- this one says: "does the network we think is best for the new task perform adequately?"
+        This is strange.
+
+        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        :param birth_func: a function describing how new pairs are created
+        :return:
+        """
 
         nets = [(p.solver, p.id) for j, p in enumerate(active_population)]
         solvers, solver_idxs = zip(*nets)
@@ -178,6 +189,11 @@ class POETStrategy(EvolutionStrategy):
         return self._replacement_strategy.update(active_population)
 
     def _get_child_list(self, parent_list, active_population):
+        """
+        :param parent_list: a list of the selected parent tasks/generators that will be used to create new mutated generators
+        :param active_population: meta-population of Generators-Solvers (e.g. self.pairs in the POETManager class)
+        :return: a list of new potential generators sorted by novelty
+        """
         child_list = []
         active_solvers = [p.solver for p in active_population]
         active_generators = [p.generator for p in active_population]

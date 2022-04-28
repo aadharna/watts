@@ -66,6 +66,11 @@ class EvolutionaryGenerator(BaseGenerator):
         self.locations = self._parse_tile_world(o)
 
     def _parse_tile_world(self, tile_world):
+        """
+        Parse a 2D numpy array to extract what game object is in what location
+        :param tile_world: numpy array of the game objects
+        :return: dictionary of game-object locations
+        """
         locations = {}
         # comb through world, extract positions for each element currently in world
         for i in range(len(tile_world)):
@@ -88,6 +93,11 @@ class EvolutionaryGenerator(BaseGenerator):
         return locations
 
     def tile_world(self, locations):
+        """
+        Create a numpy array of the 2D game world with string entries using the class location data
+        :param locations: class dict of location information for each object type
+        return: a 2D numpy array
+        """
         # numpy array
         npa = np.array([['0'] * self._height] * self._length, dtype=str)
         for k in locations.keys():
@@ -101,7 +111,7 @@ class EvolutionaryGenerator(BaseGenerator):
 
     def mutate(self, **kwargs):  # -> EvolutionaryGenerator
         """randomly edit parts of the level!
-        :return: dict of location data for the entire level
+        :return: A new EvolutionaryGenerator that has a mutated locations dict from this generator
         """
         mutation_rate = kwargs.get('mutation_rate', 0.7)
         locations = deepcopy(self.locations)
@@ -132,9 +142,6 @@ class EvolutionaryGenerator(BaseGenerator):
         if np.random.rand() < mutation_rate:
             choices = np.arange(1, 4)
 
-            ###
-            # choices = [3, 3, 3] # TEMPORARY FOR THE EXPERIMENT OF CONSISTENT SHIFTING OF KEY AND DOORS.
-            ###
             go_again = 0
             while go_again < 0.5:
                 go_again = np.random.rand()
@@ -250,11 +257,17 @@ class EvolutionaryGenerator(BaseGenerator):
         return EvolutionaryGenerator(self._to_str(locations), self.args)
 
     def generate_fn_wrapper(self):
+        """
+        wrap the to_stirng function and provide a dict of additional information
+        """
         def _generate() -> Tuple[str, dict]:
             return str(self), {}
         return _generate
 
     def _to_str(self, location):
+        """
+        create a string representation from the location data contained in this class
+        """
         stringrep = ""
         tile_world = self.tile_world(location)
         for i in range(len(tile_world)):
@@ -267,13 +280,16 @@ class EvolutionaryGenerator(BaseGenerator):
         return stringrep
 
     def __str__(self):
+        """
+        Override the string magic method for this class
+        """
         return self._to_str(self.locations)
 
 
 if __name__ == "__main__":
     import os
-    from utils.register import Registrar
-    from utils.loader import load_from_yaml
+    from watts.utils.register import Registrar
+    from watts.utils.loader import load_from_yaml
     os.chdir('..')
 
     args = load_from_yaml('args.yaml')

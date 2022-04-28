@@ -3,16 +3,16 @@ from typing import Dict, List, Tuple
 import os
 import ray
 
-from .base import Manager
-from ..utils.register import Registrar
-from ..utils.loader import save_obj
-from ..gym_factory import GridGameFactory
-from ..network_factory import NetworkFactory
-from ..transfer.rank_strategy import RankStrategy
-from ..pair.agent_environment_pair import Pairing
-from ..solvers.SingleAgentSolver import SingleAgentSolver
-from ..evolution.evolution_strategy import EvolutionStrategy
-from ..serializer.POETManagerSerializer import POETManagerSerializer
+from watts.managers.base import Manager
+from watts.utils.register import Registrar
+from watts.utils.loader import save_obj
+from watts.gym_factory import GridGameFactory
+from watts.network_factory import NetworkFactory
+from watts.transfer.rank_strategy import RankStrategy
+from watts.pair.agent_environment_pair import Pairing
+from watts.solvers.SingleAgentSolver import SingleAgentSolver
+from watts.evolution.evolution_strategy import EvolutionStrategy
+from watts.serializer.POETManagerSerializer import POETManagerSerializer
 
 
 class PoetManager(Manager):
@@ -27,12 +27,16 @@ class PoetManager(Manager):
             registrar: Registrar,
             archive_dict: dict,
     ):
-        """Extends the manager class to instantiate the POET algorithm
-
-        :param exp_name: exp_name from launch script
-        :param gym_factory: factory to make new gym.Envs
-        :param network_factory: factory to make new NNs
-        :param registrar: class that dispenses necessary information e.g. num_poet_loops
+        """
+        Extends the manager class to instantiate the POET algorithm
+        @param exp_name: experiment name
+        @param gym_factory: gym_factory class to create new learning envs
+        @param initial_pair: pair::Pairing class to start the process
+        @param evolution_strategy: strategy that dictates how the population of Pairs change over time
+        @param transfer_strategy: strategy that dictates how the agents move between environments
+        @param network_factory: network_factory class to create new NNs (Rllib Policies)
+        @param registrar: a singleton class that holds information about the experiment
+        @param archive_dict: serializable dictionary that contains no longer active agent-generator pairs
         """
         super().__init__(exp_name, gym_factory, network_factory, registrar)
         self._evolution_strategy = evolution_strategy
@@ -74,6 +78,11 @@ class PoetManager(Manager):
         return refs
 
     def build_children(self, children: List[Tuple]) -> List[Pairing]:
+        """
+        build a new Pairing class from the passed in list of agent-environment objects
+        @param children: This is a list of (solver, generator, parent.id, novelty_ranking) to create new active agent-environment Pairings from
+        @return: the list of initialized children
+        """
         built_children = []
         for parent_solver, child_generator, parent_id, _ in children:
             parent_weights = ray.get(parent_solver.get_weights.remote())

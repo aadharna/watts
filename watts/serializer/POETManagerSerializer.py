@@ -4,13 +4,16 @@ import pickle
 import ray
 from ray.rllib.utils import add_mixins
 
-from ..managers import POETManager
-from ..utils.trainer_reset import ResetConfigOverride
-from ..utils.register import get_default_trainer_config_constructor_and_policy_fn, Registrar
-from ..solvers.SingleAgentSolver import SingleAgentSolver
+from watts.managers import POETManager
+from watts.utils.trainer_reset import ResetConfigOverride
+from watts.utils.register import get_default_trainer_config_constructor_and_policy_fn, Registrar
+from watts.solvers.SingleAgentSolver import SingleAgentSolver
 
 
 class POETManagerSerializer():
+    """
+    Serialize the POET experiment so that it can be saved and reloaded on demand.
+    """
     def __init__(self, manager: POETManager):
         self.manager = manager
 
