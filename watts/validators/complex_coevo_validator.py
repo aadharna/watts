@@ -1,11 +1,11 @@
 from typing import List, Tuple, Dict
 
-from ..generators.base import BaseGenerator
-from ..solvers.base import BaseSolver
-from ..validators.level_validator import LevelValidator
-from ..validators.agent_validator import ParentCutoffValidator, RandomAgentValidator
-from ..validators.graph_validator import GraphValidator
-from ..validators.Deepmind_validator import DeepMindAppendixValidator
+from watts.generators.base import BaseGenerator
+from watts.solvers.base import BaseSolver
+from watts.validators.level_validator import LevelValidator
+from watts.validators.agent_validator import ParentCutoffValidator, RandomAgentValidator
+from watts.validators.graph_validator import GraphValidator
+from watts.validators.Deepmind_validator import DeepMindAppendixValidator
 
 
 class Foo(LevelValidator):

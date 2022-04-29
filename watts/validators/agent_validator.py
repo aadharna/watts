@@ -5,10 +5,10 @@ import ray
 import numpy as np
 import torch
 
-from ..solvers.base import BaseSolver
-from ..generators.base import BaseGenerator
-from ..validators.level_validator import LevelValidator
-from ..utils.returns import compute_gae
+from watts.solvers.base import BaseSolver
+from watts.generators.base import BaseGenerator
+from watts.validators.level_validator import LevelValidator
+from watts.utils.returns import compute_gae
 
 
 def _eval_solver_on_generator(generator: BaseGenerator, solver: BaseSolver, config: dict) -> Tuple[bool, float, dict]:
