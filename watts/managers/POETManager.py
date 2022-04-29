@@ -133,6 +133,7 @@ class PoetManager(Manager):
         #       * tournament selection
         #       * etc
 
+        @return: void
         """
         while self.i <= self.args.num_poet_loops:
             i = self.i
