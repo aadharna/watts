@@ -1,10 +1,10 @@
 from typing import Callable, List, Tuple
 
-from ..validators.level_validator import LevelValidator
-from .selection_strategy import SelectionStrategy
-from .replacement_strategy import ReplaceOldest, ReplacementStrategy, _release
-from ..transfer.rank_strategy import RankStrategy
-from ..validators.rank_novelty_validator import RankNoveltyValidator
+from watts.validators.level_validator import LevelValidator
+from watts.evolution.selection_strategy import SelectionStrategy
+from watts.evolution.replacement_strategy import ReplaceOldest, ReplacementStrategy, _release
+from watts.transfer.rank_strategy import RankStrategy
+from watts.validators.rank_novelty_validator import RankNoveltyValidator
 
 
 class EvolutionStrategy:
@@ -20,6 +20,20 @@ class BirthThenKillStrategy(EvolutionStrategy):
             selection_strategy: SelectionStrategy,
             mutation_rate: float = 0.8,
     ):
+        """This is a Minimal Criteria-based evolutionary loop.
+        This is used as an outer-loop in: https://arxiv.org/abs/2007.08497
+
+        1. k parents are selected
+        2. Each parent proposes an offspring
+        2a. Each potential offspring is checked to see if it passes the MC
+        3. If the child is valid, it gets added to the population
+        4. If the population is too big, it gets culled down to the max supported pop size.
+
+        @param level_validator: a Watts.validators.level_validator that determines if the proposed level is suitable
+        @param replacement_strategy: a Watts.evolution.replacement_strategy that determines how to manage the population size
+        @param selection_strategy: a Watts.evolution.selection_strategy that determines how parents are selected
+        @param mutation_rate: a scaler value that determines if the parent mutates itself to propose a new child
+        """
         self._level_validator = level_validator
         self._replacement_strategy = replacement_strategy
         self._selection_strategy = selection_strategy
@@ -60,6 +74,19 @@ class TraditionalES(EvolutionStrategy):
             selection_strategy: SelectionStrategy,
             mutation_rate: float = 0.8,
     ):
+        """This is a traditional evolution strategy as the people in ES-land would think of it.
+
+        1. remove (n-k) least performant individuals
+        2. keep k elites
+        3. spawn (n-k) individuals
+        4. evaluate the new generation
+        5. return to 1.
+
+        @param level_validator: n/a. Not used in a traditional ES. Instead we select based on fitness.
+        @param replacement_strategy: a Watts.evolution.replacement_strategy that determines how to manage the population size
+        @param selection_strategy: a Watts.evolution.selection_strategy that determines how parents are selected
+        @param mutation_rate: a scaler value that determines if the parent mutates itself to propose a new child
+        """
         self._level_validator = level_validator
         self._replacement_strategy = replacement_strategy
         self._selection_strategy = selection_strategy
@@ -115,6 +142,23 @@ class POETStrategy(EvolutionStrategy):
             high_cutoff: float = 150.,
             mutation_rate: float = 0.8,
     ):
+        """
+
+        @param level_validator: a Watts.validators.level_validator that determines if the proposed level is suitable
+        @param replacement_strategy: a Watts.evolution.replacement_strategy that determines how to manage the population size
+        @param selection_strategy: a Watts.evolution.selection_strategy that determines how parents are selected
+        @param transfer_strategy: a Watts.transfer.Rank strategy. This is specific to POET where we select the new child's weights based on an evaluation of all active agents on the proposed environment.
+        @param env_config: config to load level information into
+        # The following parameters are passed to the RankNoveltyValidator
+        @param network_factory: the watts.network_factory object. This allows the algorithm to spawn a blank rllib policy nn object.
+        @param env_factory: factory to create new learning environments
+        @param historical_archive: the archive that contains all agent-generator/env pairs that are no longer active
+        @param density_threshold: Scaler for determining if the new generator is novel based on its average distance to its nearest neighbors
+        @param k: how many neighbors should I calculate my distance to?
+        @param low_cutoff: Low cutoff used in normalizing the ranking scheme
+        @param high_cutoff: High cutoff used in normalizing the ranking scheme
+        @param mutation_rate: a scaler value that determines if the parent mutates itself to propose a new child
+        """
         self._level_validator = level_validator
         self._replacement_strategy = replacement_strategy
         self._selection_strategy = selection_strategy
