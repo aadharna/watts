@@ -16,6 +16,16 @@ from watts.serializer.POETManagerSerializer import POETManagerSerializer
 
 
 class PoetManager(Manager):
+    """PoetManager runner.
+
+    See:
+     POET -- https://arxiv.org/abs/1901.01753
+     Enhanced POET -- https://arxiv.org/abs/2003.08536
+     PINSKY -- https://arxiv.org/abs/2007.08497
+     PINSKY 2 -- https://arxiv.org/abs/2203.10941
+
+    Each of the above algorithms implement a POET loop.
+    """
     def __init__(
             self,
             exp_name: str,
@@ -27,8 +37,8 @@ class PoetManager(Manager):
             registrar: Registrar,
             archive_dict: dict,
     ):
-        """
-        Extends the manager class to instantiate the POET algorithm
+        """Extends the manager class to instantiate the POET algorithm
+
         @param exp_name: experiment name
         @param gym_factory: gym_factory class to create new learning envs
         @param initial_pair: pair::Pairing class to start the process
@@ -49,8 +59,7 @@ class PoetManager(Manager):
         self.i = 1
 
     def evaluate(self) -> list:
-        """
-        Evaluate each NN-pair on its PAIRED environment
+        """Evaluate each NN-pair on its PAIRED environment
         :return: list of future-refs to the evaluated objects
         """
 
@@ -65,8 +74,7 @@ class PoetManager(Manager):
         return refs
 
     def optimize(self) -> list:
-        """
-        Optimize each NN-pair on its PAIRED environment
+        """Optimize each NN-pair on its PAIRED environment
         :return: list of future-refs to the new optimized weights
         """
 
@@ -78,8 +86,7 @@ class PoetManager(Manager):
         return refs
 
     def build_children(self, children: List[Tuple]) -> List[Pairing]:
-        """
-        build a new Pairing class from the passed in list of agent-environment objects
+        """Build a new Pairing class from the passed in list of agent-environment objects
         @param children: This is a list of (solver, generator, parent.id, novelty_ranking) to create new active agent-environment Pairings from
         @return: the list of initialized children
         """
