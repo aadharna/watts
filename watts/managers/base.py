@@ -1,8 +1,8 @@
 import abc
 
-from ..utils.register import Registrar
-from ..gym_factory import GridGameFactory
-from ..network_factory import NetworkFactory
+from watts.utils.register import Registrar
+from watts.gym_factory import GridGameFactory
+from watts.network_factory import NetworkFactory
 
 
 class Manager(abc.ABC):
