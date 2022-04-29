@@ -13,14 +13,8 @@ class EvolutionStrategy:
 
 
 class BirthThenKillStrategy(EvolutionStrategy):
-    def __init__(
-            self,
-            level_validator: LevelValidator,
-            replacement_strategy: ReplacementStrategy,
-            selection_strategy: SelectionStrategy,
-            mutation_rate: float = 0.8,
-    ):
-        """This is a Minimal Criteria-based evolutionary loop.
+    """
+    This is a Minimal Criteria-based evolutionary loop.
         This is used as an outer-loop in: https://arxiv.org/abs/2007.08497
 
         1. k parents are selected
@@ -29,6 +23,15 @@ class BirthThenKillStrategy(EvolutionStrategy):
         3. If the child is valid, it gets added to the population
         4. If the population is too big, it gets culled down to the max supported pop size.
 
+    """
+    def __init__(
+            self,
+            level_validator: LevelValidator,
+            replacement_strategy: ReplacementStrategy,
+            selection_strategy: SelectionStrategy,
+            mutation_rate: float = 0.8,
+    ):
+        """
         @param level_validator: a Watts.validators.level_validator that determines if the proposed level is suitable
         @param replacement_strategy: a Watts.evolution.replacement_strategy that determines how to manage the population size
         @param selection_strategy: a Watts.evolution.selection_strategy that determines how parents are selected
@@ -67,6 +70,15 @@ class BirthThenKillStrategy(EvolutionStrategy):
 
 
 class TraditionalES(EvolutionStrategy):
+    """
+    This is a traditional evolution strategy as the people in ES-land would think of it.
+
+        1. remove (n-k) least performant individuals
+        2. keep k elites
+        3. spawn (n-k) individuals
+        4. evaluate the new generation
+        5. return to 1.
+    """
     def __init__(
             self,
             level_validator: LevelValidator,
@@ -74,14 +86,7 @@ class TraditionalES(EvolutionStrategy):
             selection_strategy: SelectionStrategy,
             mutation_rate: float = 0.8,
     ):
-        """This is a traditional evolution strategy as the people in ES-land would think of it.
-
-        1. remove (n-k) least performant individuals
-        2. keep k elites
-        3. spawn (n-k) individuals
-        4. evaluate the new generation
-        5. return to 1.
-
+        """
         @param level_validator: n/a. Not used in a traditional ES. Instead we select based on fitness.
         @param replacement_strategy: a Watts.evolution.replacement_strategy that determines how to manage the population size
         @param selection_strategy: a Watts.evolution.selection_strategy that determines how parents are selected
