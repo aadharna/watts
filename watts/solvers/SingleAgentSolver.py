@@ -13,11 +13,13 @@ from warnings import warn
 
 @ray.remote
 class SingleAgentSolver(BaseSolver):
+    """This class is a ray.remote class. Therefore, when instantiated, it will be spun up on a different process.
+    This class in general is responsible for defining how an agent is optimized and evaluated.
+    """
     def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={},
                  log_id='foo_bar'):
-        """This class is a ray.remote class. Therefore, when instantiated, it will be spun up on a different process.
+        """
 
-        This class in general is responsible for defining how an agent is optimized and evaluated.
         This particular class is a generic wrapper into rllib's optimization suite.
 
         @param trainer_constructor: an rllib.trainer_constructor e.g. PPOTrainer
