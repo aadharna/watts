@@ -8,7 +8,7 @@ from ray.rllib.policy import Policy
 from ray.rllib.utils.typing import AgentID, PolicyID
 from ray.rllib.policy.sample_batch import SampleBatch
 
-from .base import BaseSolver
+from watts.solvers.base import BaseSolver
 from watts.evaluators.rollout import rollout
 
 

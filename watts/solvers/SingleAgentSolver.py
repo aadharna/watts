@@ -18,9 +18,7 @@ class SingleAgentSolver(BaseSolver):
     """
     def __init__(self, trainer_constructor, trainer_config, registered_gym_name, network_factory, gym_factory, weights={},
                  log_id='foo_bar'):
-        """
-
-        This particular class is a generic wrapper into rllib's optimization suite.
+        """This particular class is a generic wrapper into rllib's optimization suite.
 
         @param trainer_constructor: an rllib.trainer_constructor e.g. PPOTrainer
         @param trainer_config: The filled-in config dictionary necessary for the trainer_constructor above.
@@ -70,8 +68,8 @@ class SingleAgentSolver(BaseSolver):
 
     @ray.method(num_returns=0)
     def write(self, name, value, step):
-        """
-        write this value to a tensorboard graph of this name with this x-value of step.
+        """write this value to a tensorboard graph of this name with this x-value of step.
+
         @param name: which graph to write to
         @param value: the y-value of the datapoint
         @param step: the x-value of the datapoint
