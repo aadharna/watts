@@ -37,10 +37,19 @@ _args = parser.parse_args()
 
 
 if __name__ == "__main__":
+    """
+    This file launches the POET (and therefore also PINSKY) algorithms. 
+    This file should be provided a name that is used to track this experiment 
+      as well as an arguments file.
+    """
 
+    # make the python that launched this script the version of python
+    # that all ray-processes will also use.
+    # this is very important
     sep = os.pathsep
     os.environ['PYTHONPATH'] = sep.join(sys.path)
 
+    # initialize ray
     ray.init(num_gpus=1,
              ignore_reinit_error=True,)
              # log_to_driver=False,
@@ -48,25 +57,39 @@ if __name__ == "__main__":
 
     start = time.time()
 
+    # load arguments from file
     args = load_from_yaml(fpath=_args.args_file)
+    # save the name into the loaded-file-arguments and tag it as poet
     args.exp_name = f'poet.{_args.exp_name}' if 'poet' not in _args.exp_name else _args.exp_name
 
+    # extract and setup experiment info from the arguments
     registry = Registrar(file_args=args)
+
     # game_schema = GameSchema(registry.gdy_file) # Used for GraphValidator
+    # get any classes used the wrap the Gym/RLliv env
     wrappers = add_wrappers(args.wrappers)
+
+    # register the gym with rllib and create the factory that will build new envs on demand
     gym_factory = GridGameFactory(registry.env_name, env_wrappers=wrappers)
     # gym_factory = WalkerFactory(registry.env_name, env_wrappers=wrappers)
+
+    # register the neural network with rllib and create the factory that will build
+    #  new NNs on demand
     network_factory = NetworkFactory(registry.network_name, registry.get_nn_build_info,
                                      policy_class=registry.policy_class)
 
-
-    # generator = StaticGenerator(args.initial_level_string)
+    # Define a Generator class that will build/evolve/train/sample/generate new learning environemnts
     generator = EvolutionaryGenerator(args.initial_level_string,
                                       file_args=registry.get_generator_config)
     # generator = WalkerConfigGenerator(**registry.get_generator_config)
+    # generator = StaticGenerator(args.initial_level_string)
 
+    # dict to save agent/environment information
     archive_dict = OrderedDict()
 
+    # This solver will define optimization for the agent's NN.
+    # this specific solver, the Single-Agent-Solver is a general Solver class
+    # that can call into various RLlib optimization algorithms.
     s = SingleAgentSolver.remote(trainer_constructor=registry.trainer_constr,
                                  trainer_config=registry.get_trainer_config,
                                  registered_gym_name=registry.env_name,
@@ -77,32 +100,44 @@ if __name__ == "__main__":
     if args.use_snapshot:
         manager = POETManagerSerializer.deserialize()
     else:
+        # Define the POETManager!
         manager = PoetManager(exp_name=args.exp_name,
                               gym_factory=gym_factory,
                               network_factory=network_factory,
+                              # combine the agent and generator into a Pair!
                               initial_pair=Pairing(solver=s,
                                                    generator=generator),
-                              evolution_strategy=POETStrategy(level_validator=ParentCutoffValidator(env_config=registry.get_config_to_build_rllib_env,
-                                                                                                    low_cutoff=1,
-                                                                                                    high_cutoff=450,
-                                                                                                    n_repeats=1),
-                                                              replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
-                                                                                                 archive=archive_dict),
-                                                              selection_strategy=SelectRandomly(args.max_children),
-                                                              transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
-                                                                                             default_trainer_config=registry.get_trainer_config),
-                                                              # these are fed to the RankNoveltyValidator
-                                                              # for now this validator is explicitly coded into
-                                                              # the POETStrategy
-                                                              env_config=registry.get_config_to_build_rllib_env,
-                                                              network_factory=network_factory,
-                                                              env_factory=gym_factory,
-                                                              historical_archive=archive_dict,
-                                                              density_threshold=1.,
-                                                              k=5,
-                                                              low_cutoff=1,
-                                                              high_cutoff=250,
-                                                              mutation_rate=args.mutation_rate),
+                              # define how the learning environemnts evolve over time
+                              evolution_strategy=POETStrategy(
+                                  # Define how new learning environments get validated as
+                                  #  being ``good'' to train on
+                                  level_validator=ParentCutoffValidator(env_config=registry.get_config_to_build_rllib_env,
+                                                                        low_cutoff=1,
+                                                                        high_cutoff=450,
+                                                                        n_repeats=1),
+                                  # Define how to remove ``old'' pairs
+                                  replacement_strategy=ReplaceOldest(max_pairings=args.max_envs,
+                                                                     archive=archive_dict),
+                                  # Define how to pick which pairs will have children
+                                  selection_strategy=SelectRandomly(args.max_children),
+                                  # Define how the newly created agent
+                                  #  gets its weights
+                                  #   this transfer step to find good weights is specific to the POETManager
+                                  transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
+                                                                 default_trainer_config=registry.get_trainer_config),
+                                  # these are fed to the RankNoveltyValidator
+                                  # for now this validator is explicitly coded into
+                                  # the POETStrategy
+                                  env_config=registry.get_config_to_build_rllib_env,
+                                  network_factory=network_factory,
+                                  env_factory=gym_factory,
+                                  historical_archive=archive_dict,
+                                  density_threshold=1.,
+                                  k=5,
+                                  low_cutoff=1,
+                                  high_cutoff=250,
+                                  mutation_rate=args.mutation_rate),
+                              # Define how to goal-switch agents between different learning environments
                               transfer_strategy=GetBestZeroOrOneShotSolver(ZeroShotCartesian(config=registry.get_config_to_build_rllib_env),
                                                                                              default_trainer_config=registry.get_trainer_config),
                               registrar=registry,

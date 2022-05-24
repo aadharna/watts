@@ -4,8 +4,8 @@ from collections import OrderedDict
 def _release(archive: dict, finished_list: list):
     """helper function to clean up pair objects that are no longer being used going forward
 
-    :param archive: container to save meta-data in for the objects being destroyed
-    :param finished_list: list of objects to release
+    @param archive: container to save meta-data in for the objects being destroyed
+    @param finished_list: list of objects to release
     :return: n/a
     """
     for p in finished_list:

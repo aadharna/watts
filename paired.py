@@ -51,6 +51,10 @@ if __name__ == "__main__":
         h_env = PlacePredefinedSequence(h_env, config)
         return h_env
 
+    def make_unconstrained_paired(config):
+        env = RLlibEnv(config)
+        h_env = Regret(env, config)
+        return h_env
 
     def policy_mapping_fn(agent_id, episode, **kwargs):
         if agent_id.startswith('antagonist'):
@@ -64,105 +68,6 @@ if __name__ == "__main__":
     ModelCatalog.register_custom_model('AIIDE', AIIDEActor)
     ModelCatalog.register_custom_model('PCGRL', PCGRLAdversarial)
     register_env('h_maze', make_env)
-
-    # class SnapshotLoggerCallback(TBXLoggerCallback):
-    #     def __init__(self):
-    #         super(SnapshotLoggerCallback, self).__init__()
-    #         self.first_batch = True
-    #
-    #     def log_trial_result(self, iteration: int, trial: "Trial", result: Dict):
-    #         super().log_trial_result(iteration, trial, result)
-    #         picture_folder = os.path.join(trial.logdir, "images")
-    #         if not os.path.exists(picture_folder):
-    #             os.mkdir(picture_folder)
-    #         try:
-    #             image_list = result['episode_media']['level']
-    #             image_list = np.array(image_list).squeeze()
-    #             # print(f"{image_list.shape} items with {image_list.size} size")
-    #             images = [image for image in image_list if (len(image) != 0 and image.size != 0)]
-    #         except (KeyError, TypeError, IndexError) as e:
-    #             return
-    #         # save the first rollout
-    #         if self.first_batch and len(images) != 0:
-    #             self.first_batch = False
-    #             np.save(os.path.join(picture_folder, str(iteration)) + '.npy', images)
-    #         # do not save if iteration is not mod 10
-    #         # do not save if there is nothing to save
-    #         if not iteration % 10 == 0 or len(images) == 0:
-    #             return
-    #         else:
-    #             np.save(os.path.join(picture_folder, str(iteration)) + '.npy', images)
-    #
-    #
-    # class PairedRewardRewriter(DefaultCallbacks):
-    #     def __init__(self):
-    #         super().__init__()
-    #
-    #     def on_postprocess_trajectory(
-    #         self, *, worker: "RolloutWorker", episode: MultiAgentEpisode,
-    #         agent_id: AgentID, policy_id: PolicyID,
-    #         policies: Dict[PolicyID, Policy], postprocessed_batch: SampleBatch,
-    #         original_batches: Dict[AgentID, SampleBatch], **kwargs) -> None:
-    #         """Called immediately after a policy's postprocess_fn is called.
-    #
-    #         You can use this callback to do additional postprocessing for a policy,
-    #         including looking at the trajectory data of other agents in multi-agent
-    #         settings.
-    #
-    #         Args:
-    #             worker (RolloutWorker): Reference to the current rollout worker.
-    #             episode (MultiAgentEpisode): Episode object.
-    #             agent_id (str): Id of the current agent.
-    #             policy_id (str): Id of the current policy for the agent.
-    #             policies (dict): Mapping of policy id to policy objects. In single
-    #                 agent mode there will only be a single "default" policy.
-    #             postprocessed_batch (SampleBatch): The postprocessed sample batch
-    #                 for this agent. You can mutate this object to apply your own
-    #                 trajectory postprocessing.
-    #             original_batches (dict): Mapping of agents to their unpostprocessed
-    #                 trajectory data. You should not mutate this object.
-    #             kwargs: Forward compatibility placeholder.
-    #         """
-    #         pass
-    #
-    # class PairedLevelExtractorCallback(DefaultCallbacks):
-    #     def __init__(self):
-    #         super().__init__()
-    #
-    #     def on_episode_end(self,
-    #                    *,
-    #                    worker: "RolloutWorker",
-    #                    base_env: BaseEnv,
-    #                    policies: Dict[PolicyID, Policy],
-    #                    episode: MultiAgentEpisode,
-    #                    env_index: Optional[int] = None,
-    #                    **kwargs) -> None:
-    #         """Runs when an episode is done.
-    #
-    #         Args:
-    #             worker (RolloutWorker): Reference to the current rollout worker.
-    #             base_env (BaseEnv): BaseEnv running the episode. The underlying
-    #                 env object can be gotten by calling base_env.get_unwrapped().
-    #             policies (dict): Mapping of policy id to policy objects. In single
-    #                 agent mode there will only be a single "default" policy.
-    #             episode (MultiAgentEpisode): Episode object which contains episode
-    #                 state. You can use the `episode.user_data` dict to store
-    #                 temporary data, and `episode.custom_metrics` to store custom
-    #                 metrics for the episode.
-    #             env_index (EnvID): Obsoleted: The ID of the environment, which the
-    #                 episode belongs to.
-    #             kwargs: Forward compatibility placeholder.
-    #         """
-    #         envs = base_env.get_unwrapped()
-    #         gifs = []
-    #         for e in envs:
-    #             gv = e.global_view
-    #             if gv is not None:
-    #                 gifs.append(gv)
-    #         if len(gifs) == 0:
-    #             return
-    #         else:
-    #             episode.media['level'] = gifs
 
     h_env = make_env(config)
     _ = h_env.reset()

@@ -1,8 +1,8 @@
 import abc
 
-from ..utils.register import Registrar
-from ..gym_factory import GridGameFactory
-from ..network_factory import NetworkFactory
+from watts.utils.register import Registrar
+from watts.gym_factory import GridGameFactory
+from watts.network_factory import NetworkFactory
 
 
 class Manager(abc.ABC):
@@ -12,10 +12,10 @@ class Manager(abc.ABC):
                 e.g. PAIREDManager\n
                 e.g. GPNManager\n
 
-        :param exp_name: exp_name from launch script
-        :param gym_factory: factory to make new gym.Envs
-        :param network_factory: factory to make new NNs
-        :param registrar: class that dispenses necessary information e.g. num_poet_loops
+        @param exp_name: exp_name from launch script
+        @param gym_factory: factory to make new gym.Envs
+        @param network_factory: factory to make new NNs
+        @param registrar: class that dispenses necessary information e.g. num_poet_loops
         """
 
         self.registrar = registrar

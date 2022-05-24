@@ -10,9 +10,9 @@ Rollout_results = namedtuple('Rollout_results',
 def rollout(actor, env) -> Rollout_results:
     """Run a rollout on a given actor and environment.
 
-    :param actor: RLlib Policy Class: You can build this using the NetworkFactory
-    :param env: An RLlibEnv (OpenAI Env that interfaces with RLlib) to evaluate the solver in
-    :return: evaluation result state
+    @param actor: RLlib Policy Class: You can build this using the NetworkFactory
+    @param env: An RLlibEnv (OpenAI Env that interfaces with RLlib) to evaluate the solver in
+    @return: evaluation result state
     """
     state = env.reset()
     done = False

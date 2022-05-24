@@ -26,6 +26,17 @@ class RankNoveltyValidator(LevelValidator):
     def __init__(self, density_threshold, env_config, historical_archive,
                  agent_factory, env_factory,
                  k=5, low_cutoff: float = -np.inf, high_cutoff: float = np.inf):
+        """
+
+        @param density_threshold: Scaler for determining if the new generator is novel based on its average distance to its nearest neighbors
+        @param env_config: config to load level information into
+        @param historical_archive: the archive that contains all agent-generator/env pairs that are no longer active
+        @param agent_factory: factory to create new rllib policy NNs
+        @param env_factory: factory to create new learning environments
+        @param k: how many neighbors should I calculate my distance to?
+        @param low_cutoff: Low cutoff used in normalizing the ranking scheme
+        @param high_cutoff: High cutoff used in normalizing the ranking scheme
+        """
         self.density_threshold = density_threshold
         self.k = k
         self.high_cutoff = high_cutoff
@@ -42,6 +53,13 @@ class RankNoveltyValidator(LevelValidator):
         self.actor_pool = ActorPool(actors=self.rollout_actor_pointers)
 
     def validate_level(self, generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
+        """
+
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
+        @return: True/False, distance data
+        """
         proposed_generator = kwargs.get('proposed_generator', None)
         if proposed_generator is None:
             raise ValueError('The RankNoveltyValidator needs to know what the proposed '
@@ -62,6 +80,13 @@ class RankNoveltyValidator(LevelValidator):
         return top_k_mean > self.density_threshold, {'top_k_mean': top_k_mean}
 
     def calculate_pata_ec(self, generator: BaseGenerator, solvers: List[BaseSolver], **kwargs):
+        """
+
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: Solver class that can play a game
+        @param kwargs: future proofing
+        @return:
+        """
         def cap_score(score, lower, upper):
             if score < lower:
                 score = lower
@@ -99,8 +124,8 @@ def euclidean_distance(x, y):
     """euclidean distance calculation from:
     https://github.com/uber-research/poet/blob/8669a17e6958f80cd547b2de61c51d4518c833d9/poet_distributed/novelty.py#L30
 
-    :param x:
-    :param y:
+    @param x: nd-vector scores on d levels
+    @param y: nd-vector scores on d levels
     :return:
     """
     n, m = len(x), len(y)

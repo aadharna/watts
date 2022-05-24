@@ -3,10 +3,10 @@ from typing import List, Tuple, Dict
 import networkx as nx
 from networkx import grid_graph
 
-from ..solvers.base import BaseSolver
-from ..game.GameSchema import GameSchema
-from ..generators.base import BaseGenerator
-from .level_validator import LevelValidator
+from watts.solvers.base import BaseSolver
+from watts.game.GameSchema import GameSchema
+from watts.generators.base import BaseGenerator
+from watts.validators.level_validator import LevelValidator
 
 
 class GraphValidator(LevelValidator):
@@ -55,9 +55,9 @@ class GraphValidator(LevelValidator):
     def validate_level(self,  generators: List[BaseGenerator], solvers: List[BaseSolver], **kwargs) -> Tuple[bool, Dict]:
         """
 
-        :param generators: Generator class that we can extract a level string from
-        :param solvers: n/a here; Solver class that can play a game
-        :param kwargs: future proofing
+        @param generators: Generator class that we can extract a level string from
+        @param solvers: n/a here; Solver class that can play a game
+        @param kwargs: future proofing
         :return: True/False is this level a good level to use?
         """
         level = [row.split() for row in str(generators[0]).split('\n')[:-1]]
