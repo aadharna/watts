@@ -13,6 +13,7 @@ setup(
             'gym==0.21',
             'griddly',
             'networkx',
+            'pytest',
             'box2d',
             'tensorboard',
         ]
